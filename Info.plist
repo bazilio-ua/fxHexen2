@@ -27,7 +27,7 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2017 fixme. All rights reserved.</string>
 	<key>NSMainNibFile</key>
-	<string>fxQuake</string>
+	<string>fxHexen2</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>
