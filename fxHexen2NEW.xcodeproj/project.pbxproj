@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		4215AFEB1FC76F8800064F60 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4215AFEA1FC76F8800064F60 /* AudioToolbox.framework */; };
+		425AC4542E0D8BA4004726CB /* cl_effect.c in Sources */ = {isa = PBXBuildFile; fileRef = 425AC4532E0D8BA4004726CB /* cl_effect.c */; };
+		425AC4572E0D8C21004726CB /* sv_effect.c in Sources */ = {isa = PBXBuildFile; fileRef = 425AC4562E0D8C21004726CB /* sv_effect.c */; };
 		425D10F82DBFCF4C00D5245B /* config.c in Sources */ = {isa = PBXBuildFile; fileRef = 425D10F72DBFCF4C00D5245B /* config.c */; };
 		428B32831FD48E7D00E5197A /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4215AFED1FC7736D00064F60 /* AudioUnit.framework */; };
 		428DD5402D5D0173002D6049 /* gl_bloom.c in Sources */ = {isa = PBXBuildFile; fileRef = 428DD53F2D5D0173002D6049 /* gl_bloom.c */; };
@@ -79,6 +81,9 @@
 /* Begin PBXFileReference section */
 		4215AFEA1FC76F8800064F60 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		4215AFED1FC7736D00064F60 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		425AC4532E0D8BA4004726CB /* cl_effect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = cl_effect.c; sourceTree = "<group>"; };
+		425AC4552E0D8BBD004726CB /* effect.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = effect.h; sourceTree = "<group>"; };
+		425AC4562E0D8C21004726CB /* sv_effect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sv_effect.c; sourceTree = "<group>"; };
 		425D10F62DBFCF4C00D5245B /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = "<group>"; };
 		425D10F72DBFCF4C00D5245B /* config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = config.c; sourceTree = "<group>"; };
 		4273FAB01DFF2EDA005DC9A7 /* anorm_dots.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = anorm_dots.h; sourceTree = SOURCE_ROOT; };
@@ -267,6 +272,7 @@
 				4273FAB41DFF2EDA005DC9A7 /* cdaudio.h */,
 				4273FAB51DFF2EDA005DC9A7 /* chase.c */,
 				4273FAB61DFF2EDA005DC9A7 /* cl_demo.c */,
+				425AC4532E0D8BA4004726CB /* cl_effect.c */,
 				4273FAB71DFF2EDA005DC9A7 /* cl_input.c */,
 				4273FAB81DFF2EDA005DC9A7 /* cl_main.c */,
 				4273FAB91DFF2EDA005DC9A7 /* cl_parse.c */,
@@ -285,6 +291,7 @@
 				4273FAC41DFF2EDA005DC9A7 /* cvar.c */,
 				4273FAC51DFF2EDA005DC9A7 /* cvar.h */,
 				4273FAC61DFF2EDA005DC9A7 /* draw.h */,
+				425AC4552E0D8BBD004726CB /* effect.h */,
 				428DD53F2D5D0173002D6049 /* gl_bloom.c */,
 				4273FAC81DFF2EDA005DC9A7 /* gl_draw.c */,
 				4273FAC91DFF2EDA005DC9A7 /* gl_efrag.c */,
@@ -344,6 +351,7 @@
 				4273FAFA1DFF2EDA005DC9A7 /* snd_mix.c */,
 				4273FAFB1DFF2EDA005DC9A7 /* sound.h */,
 				4273FAFC1DFF2EDA005DC9A7 /* spritegn.h */,
+				425AC4562E0D8C21004726CB /* sv_effect.c */,
 				4273FAFD1DFF2EDA005DC9A7 /* sv_main.c */,
 				4273FAFE1DFF2EDA005DC9A7 /* sv_move.c */,
 				4273FAFF1DFF2EDA005DC9A7 /* sv_phys.c */,
@@ -492,6 +500,7 @@
 				42B7184F1EA2C0F700BD51E1 /* host_cmd.c in Sources */,
 				42B718501EA2C0F700BD51E1 /* host.c in Sources */,
 				42B718511EA2C0F700BD51E1 /* in_mac.m in Sources */,
+				425AC4572E0D8C21004726CB /* sv_effect.c in Sources */,
 				42B718521EA2C0F700BD51E1 /* keys.c in Sources */,
 				42B718531EA2C0F700BD51E1 /* mathlib.c in Sources */,
 				42B718541EA2C0F700BD51E1 /* menu.c in Sources */,
@@ -511,6 +520,7 @@
 				42B718611EA2C11D00BD51E1 /* snd_mix.c in Sources */,
 				42B718621EA2C11D00BD51E1 /* sv_main.c in Sources */,
 				42B718631EA2C11D00BD51E1 /* sv_move.c in Sources */,
+				425AC4542E0D8BA4004726CB /* cl_effect.c in Sources */,
 				42B718641EA2C11D00BD51E1 /* sv_phys.c in Sources */,
 				42B718651EA2C11D00BD51E1 /* sv_user.c in Sources */,
 				42B718661EA2C11D00BD51E1 /* sys_mac.m in Sources */,
