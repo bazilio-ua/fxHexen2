@@ -53,20 +53,26 @@ Cvars are restricted from having the same names as commands to keep this
 interface from being ambiguous.
 */
 
+#define	CVAR_NONE		0	// normal cvar
+#define	CVAR_ARCHIVE	1	// set to cause it to be saved to vars.rc (config.cfg)
+#define	CVAR_SERVER		2	// notifies players when changed
+#define	CVAR_ROM		4	// display only, cannot be set
+#define	CVAR_CALLBACK	8	// cvar has a callback
+
 typedef struct cvar_s
 {
 	char	*name;
 	char	*string;
-	qboolean archive;		// set to true to cause it to be saved to vars.rc
-	qboolean server;		// notifies players when changed
+	unsigned flags;
 	float	value;
-	struct cvar_s *next;
 	char	*default_string; //johnfitz -- remember defaults for reset function
 	void (*callback) (void); //johnfitz
+	struct cvar_s *next;
 } cvar_t;
 
 void	Cvar_Init (void);
-void 	Cvar_RegisterVariable (cvar_t *variable, void *function); //johnfitz -- cvar callback
+void 	Cvar_RegisterVariable (cvar_t *var);
+void 	Cvar_RegisterVariableCallback (cvar_t *var, void *function); //johnfitz -- cvar callback
 // registers a cvar that already has the name, string, and optionally the
 // archive elements set.
 
@@ -78,6 +84,14 @@ void 	Cvar_Set (char *var_name, char *value);
 
 void	Cvar_SetValue (char *var_name, float value);
 // expands value to a string and calls Cvar_Set
+
+void	Cvar_SetNoCallback (char *var_name, char *value);
+void	Cvar_SetValueNoCallback (char *var_name, float value);
+// sets a variable without firing callback
+
+void	Cvar_SetROM (char *var_name, char *value);
+void	Cvar_SetValueROM (char *var_name, float value);
+// sets a CVAR_ROM variable from within the engine
 
 float	Cvar_VariableValue (char *var_name);
 // returns 0 if not defined or non numeric
@@ -99,5 +113,6 @@ void 	Cvar_WriteVariables (FILE *f);
 // with the archive flag set to true.
 
 cvar_t *Cvar_FindVar (char *var_name);
+cvar_t *Cvar_NextServerVar (char *var_name);
 
 extern cvar_t	*cvar_vars;
