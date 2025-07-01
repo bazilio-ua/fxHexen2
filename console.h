@@ -17,25 +17,24 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+// console.h
 
-//
-// console
-//
+#define		CON_TEXTSIZE	262144
+
 extern int con_totallines;
-extern int con_backscroll;
 extern	qboolean con_forcedup;	// because no entities to refresh
 extern qboolean con_initialized;
-extern byte *con_chars;
 extern int	con_vislines;
 extern int	con_current;
-extern int	con_x;
+extern int	con_display;
 extern int	con_linewidth;
-extern short	*con_text; // Q1 char, H2 need short
+extern short	con_text[CON_TEXTSIZE * 2]; // Q1 'char' -> H2 'short'
 extern char	con_lastcenterstring[MAX_PRINTMSG];
 
 void Con_DrawCharacter (int cx, int line, int num);
 
 void Con_CheckResize (void);
+void Con_Start (void);
 void Con_Init (void);
 void Con_DrawConsole (int lines, qboolean drawinput);
 void Con_Print (char *txt);
@@ -50,7 +49,6 @@ void Con_DrawNotify (void);
 void Con_ClearNotify (void);
 void Con_ToggleConsole_f (void);
 void Con_LogCenterPrint (char *str);
-char *Con_Quakebar (int len);
 
 void Con_NotifyBox (char *text);	// during startup for sound / cd warnings
 

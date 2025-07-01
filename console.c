@@ -19,34 +19,37 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // console.c
 
-#ifndef _MSC_VER
-#include <unistd.h>
-#else
-#include <io.h>
-#endif
-#include <fcntl.h>
-#include <time.h>
 #include "quakedef.h"
-
-int 		con_linewidth;
 
 float		con_cursorspeed = 4;
 
-//#define		CON_TEXTSIZE	0x40000 //16384
-#define		CON_TEXTSIZE	16384
-
+qboolean	con_initialized = false;
+qboolean	con_debuglog = false;
 
 qboolean 	con_forcedup;		// because no entities to refresh
+qboolean 	con_wrapped;		// will be set to true after 1st buffer wrap
+qboolean 	con_wrdwrap;
 
+// WRAP_CHAR will be placed as "soft" line-feed instead of a space char
+#define		WRAP_CHAR	(char)(' ' + 128)
+
+int 		con_linewidth;
 int			con_totallines;		// total lines in console scrollback
-int			con_backscroll;		// lines up from bottom to display
-int			con_current;		// where next message will be printed
-int			con_x;				// offset in current line for next print
-short		*con_text=0; // Q1 char, H2 need short
+int			con_current;		// line where next message will be printed
+int			con_display;		// bottom of console displays this line
 
-cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
-cvar_t		con_logcenterprint = {"con_logcenterprint", "1"};	// log centerprints to console
-cvar_t		con_removecr = {"con_removecr", "1"}; // remove \r from console output
+int			con_x;				// offset in current line for next print
+int			con_startpos;		// points to begin of text buffer
+int			con_endpos;			// text will be placed to endpos
+
+int			con_vislines;
+
+short		con_text[CON_TEXTSIZE * 2];	// first half - text, second - color mask // Q1 'char' -> H2 'short'
+
+typedef struct {
+	int line, pos;
+} con_cache_t;
+con_cache_t con_disp, con_notif;
 
 char		con_lastcenterstring[MAX_PRINTMSG];
 
@@ -54,9 +57,9 @@ char		con_lastcenterstring[MAX_PRINTMSG];
 float		con_times[NUM_CON_TIMES];	// realtime time the line was generated
 								// for transparent notify lines
 
-int			con_vislines;
-
-qboolean	con_debuglog = false;
+cvar_t		con_notifytime = {"con_notifytime","3", CVAR_NONE};			// in seconds
+cvar_t		con_logcenterprint = {"con_logcenterprint","1", CVAR_NONE};	// log centerprints to console
+cvar_t		con_wordwrap = {"con_wordwrap","1", CVAR_NONE}; 			// console word wrap may be controlled
 
 extern	char	key_lines[64][MAX_CMDLINE];
 extern	int		edit_line;
@@ -66,38 +69,6 @@ extern	int		key_insert;
 
 extern	char	chat_buffer[];
 
-qboolean	con_initialized = false;
-
-/*
-================
-Con_Quakebar -- returns a bar of the desired length, but never wider than the console
-
-includes a newline, unless len >= con_linewidth.
-================
-*/
-char *Con_Quakebar (int len)
-{
-	static char bar[42];
-	int	    i;
-
-	len = min(len, sizeof(bar) - 2);
-	len = min(len, con_linewidth);
-
-	bar[0] = '\35';
-	for (i = 1; i < len - 1; i++)
-		bar[i] = '\36';
-	bar[len-1] = '\37';
-
-	if (len < con_linewidth)
-	{
-		bar[len] = '\n';
-		bar[len+1] = 0;
-	}
-	else
-		bar[len] = 0;
-
-	return bar;
-}
 
 /*
 ================
@@ -108,13 +79,14 @@ void Con_ToggleConsole_f (void)
 {
 	if (key_dest == key_console)
 	{
+		key_lines[edit_line][1] = 0;	// clear any typing
+		key_linepos = 1;
+		con_display = con_current; //johnfitz -- toggleconsole should return you to the bottom of the scrollback
+		history_line = edit_line; //johnfitz -- it should also return you to the bottom of the command history
+		
 		if (cls.state == ca_connected)
 		{
 			key_dest = key_game;
-			key_lines[edit_line][1] = 0;	// clear any typing
-			key_linepos = 1;
-			con_backscroll = 0; // toggleconsole should return you to the bottom of the scrollback
-			history_line = edit_line; // it should also return you to the bottom of the command history
 		}
 		else
 		{
@@ -135,15 +107,7 @@ Con_Clear_f
 */
 void Con_Clear_f (void)
 {
-	short i;
-
-	for(i=0;i<CON_TEXTSIZE;i++)
-		con_text[i] = ' ';
-
-/*	if (con_text)
-		memset (con_text, ' ', CON_TEXTSIZE);
-*/
-	con_backscroll = 0; // if console is empty, being scrolled up is confusing
+	Con_Start ();
 }
 
 /*
@@ -155,10 +119,10 @@ adapted from quake2 source
 */
 void Con_Dump_f (void)
 {
-	int		l, x;
-	char	*line;
+	int		pos, size, out;
 	FILE	*f;
-	char	buffer[1024];
+	short	c;
+	char	buffer[MAX_PRINTMSG]; // was 1024
 	char	name[MAX_OSPATH];
 
 	// there is a security risk in writing files with an arbitrary filename. so,
@@ -173,34 +137,29 @@ void Con_Dump_f (void)
 		return;
 	}
 
-	// skip initial empty lines
-	for (l = con_current - con_totallines + 1 ; l <= con_current ; l++)
-	{
-		line = (char *)con_text + (l%con_totallines)*con_linewidth;
-		for (x=0 ; x<con_linewidth ; x++)
-			if (line[x] != ' ')
-				break;
-		if (x != con_linewidth)
-			break;
-	}
+	pos = con_startpos;
+	size = con_endpos - pos;
+	if (size < 0)
+		size += CON_TEXTSIZE;
 
-	// write the remaining lines
-	buffer[con_linewidth] = 0;
-	for ( ; l <= con_current ; l++)
+	out = 0;
+	while (size) // write the remaining lines
 	{
-		line = (char *)con_text + (l%con_totallines)*con_linewidth;
-		strncpy (buffer, line, con_linewidth);
-		for (x=con_linewidth-1 ; x>=0 ; x--)
+		c = con_text[pos];
+		if (++pos >= CON_TEXTSIZE)
+			pos -= CON_TEXTSIZE;
+		size--;
+
+		if (c == WRAP_CHAR)
+			c = ' '; // unwrap words
+		c = sys_char_map[c]; 			// translate to ASCII
+		buffer[out++] = c;
+		if (c == '\n' || out >= sizeof(buffer) - 1 || !size)
 		{
-			if (buffer[x] == ' ')
-				buffer[x] = 0;
-			else
-				break;
+			buffer[out] = 0;			// ASCII
+			out = 0;
+			fprintf (f, "%s", buffer);
 		}
-		for (x=0; buffer[x]; x++)
-			buffer[x] &= 0x7f;
-
-		fprintf (f, "%s\n", buffer);
 	}
 
 	fclose (f);
@@ -214,10 +173,7 @@ Con_ClearNotify
 */
 void Con_ClearNotify (void)
 {
-	int		i;
-	
-	for (i=0 ; i<NUM_CON_TIMES ; i++)
-		con_times[i] = 0;
+	memset (con_times, 0, sizeof(con_times));
 }
 
 						
@@ -230,6 +186,8 @@ extern qboolean team_message;
 
 void Con_MessageMode_f (void)
 {
+	if (cls.state != ca_connected || cls.demoplayback)
+		return;
 	key_dest = key_message;
 	team_message = false;
 }
@@ -242,6 +200,8 @@ Con_MessageMode2_f
 */
 void Con_MessageMode2_f (void)
 {
+	if (cls.state != ca_connected || cls.demoplayback)
+		return;
 	key_dest = key_message;
 	team_message = true;
 }
@@ -251,64 +211,110 @@ void Con_MessageMode2_f (void)
 ================
 Con_CheckResize
 
-If the line width has changed, reformat the buffer.
+If the line width has changed, reformat the buffer
+Supported word wrap.
 ================
 */
 void Con_CheckResize (void)
 {
-	int		i, j, width, oldwidth, oldtotallines, numlines, numchars;
-	short	tbuf[CON_TEXTSIZE]; // Q1 char, H2 need short
+	int width, size, line;
+	int i, x, i1, x1;
+	short c, c1; // Q1 'char' -> H2 'short'
+	qboolean wrap = (con_wordwrap.value != 0.f);
+	
+	if (wrap != con_wrdwrap)
+	{
+		con_linewidth = -1; // force resize
+		con_wrdwrap = wrap;
+	}
 
-	width = (vid.width >> 3) - 2;
+	width = (vid.conwidth >> 3) - 2; //johnfitz -- use vid.conwidth instead of vid.width
+	if (width < 1)
+		width = 38; // video hasn't been initialized yet
 
 	if (width == con_linewidth)
 		return;
 
-	if (width < 1)			// video hasn't been initialized yet
+	con_linewidth = width;
+
+	size = con_endpos - con_startpos; // size of data in buffer
+	if (size < 0)
+		size += CON_TEXTSIZE; // wrap buffer: endpos < startpos
+
+	i = con_startpos;
+	x = 0;
+	line = 0;
+	while (size--)
 	{
-		width = 38;
-		con_linewidth = width;
-		con_totallines = CON_TEXTSIZE / con_linewidth;
-//		memset (con_text, ' ', CON_TEXTSIZE);
-		Con_Clear_f();
-	}
-	else
-	{
-		oldwidth = con_linewidth;
-		con_linewidth = width;
-		oldtotallines = con_totallines;
-		con_totallines = CON_TEXTSIZE / con_linewidth;
-		numlines = oldtotallines;
+		c = con_text[i];
+		if (c == WRAP_CHAR)
+			c = ' '; // ignore old WRAP_CHARs
+		con_text[i] = c;
+		if (++i >= CON_TEXTSIZE)
+			i -= CON_TEXTSIZE;
 
-		if (con_totallines < numlines)
-			numlines = con_totallines;
+		if (c != '\n' && ++x < width)
+			continue; // no line feed or line wrap
 
-		numchars = oldwidth;
-	
-		if (con_linewidth < numchars)
-			numchars = con_linewidth;
+		x = 0;
+		line++;
 
-		memcpy (tbuf, con_text, CON_TEXTSIZE<<1);
-//		memset (con_text, ' ', CON_TEXTSIZE);
-		Con_Clear_f();
+		if (!con_wrdwrap || c == '\n')
+			continue; // no word wrap here
 
-		for (i=0 ; i<numlines ; i++)
+		// make a word wrap
+		i1 = i; // seek back to find a space char
+		x1 = -1;
+		while (++x1 < width)
 		{
-			for (j=0 ; j<numchars ; j++)
+			if (--i1 < 0)
+				i1 += CON_TEXTSIZE;
+			c1 = con_text[i1];
+
+			if (c1 == '\n' || c1 == WRAP_CHAR)
+				break; // wrap found - word is too long
+			if (c1 == ' ')
 			{
-				con_text[(con_totallines - 1 - i) * con_linewidth + j] =
-						tbuf[((con_current - i + oldtotallines) %
-							  oldtotallines) * oldwidth + j];
+				con_text[i1] = WRAP_CHAR;
+				x = x1;
+				break;
 			}
 		}
-
-		Con_ClearNotify ();
 	}
-
-	con_backscroll = 0;
-	con_current = con_totallines - 1;
+	con_totallines = line + 1;
+	con_current = line;
+	con_display = line;
+	
+	Con_ClearNotify ();
+	
+	// clear cache
+	con_disp.line = con_notif.line = -1;
 }
 
+
+/*
+================
+Con_Start
+================
+*/
+void Con_Start (void)
+{
+	memset (con_text, 0, CON_TEXTSIZE * 2);
+	
+	con_totallines = 1; // current line, even if empty, encounted
+	con_current = con_display = 0; //johnfitz -- if console is empty, being scrolled up is confusing
+	
+	con_x = 0;
+	con_startpos = con_endpos = 0;
+	
+	con_wrapped = false;
+	con_text[0] = '\n'; // mark current line end (for correct display)
+	
+	Con_ClearNotify ();
+	
+	// clear line position cache
+	con_disp.line = con_notif.line = -1;
+}
 
 /*
 ================
@@ -317,11 +323,10 @@ Con_Init
 */
 void Con_Init (void)
 {
-	con_text = Hunk_AllocName (CON_TEXTSIZE<<1, "context");
-//	memset (con_text, ' ', CON_TEXTSIZE);
-	Con_Clear_f();
-	con_linewidth = -1;
-	Con_CheckResize ();
+	//johnfitz -- no need to run Con_CheckResize() here
+	con_linewidth = 38; // video hasn't been initialized yet
+	
+	Con_Start ();
 	
 	con_initialized = true;
 	Con_Printf ("Console initialized\n");
@@ -329,41 +334,94 @@ void Con_Init (void)
 //
 // register our commands
 //
-	Cvar_RegisterVariable (&con_notifytime, NULL);
-	Cvar_RegisterVariable (&con_logcenterprint, NULL);
-	Cvar_RegisterVariable (&con_removecr, NULL); // remove \r from console output
+	Cvar_RegisterVariable (&con_notifytime);
+	Cvar_RegisterVariable (&con_logcenterprint);
+	Cvar_RegisterVariable (&con_wordwrap);
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);
 	Cmd_AddCommand ("messagemode2", Con_MessageMode2_f);
 	Cmd_AddCommand ("clear", Con_Clear_f);
-	Cmd_AddCommand ("con_dump", Con_Dump_f);
+	Cmd_AddCommand ("condump", Con_Dump_f);
 }
 
 
 /*
 ===============
-Con_Linefeed
+Con_PlaceChar
 ===============
 */
-void Con_Linefeed (void)
+void Con_PlaceChar (short c, short mask)
 {
-	int i,j;
+	int size;
+	int i, x;
+	short t;
 
-	// improved scrolling
-	if (con_backscroll)
-		con_backscroll++;
+	// calculate free space in buffer
+	size = con_startpos - con_endpos;
+	if (size < 0)
+		size += CON_TEXTSIZE; // size of free space in buffer
 
-	con_backscroll = CLAMP(0, con_backscroll, con_totallines - (int)(vid.height>>3) - 1);
+	if (!size && !con_wrapped)
+		size = CON_TEXTSIZE;
+	if (size <= 2)
+	{
+		// kill first line in buffer
+		x = 0;
+		while (true)
+		{
+			t = con_text[con_startpos++];
+			if (con_startpos >= CON_TEXTSIZE)
+				con_startpos -= CON_TEXTSIZE;
 
-	con_x = 0;
-	con_current++;
-//	memset (&con_text[(con_current%con_totallines)*con_linewidth]
-//	, ' ', con_linewidth);
+			if (t == '\n' || t == WRAP_CHAR || ++x >= con_linewidth)
+				break; // killed
+		}
+		con_totallines--;
+	}
 
-	j = (con_current%con_totallines)*con_linewidth;
-	for(i=0;i<con_linewidth;i++)
-		con_text[i+j] = ' ';
+	// mark time for transparent overlay
+	con_times[con_current % NUM_CON_TIMES] = realtime;
+
+	con_text[con_endpos] = c;
+	con_text[con_endpos + CON_TEXTSIZE] = mask;
+	if (++con_endpos >= CON_TEXTSIZE)
+	{
+		con_endpos -= CON_TEXTSIZE;
+		con_wrapped = true;
+	}
+	con_text[con_endpos] = '\n'; // mark (temporary) end of line
+
+	if (c == '\n' || ++con_x >= con_linewidth)
+	{
+		// new line (linefeed)
+		con_x = 0;
+		if (con_wrdwrap && c != '\n')
+		{
+			// make a word wrap
+			i = con_endpos; // seek back to find space
+			x = -1;
+			while (++x < con_linewidth)
+			{
+				if (--i < 0)
+					i += CON_TEXTSIZE;
+				c = con_text[i];
+
+				if (c == '\n' || c == WRAP_CHAR)
+					break; // wrap found - word is too long
+				if (c == ' ')
+				{
+					con_text[i] = WRAP_CHAR;
+					con_x = x;
+					break;
+				}
+			}
+		}
+		if (con_display == con_current)
+			con_display++;
+		con_current++;
+		con_totallines++;
+	}
 }
 
 /*
@@ -377,84 +435,32 @@ If no console is visible, the notify window will pop up.
 */
 void Con_Print (char *txt)
 {
-	int		y;
-	int		c, l;
-	static int	cr;
-	int		mask;
+	short 	c, mask; // Q1 'char' -> H2 'short'
 	
-//	con_backscroll = 0; // better console scrolling
-
-	if (txt[0] == 1)
+	if (txt[0] == 1 || txt[0] == 2)
 	{
-		mask = 256;		// go to colored text
-		S_LocalSound ("misc/comm.wav");
-	// play talk wav
-		txt++;
-	}
-	else if (txt[0] == 2)
-	{
+		if (txt[0] == 1)
+			S_LocalSound ("misc/comm.wav"); // play talk/comm wav
 		mask = 256;		// go to colored text
 		txt++;
 	}
 	else
 		mask = 0;
 
-
-	while ( (c = *txt) )
+	while ( (c = *txt++) )
 	{
-	// count word length
-		for (l=0 ; l< con_linewidth ; l++)
-			if ( txt[l] <= ' ')
-				break;
-
-	// word wrap
-		if (l != con_linewidth && (con_x + l > con_linewidth) )
-			con_x = 0;
-
-		txt++;
-
-		if (cr)
+		if (c == '\r' && *txt == '\n') // handle CR+LF correctly
 		{
-			con_current--;
-			cr = false;
+			c = '\n';
+			txt++;
 		}
+		else if (c == WRAP_CHAR)
+			c = ' '; // force WRAP_CHAR (== space|0x80) to be a space
 
-		
-		if (!con_x)
-		{
-			Con_Linefeed ();
-		// mark time for transparent overlay
-			if (con_current >= 0)
-				con_times[con_current % NUM_CON_TIMES] = realtime;
-		}
-
-		switch (c)
-		{
-		case '\n':
-			con_x = 0;
-			break;
-
-		case '\r':
-			if (con_removecr.value)	// optionally remove '\r'
-				c += 128;
-			else
-			{
-				con_x = 0;
-				cr = 1;
-				break;
-			}
-
-		default:	// display character and advance
-			y = con_current % con_totallines;
-			con_text[y*con_linewidth+con_x] = c | mask;
-			con_x++;
-			if (con_x >= con_linewidth)
-				con_x = 0;
-			break;
-		}
-		
+		Con_PlaceChar (c, mask);
 	}
 }
+
 
 /*
 ================
@@ -500,36 +506,11 @@ void LOG_Close (void)
 	if (!con_debuglog)
 		return;
 
-	fclose (logfile);
+	if (logfile)
+		fclose (logfile);
 	logfile = NULL;
 }
 
-/*
-================
-Con_QuakeStr
-================
-*/
-void Con_QuakeStr (byte str[])
-{
-	int  i;
-	byte tchar;
-
-	// Translate into simplified Quake character set
-	for (i = 0; str[i] != '\0'; ++i)
-	{
-		tchar = str[i] & 0x7F;
-
-		// Lower bits not CRLF ?
-		if (tchar != 0x0A && tchar != 0x0D)
-		{
-			if (str[i] != 0x80)
-				str[i] = tchar; // Ignore colour bit unless result becomes NUL
-
-			if (str[i] < 0x1D)
-				str[i] = 0x1D; // Filter colour triggers, control chars etc
-		}
-	}
-}
 
 /*
 ================
@@ -539,16 +520,21 @@ Con_DebugLog
 void Con_DebugLog (char *fmt, ...)
 {
     va_list argptr; 
-	static char data[MAX_PRINTMSG]; // was 1024
-    
+	char	msg[MAX_PRINTMSG]; // was 1024
+	byte	*p;
+
 	va_start (argptr, fmt);
-	vsnprintf (data, sizeof(data), fmt, argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
-	Con_QuakeStr ((byte *)data);
+	/* translate to ASCII */
+	for (p = (byte *)msg; *p; p++)
+		*p = sys_char_map[*p];
 
-	fprintf (logfile, "%s", data);
-	fflush (logfile);		// force it to save every time
+	if (logfile) {
+		fprintf (logfile, "%s", msg);
+		fflush (logfile);		// force it to save every time
+	}
 }
 
 
@@ -588,8 +574,7 @@ void Con_Printf (char *fmt, ...)
 // update the screen if the console is displayed
 	if (cls.signon != SIGNONS && !scr_disabled_for_loading )
 	{
-	// protect against infinite loop if something in SCR_UpdateScreen calls
-	// Con_Printd
+	// protect against infinite loop if something in SCR_UpdateScreen calls Con_Printd
 		if (!inupdate)
 		{
 			inupdate = true;
@@ -643,7 +628,7 @@ void Con_Warning (char *fmt, ...)
 ================
 Con_DWarning
 
-prints a warning to the console (special debug case)
+prints a warning to the console (special "developer" case)
 ================
 */
 void Con_DWarning (char *fmt, ...)
@@ -658,7 +643,7 @@ void Con_DWarning (char *fmt, ...)
 	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
-	Con_SafePrintf ("\x02WarnDebug: ");
+	Con_SafePrintf ("%sDWarning: ", "\x02");
 	Con_SafePrintf ("%s", msg);
 }
 
@@ -716,20 +701,21 @@ Con_CenterPrintf
 pad each line with spaces to make it appear centered
 ================
 */
-void Con_CenterPrintf (int linewidth, char *fmt, ...)
+void Con_CenterPrintf (char *fmt, ...)
 {
 	va_list	argptr;
 	char	msg[MAX_PRINTMSG]; //the original message
 	char	line[MAX_PRINTMSG]; //one line from the message
-	char	spaces[21]; //buffer for spaces
+	char	spaces[19]; //buffer for spaces
 	char	*src, *dst;
 	int	len, s;
+	int linewidth;
 
 	va_start (argptr, fmt);
 	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
-	linewidth = min (linewidth, con_linewidth);
+	linewidth = 38; // con_linewidth - as for screen 320*200
 	for (src = msg; *src; )
 	{
 		dst = line;
@@ -771,9 +757,9 @@ void Con_LogCenterPrint (char *str)
 
 	if (con_logcenterprint.value)
 	{
-		Con_Printf (Con_Quakebar(40));
-		Con_CenterPrintf (40, "%s\n", str);
-		Con_Printf (Con_Quakebar(40));
+		Con_Printf ("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
+		Con_CenterPrintf ("%s\n", str);
+		Con_Printf ("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
 		Con_ClearNotify ();
 	}
 }
@@ -818,14 +804,40 @@ extern	cmdalias_t	*cmd_alias;
 
 /*
 ============
-AddToTabList
+Con_AddToTabList -- johnfitz
 
 tablist is a doubly-linked loop, alphabetized by name
 ============
 */
-void AddToTabList (char *name, char *type)
+// bash_partial is the string that can be expanded,
+// aka Linux Bash shell. -- S.A.
+static char	bash_partial[80];
+static qboolean	bash_singlematch;
+
+void Con_AddToTabList (char *name, char *type)
 {
 	tab_t	*t, *insert;
+	char	*i_bash;
+	char	*i_name;
+
+	if (!*bash_partial)
+	{
+		strncpy (bash_partial, name, 79);
+		bash_partial[79] = '\0';
+	}
+	else
+	{
+		bash_singlematch = 0;
+		// find max common between bash_partial and name
+		i_bash = bash_partial;
+		i_name = name;
+		while (*i_bash && (*i_bash == *i_name))
+		{
+			i_bash++;
+			i_name++;
+		}
+		*i_bash = 0;
+	}
 
 	t = Hunk_AllocName (sizeof(tab_t), "tablist");
 	t->name = name;
@@ -865,12 +877,94 @@ void AddToTabList (char *name, char *type)
 	}
 }
 
+
+// filelist completions
+typedef struct arg_completion_type_s
+{
+	char		*command;
+	filelist_t		**filelist;
+} arg_completion_type_t;
+
+static arg_completion_type_t arg_completion_types[] =
+{
+	{ "game ", &gamelist },
+	{ "map ", &maplist },
+	{ "changelevel ", &maplist },
+	{ "save ", &savelist },
+	{ "load ", &savelist },
+	{ "record ", &demolist },
+	{ "playdemo ", &demolist },
+	{ "timedemo ", &demolist },
+	{ "startdemos ", &demolist },
+	{ "exec ", &configlist },
+	{ "saveconfig ", &configlist }
+};
+
+static int num_arg_completion_types =
+	sizeof(arg_completion_types)/sizeof(arg_completion_types[0]);
+
 /*
 ============
-BuildTabList
+Con_FindCompletion -- stevenaaus
 ============
 */
-void BuildTabList (char *partial)
+char *Con_FindCompletion (char *partial, filelist_t *filelist, int *nummatches_out)
+{
+	static char matched[32];
+	char *i_matched, *i_name;
+	filelist_t	*file;
+	int   init, match, plen;
+
+	memset(matched, 0, sizeof(matched));
+	plen = strlen(partial);
+	match = 0;
+
+	for (file = filelist, init = 0 ; file ; file = file->next)
+	{
+		if (!strncmp(file->name, partial, plen))
+		{
+			if (init == 0)
+			{
+				init = 1;
+				strncpy (matched, file->name, sizeof(matched)-1);
+				matched[sizeof(matched)-1] = '\0';
+			}
+			else
+			{ // find max common
+				i_matched = matched;
+				i_name = file->name;
+				while (*i_matched && (*i_matched == *i_name))
+				{
+					i_matched++;
+					i_name++;
+				}
+				*i_matched = 0;
+			}
+			match++;
+		}
+	}
+
+	*nummatches_out = match;
+
+	if (match > 1)
+	{
+		for (file = filelist; file; file = file->next)
+		{
+			if (!strncmp(file->name, partial, plen))
+				Con_SafePrintf ("   %s\n", file->name);
+		}
+		Con_SafePrintf ("\n");
+	}
+
+	return matched;
+}
+
+/*
+============
+Con_BuildTabList -- johnfitz
+============
+*/
+void Con_BuildTabList (char *partial)
 {
 	cmdalias_t		*alias;
 	cvar_t			*cvar;
@@ -880,17 +974,20 @@ void BuildTabList (char *partial)
 	tablist = NULL;
 	len = strlen(partial);
 
+	bash_partial[0] = 0;
+	bash_singlematch = 1;
+
 	for (cvar=cvar_vars ; cvar ; cvar=cvar->next)
 		if (!strncmp (partial, cvar->name, len))
-			AddToTabList (cvar->name, "cvar");
+			Con_AddToTabList (cvar->name, "cvar");
 
 	for (cmd=cmd_functions ; cmd ; cmd=cmd->next)
 		if (!strncmp (partial,cmd->name, len))
-			AddToTabList (cmd->name, "command");
+			Con_AddToTabList (cmd->name, "command");
 
 	for (alias=cmd_alias ; alias ; alias=alias->next)
 		if (!strncmp (partial, alias->name, len))
-			AddToTabList (alias->name, "alias");
+			Con_AddToTabList (alias->name, "alias");
 }
 
 /*
@@ -911,17 +1008,54 @@ void Con_TabComplete (void)
 		return;
 
 // get partial string (space -> cursor)
-	if (!strlen(key_tabpartial)) // first time through, find new insert point. (Otherwise, use previous.)
+	if (!key_tabpartial[0]) // first time through, find new insert point. (otherwise, use previous.)
 	{
 		// work back from cursor until you find a space, quote, semicolon, or prompt
 		c = key_lines[edit_line] + key_linepos - 1; // start one space left of cursor
 		while (*c!=' ' && *c!='\"' && *c!=';' && c!=key_lines[edit_line])
 			c--;
-		c++; // start 1 char after the seperator we just found
+		c++; // start 1 char after the separator we just found
 	}
 	for (i = 0; c + i < key_lines[edit_line] + key_linepos; i++)
 		partial[i] = c[i];
+	
 	partial[i] = 0;
+
+// Map autocomplete function -- S.A
+// Since we don't have argument completion, this hack will do for now...
+	for (i=0; i<num_arg_completion_types; i++)
+	{
+	// arg_completion contains a command we can complete the arguments
+	// for (like "map ") and a list of all the maps.
+		arg_completion_type_t arg_completion = arg_completion_types[i];
+		char *command_name = arg_completion.command;
+		
+		if (!strncmp (key_lines[edit_line] + 1, command_name, strlen(command_name)))
+		{
+			int nummatches = 0;
+			char *matched_map = Con_FindCompletion(partial, *arg_completion.filelist, &nummatches);
+			if (!*matched_map)
+				return;
+			
+			strcpy (partial, matched_map);
+			*c = '\0';
+			strcat (key_lines[edit_line], partial);
+			key_linepos = c - key_lines[edit_line] + strlen(matched_map); //set new cursor position
+			if (key_linepos >= MAX_CMDLINE)
+				key_linepos = MAX_CMDLINE - 1;
+			// if only one match, append a space
+			if (key_linepos < MAX_CMDLINE - 1 &&
+			    key_lines[edit_line][key_linepos] == 0 && (nummatches == 1))
+			{
+				key_lines[edit_line][key_linepos] = ' ';
+				key_linepos++;
+				key_lines[edit_line][key_linepos] = 0;
+			}
+			c = key_lines[edit_line] + key_linepos;
+			
+			return;
+		}
+	}
 
 // if partial is empty, return
 	if (partial[0] == 0)
@@ -932,59 +1066,77 @@ void Con_TabComplete (void)
 		partial[i-1] = 0;
 
 // find a match
-	mark = Hunk_LowMark();
-	if (!strlen(key_tabpartial)) // first time through
+	mark = Hunk_LowMark ();
+	if (!key_tabpartial[0]) // first time through
 	{
 		strcpy (key_tabpartial, partial);
-		BuildTabList (key_tabpartial);
+		Con_BuildTabList (key_tabpartial);
 
 		if (!tablist)
 			return;
 
-		// print list
-		t = tablist;
-		do
+		// print list if length > 1
+		if (tablist->next != tablist)
 		{
-			Con_SafePrintf("   %s (%s)\n", t->name, t->type);
-			t = t->next;
-		} while (t != tablist);
+			t = tablist;
+			Con_SafePrintf("\n");
+			do
+			{
+				Con_SafePrintf("   %s (%s)\n", t->name, t->type);
+				t = t->next;
+			} while (t != tablist);
+			Con_SafePrintf("\n");
+		}
 
 		// get first match
-		match = tablist->name;
+	// First time, just show maximum matching chars -- S.A.
+		match = bash_partial;
 	}
 	else
 	{
-		BuildTabList (key_tabpartial);
+		Con_BuildTabList (key_tabpartial);
 
 		if (!tablist)
 			return;
 
 		// find current match -- can't save a pointer because the list will be rebuilt each time
 		t = tablist;
+		match = keydown[K_SHIFT] ? t->prev->name : t->name;
 		do
 		{
 			if (!strcmp(t->name, partial))
+			{
+				// use prev or next to find next match
+				match = keydown[K_SHIFT] ? t->prev->name : t->next->name;
 				break;
+			}
 			t = t->next;
 		} while (t != tablist);
-
-		// use prev or next to find next match
-		match = keydown[K_SHIFT] ? t->prev->name : t->next->name;
 	}
-	Hunk_FreeToLowMark(mark); // it's okay to free it here because match is a pointer to persistent data
+	
+	Hunk_FreeToLowMark (mark); // it's okay to free it here because match is a pointer to persistent data
 
 // insert new match into edit line
 	strcpy (partial, match); // first copy match string
-	strcat (partial, key_lines[edit_line] + key_linepos); // then add chars after cursor
-	strcpy (c, partial); // now copy all of this into edit line
+//	strcat (partial, key_lines[edit_line] + key_linepos); // then add chars after cursor
+	*c = '\0';	// now copy all of this into edit line
+	strcat (key_lines[edit_line], partial);
 	key_linepos = c - key_lines[edit_line] + strlen(match); // set new cursor position
+	if (key_linepos >= MAX_CMDLINE)
+		key_linepos = MAX_CMDLINE - 1;
 
 // if cursor is at end of string, let's append a space to make life easier
-	if (key_lines[edit_line][key_linepos] == 0)
+	if (key_linepos < MAX_CMDLINE - 1 &&
+	    key_lines[edit_line][key_linepos] == 0 && bash_singlematch)
 	{
 		key_lines[edit_line][key_linepos] = ' ';
 		key_linepos++;
 		key_lines[edit_line][key_linepos] = 0;
+	// S.A.: the map argument completion (may be in combination with the bash-style
+	// display behavior changes, causes weirdness when completing the arguments for
+	// the changelevel command. the line below "fixes" it, although I'm not sure about
+	// the reason, yet, neither do I know any possible side effects of it:
+		c = key_lines[edit_line] + key_linepos;
 	}
 }
 
@@ -998,6 +1150,65 @@ DRAWING
 
 
 /*
+===============
+Con_FindLine
+
+printing text to console
+===============
+*/
+int Con_FindLine (int num)
+{
+	int i, x;
+	int line, size, pos;
+	short c; // Q1 'char' -> H2 'short'
+
+	// try to get line info from cache
+	if (num == con_disp.line)
+		return con_disp.pos;
+	else if (num == con_notif.line)
+		return con_notif.pos;
+
+	if (num == con_current)
+	{
+		i = con_endpos - con_x;
+		if (i < 0)
+			i += CON_TEXTSIZE;
+		return i;
+	}
+
+	line = con_current - con_totallines + 1; // number of 1st line in buffer
+	if (num < line || num > con_current)
+		return -1; // this line is out of buffer
+	if (num == line)
+		return con_startpos; // first line in buffer
+
+	size = con_endpos - con_startpos; // number of bytes in buffer
+	if (size < 0)
+		size += CON_TEXTSIZE; // wrap buffer: endpos < startpos
+
+	if (!size)
+		return -1; // no text in buffer
+
+	pos = con_startpos;
+	x = 0;
+	while (size--)
+	{
+		c = con_text[pos++];
+		if (pos >= CON_TEXTSIZE)
+			pos -= CON_TEXTSIZE;
+
+		if (c == '\n' || c == WRAP_CHAR || ++x >= con_linewidth)
+		{
+			x = 0;
+			line++;
+			if (line == num)
+				return pos;
+		}
+	}
+	return -1; // should not happen
+}
+
+/*
 ================
 Con_DrawNotify
 
@@ -1007,12 +1218,13 @@ Draws the last few lines of output transparently over the game top
 void Con_DrawNotify (void)
 {
 	int		x, v;
-	short	*text; // Q1 char, H2 need short
-	int		i;
+	short	c, mask; // Q1 'char' -> H2 'short'
+	int		i, pos;
 	float	time;
 
 	v = 0;
-	for (i= con_current-NUM_CON_TIMES+1 ; i<=con_current ; i++)
+	pos = -1;
+	for (i = con_current - NUM_CON_TIMES + 1; i <= con_current; i++)
 	{
 		if (i < 0)
 			continue;
@@ -1022,11 +1234,28 @@ void Con_DrawNotify (void)
 		time = realtime - time;
 		if (time > con_notifytime.value)
 			continue;
-		text = con_text + (i % con_totallines)*con_linewidth;
 
-		for (x = 0 ; x < con_linewidth ; x++)
-			Draw_Character ( (x+1)<<3, v, text[x]);
+		if (pos == -1)
+		{
+			pos = Con_FindLine (i); // else (pos!=-1) - already searched on previous loop
+			// cache info
+			con_notif.line = i;
+			con_notif.pos  = pos;
+		}
+		if (pos == -1)
+			continue; // should not happen
 
+		for (x = 0; x < con_linewidth; x++)
+		{
+			c = con_text[pos];
+			mask = con_text[pos + CON_TEXTSIZE];
+			if (++pos >= CON_TEXTSIZE)
+				pos -= CON_TEXTSIZE;
+
+			if (c == '\n' || c == WRAP_CHAR)
+				break;
+			Draw_Character ( (x+1)<<3, v, c | mask);
+		}
 		v += 8;
 	}
 
@@ -1064,7 +1293,7 @@ The input line scrolls horizontally if typing goes beyond the right edge
 */
 void Con_DrawInput (void)
 {
-	int		i;
+	int		x, len;
 	char	*text, temp[MAX_CMDLINE];
 
 	if (key_dest != key_console && !con_forcedup)
@@ -1072,25 +1301,41 @@ void Con_DrawInput (void)
 
 	text = strcpy (temp, key_lines[edit_line]);
 	
-// fill out remainder with spaces
-	for (i = strlen(text) ; i < MAX_CMDLINE ; i++)
-		text[i] = ' ';
-		
+// pad with one space so we can draw one past the string (in case the cursor is there)
+	len = strlen(key_lines[edit_line]);
+	text[len] = ' ';
+	text[len+1] = 0;
+
 // add the cursor frame
 	if ((int)(realtime * con_cursorspeed) & 1)	// cursor is visible
-//		text[key_linepos] = 11 + 130 * key_insert;	// either solid block or triagle facing right
-//		text[key_linepos] = 11 + 84 * key_insert;
 		text[key_linepos] = key_insert ? 11 : (11 + 84); // either solid block for insert mode or underline for replace mode
 
 //	prestep if horizontally scrolling
 	if (key_linepos >= con_linewidth)
 		text += 1 + key_linepos - con_linewidth;
 		
-// draw it
-	for (i=0 ; i < con_linewidth ; i++)
-		Draw_Character ( (i+1)<<3, con_vislines - 16, text[i]);
+// draw input string
+	len = (strlen(text) - 1);
+	for (x=0 ; x <= len ; x++) // only write enough letters to go from *text to cursor
+		Draw_Character ((x+1)<<3, con_vislines - 16, text[x]);
 }
 
+
+/*
+================
+Con_DrawVersion
+================
+*/
+void Con_DrawVersion (void)
+{
+	int		len, x;
+	char ver[32];
+
+	sprintf (ver, "fxQuake %4.2f", (float)VERSION);
+	len = strlen (ver);
+	for (x = 0; x < len; x++)
+		Draw_Character ((con_linewidth - len + x + 2) << 3, con_vislines - 8, ver[x]);
+}
 
 /*
 ================
@@ -1103,10 +1348,9 @@ The typing input line at the bottom should only be drawn if typing is allowed
 void Con_DrawConsole (int lines, qboolean drawinput)
 {
 	int				i, x, y;
-	int  rows, sb;
-	char ver[256];
-	short *text; // Q1 char, H2 need short
-	int  j, len;
+	int  rows, row, topline;
+	int  pos;
+	short c, mask; // Q1 'char' -> H2 'short'
 	
 	if (lines <= 0)
 		return;
@@ -1114,44 +1358,74 @@ void Con_DrawConsole (int lines, qboolean drawinput)
 // draw the background
 	Draw_ConsoleBackground (lines);
 
-// draw the buffer text
+// setup the buffer text
 	con_vislines = lines * vid.conheight / vid.height;
 
 	rows = (con_vislines + 7) / 8;	// rows of text to draw
-	y = con_vislines - rows * 8;	// may start slightly negative
-	rows -= 2;			// for input and version lines
-	sb = con_backscroll ? 1 : 0;	// > 1 generates blank lines in arrow printout below
+	y = con_vislines - 24;			// initial 'y' position for console text, input and version (16 + 8)
+	rows -= 1; // for input line
 
-	for (i= con_current - rows + 1 ; i<=con_current - sb ; i++, y+=8 )
+	topline = con_current - con_totallines + 1;	// number of top line in buffer
+	// fix con_display if out of buffer
+	if (con_display < topline + 10)	// 10 is a row count when con_visline 100, as for screen 320*200
+		con_display = topline + 10;
+	// when console buffer contains leas than 10 lines, require next line ...
+	if (con_display > con_current)
+		con_display = con_current;
+
+	row = con_display - rows + 1; // top line to display
+	if (row < topline)
 	{
-		j = i - con_backscroll;
-		if (j<0)
-			j = 0;
-		text = con_text + (j % con_totallines)*con_linewidth;
+		// row is out of (before) buffer
+		i = topline - row;
+		row = topline;
+		rows -= i;
+	}
 
-		for (x=0 ; x<con_linewidth ; x++)
-			Draw_Character ( (x+1)<<3, y, text[x]);
+	y -= (rows - 2) * 8; // may start slightly negative
+
+	if (con_totallines && con_display < con_current)
+		rows -= 3; // reserved for drawing arrows and blank lines to show the buffer is backscrolled
+	
+	pos = Con_FindLine (row);
+	// cache info
+	con_disp.line = row;
+	con_disp.pos = pos;
+	
+// draw console text
+	if (rows > 0 && pos != -1)
+	{
+		while (rows--)
+		{
+			for (x = 0; x < con_linewidth; x++)
+			{
+				c = con_text[pos];
+				mask = con_text[pos + CON_TEXTSIZE];
+				if (++pos >= CON_TEXTSIZE)
+					pos -= CON_TEXTSIZE;
+				
+				if (c == '\n' || c == WRAP_CHAR)
+					break;
+				Draw_Character ( (x+1)<<3, y, c | mask);
+			}
+			y+=8;
+		}
 	}
 
 // draw scrollback arrows
-	if (con_backscroll)
+	if (con_totallines && con_display < con_current)
 	{
-		y += (sb - 1) * 8; // 0 or more blank lines
+		y += 8; // blank line
 		for (x=0 ; x<con_linewidth ; x+=4)
 			Draw_Character ((x+1)<<3, y, '^');
-		y+=8;
 	}
 
 // draw the input prompt, user text, and cursor if desired
 	if (drawinput)
 		Con_DrawInput ();
 
-//draw version number in bottom right
-	y += 8;
-	sprintf (ver, "fxHexen II %4.2f", (float)VERSION);
-	len = strlen (ver);
-	for (x = 0; x < len; x++)
-		Draw_Character ((con_linewidth - len + x + 2) << 3, y, ver[x] /*+ 128*/);
+// draw version number in bottom right
+	Con_DrawVersion ();
 }
 
 
@@ -1165,11 +1439,11 @@ void Con_NotifyBox (char *text)
 	double		t1, t2;
 
 // during startup for sound / cd warnings
-	Con_Printf ("\n\n%s", Con_Quakebar(40));
+	Con_Printf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
 	Con_Printf ("%s", text);
 
 	Con_Printf ("Press a key.\n");
-	Con_Printf (Con_Quakebar(40));
+	Con_Printf ("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
 
 	key_count = -2;		// wait for a key down and up
 	key_dest = key_console;
