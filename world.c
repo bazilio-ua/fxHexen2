@@ -30,6 +30,7 @@ line of sight checks trace->crosscontent, but bullets don't
 
 */
 
+
 typedef struct
 {
 	vec3_t		boxmins, boxmaxs;// enclose the test object along entire move
@@ -137,12 +138,12 @@ hull_t *SV_HullForEntity (edict_t *ent, vec3_t mins, vec3_t maxs, vec3_t offset,
 	if (ent->v.solid == SOLID_BSP)
 	{	// explicit hulls in the BSP model
 		if (ent->v.movetype != MOVETYPE_PUSH)
-			Sys_Error ("SOLID_BSP without MOVETYPE_PUSH");
+			Host_Error ("SOLID_BSP without MOVETYPE_PUSH");
 
 		model = sv.models[ (int)ent->v.modelindex ];
 
 		if (!model || model->type != mod_brush)
-			Sys_Error ("SOLID_BSP with a non bsp model");
+			Host_Error ("SOLID_BSP with a non bsp model");
 
 		VectorSubtract (maxs, mins, size);
 //THIS IS WHERE THE MONSTER STEPPING ERROR WAS- IN CHECKBOTTOM,
@@ -295,8 +296,8 @@ SV_UnlinkEdict
 
 ===============
 */
-link_t	**sv_link_next;
-link_t	**sv_link_prev;
+static link_t	**sv_link_next;
+static link_t	**sv_link_prev;
 
 void SV_UnlinkEdict (edict_t *ent)
 {
@@ -318,21 +319,22 @@ SV_TouchLinks
 */
 void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 {
-	link_t		*l, *lnext;
+	link_t		*l, *next;
 	edict_t		*touch;
 	int			old_self, old_other;
 
 // touch linked edicts
-	sv_link_next = &lnext;
-	for (l = node->trigger_edicts.next ; l != &node->trigger_edicts ; l = lnext)
+	sv_link_next = &next;
+	for (l = node->trigger_edicts.next ; l != &node->trigger_edicts ; l = next)
 	{
 		if (!l)
 		{	
-		//my area got removed out from under me!
+			// my area got removed out from under me!
 			Con_Printf ("SV_TouchLinks: encountered NULL link!\n");
 			break;
 		}
-		lnext = l->next;
+		
+		next = l->next;
 		touch = EDICT_FROM_AREA(l);
 		if (touch == ent)
 			continue;
@@ -402,13 +404,12 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 	if (node->contents == CONTENTS_SOLID)
 		return;
 	
-// add an efrag if the node is a leaf
+	if (ent->num_leafs == MAX_ENT_LEAFS)
+		return;
 
+// add an efrag if the node is a leaf
 	if ( node->contents < 0)
 	{
-		if (ent->num_leafs == MAX_ENT_LEAFS)
-			return;
-
 		leaf = (mleaf_t *)node;
 		leafnum = leaf - sv.worldmodel->leafs - 1;
 
@@ -419,6 +420,7 @@ void SV_FindTouchedLeafs (edict_t *ent, mnode_t *node)
 	
 // NODE_MIXED
 
+// split on this plane
 	splitplane = node->plane;
 	sides = BOX_ON_PLANE_SIDE(ent->v.absmin, ent->v.absmax, splitplane);
 	
@@ -450,31 +452,31 @@ void SV_LinkEdict (edict_t *ent, qboolean touch_triggers)
 		return;
 
 // set the abs box
-
-	if (ent->v.solid == SOLID_BSP && 
-	(ent->v.angles[0] || ent->v.angles[1] || ent->v.angles[2]) )
-	{	// expand for rotation
-		float		max, v;
+	// expand for rotation
+	if (ent->v.solid == SOLID_BSP && (ent->v.angles[0] || ent->v.angles[1] || ent->v.angles[2]))
+	{
+		float		maxvec, v;
 		int			i;
 
-		max = 0;
+		maxvec = 0;
 		for (i=0 ; i<3 ; i++)
 		{
 			v =fabs( ent->v.mins[i]);
-			if (v > max)
-				max = v;
+			if (v > maxvec)
+				maxvec = v;
 			v =fabs( ent->v.maxs[i]);
-			if (v > max)
-				max = v;
+			if (v > maxvec)
+				maxvec = v;
 		}
 		for (i=0 ; i<3 ; i++)
 		{
-			ent->v.absmin[i] = ent->v.origin[i] - max;
-			ent->v.absmax[i] = ent->v.origin[i] + max;
+			ent->v.absmin[i] = ent->v.origin[i] - maxvec;
+			ent->v.absmax[i] = ent->v.origin[i] + maxvec;
 		}
 	}
 	else
 	{
+	// set the abs box
 		VectorAdd (ent->v.origin, ent->v.mins, ent->v.absmin);	
 		VectorAdd (ent->v.origin, ent->v.maxs, ent->v.absmax);
 	}
@@ -556,18 +558,11 @@ int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
 	float		d;
 	mclipnode_t	*node; //johnfitz -- was dclipnode_t
 	mplane_t	*plane;
-	int		i = 0;
-
-	if (num < CONTENTS_CLIP)
-		num += 65536; // Hack for more clipnodes
 
 	while (num >= 0)
 	{
-		if (++i > 100000) // 400 seems enough
-			Sys_Error ("SV_HullPointContents: runaway loop %d", i);
-
 		if (num < hull->firstclipnode || num > hull->lastclipnode)
-			Sys_Error ("SV_HullPointContents: node number %d outside %d - %d", num, hull->firstclipnode, hull->lastclipnode);
+			Host_Error ("SV_HullPointContents: node number %d outside %d - %d", num, hull->firstclipnode, hull->lastclipnode);
 	
 		node = hull->clipnodes + num;
 		plane = hull->planes + node->planenum;
@@ -575,14 +570,11 @@ int SV_HullPointContents (hull_t *hull, int num, vec3_t p)
 		if (plane->type < 3)
 			d = p[plane->type] - plane->dist;
 		else
-			d = DotProduct (plane->normal, p) - plane->dist;
+			d = PreciseDotProduct (plane->normal, p) - plane->dist; // add casts to double to force 64-bit precision on SSE builds.
 		if (d < 0)
 			num = node->children[1];
 		else
 			num = node->children[0];
-
-		if (num < CONTENTS_CLIP)
-			num += 65536; // Hack for more clipnodes
 	}
 	
 	return num;
@@ -673,7 +665,9 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 	int			side;
 	float		midf;
 	int			contents;
+	static float	lastmsg = 0;
 
+restart:
 // check for empty
 	if (num < 0)
 	{
@@ -687,12 +681,11 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 		}
 		else
 			trace->startsolid = true;
-
 		return true;		// empty
 	}
 
 	if (num < hull->firstclipnode || num > hull->lastclipnode)
-		Sys_Error ("SV_RecursiveHullCheck: bad node number");
+		Host_Error ("SV_RecursiveHullCheck: bad node number");
 
 //
 // find the point distances
@@ -700,30 +693,43 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 	node = hull->clipnodes + num;
 	plane = hull->planes + node->planenum;
 
-	if (plane->type < 3)
+	switch (plane->type)
 	{
+	case PLANE_X:
+	case PLANE_Y:
+	case PLANE_Z:
 		t1 = p1[plane->type] - plane->dist;
 		t2 = p2[plane->type] - plane->dist;
-	}
-	else
-	{
-		t1 = DotProduct (plane->normal, p1) - plane->dist;
-		t2 = DotProduct (plane->normal, p2) - plane->dist;
+		break;
+	default:
+		// add casts to double to force 64-bit precision on SSE builds.
+		t1 = PreciseDotProduct (plane->normal, p1) - plane->dist;
+		t2 = PreciseDotProduct (plane->normal, p2) - plane->dist;
+		break;
 	}
 
+// LordHavoc: recursion optimization
+// see which sides we need to consider
 	if (t1 >= 0 && t2 >= 0)
-		return SV_RecursiveHullCheck (hull, node->children[0], p1f, p2f, p1, p2, trace);
+	{
+		num = node->children[0];	// go down the front side
+		goto restart;
+	}
 	if (t1 < 0 && t2 < 0)
-		return SV_RecursiveHullCheck (hull, node->children[1], p1f, p2f, p1, p2, trace);
+	{
+		num = node->children[1];	// go down the back side
+		goto restart;
+	}
 
 // put the crosspoint DIST_EPSILON pixels on the near side
 	if (t1 < 0)
 		frac = (t1 + DIST_EPSILON)/(t1-t2);
 	else
 		frac = (t1 - DIST_EPSILON)/(t1-t2);
+
 	if (frac < 0)
 		frac = 0;
-	else if (frac > 1)
+	if (frac > 1)
 		frac = 1;
 		
 	midf = p1f + (p2f - p1f)*frac;
@@ -733,13 +739,14 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 	side = (t1 < 0);
 
 // move up to the node
-	if (!SV_RecursiveHullCheck (hull, node->children[side], p1f, midf, p1, mid, trace) )
+	if (!SV_RecursiveHullCheck (hull, node->children[side], p1f, midf, p1, mid, trace))
 		return false;
 
 	contents = SV_HullPointContents (hull, node->children[side^1], mid);
+// LordHavoc: this recursion can not be optimized because mid would need to be duplicated on a stack
+// go past the node
 //	if (contents != CONTENTS_SOLID && (contents == CONTENTS_WATER || move_type != MOVE_WATER))
 	if (contents != CONTENTS_SOLID)
-		// go past the node
 		return SV_RecursiveHullCheck (hull, node->children[side^1], midf, p2f, mid, p2, trace);
 	
 	if (trace->allsolid)
@@ -759,25 +766,26 @@ qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec
 		trace->plane.dist = -plane->dist;
 	}
 
-//	while (SV_HullPointContents (hull, hull->firstclipnode, mid) == CONTENTS_SOLID))
+//	while (SV_HullPointContents (hull, hull->firstclipnode, mid) == CONTENTS_SOLID)
 	while (1)
-	{ 
-	// shouldn't really happen, but does occasionally
+	{ // shouldn't really happen, but does occasionally
 		contents = SV_HullPointContents (hull, hull->firstclipnode, mid);
-	//	if (contents != CONTENTS_SOLID && (contents == CONTENTS_WATER || move_type != MOVE_WATER))
+//		if (contents != CONTENTS_SOLID && (contents == CONTENTS_WATER || move_type != MOVE_WATER))
 		if (contents != CONTENTS_SOLID)
 			break;
 
-		frac -= 0.1;
+		frac -= 0.1f;
 		if (frac < 0)
 		{
 			trace->fraction = midf;
 			VectorCopy (mid, trace->endpos);
-			Con_DPrintf ("backup past 0\n");
+
+			if (developer.value > 2 && IsTimeout (&lastmsg, 2))
+				Con_DPrintf ("backup past 0 near (%.0f %.0f %.0f)\n", mid[0], mid[1], mid[2]);
+
 			return false;
 		}
 		midf = p1f + (p2f - p1f)*frac;
-
 //		for (i=0 ; i<3 ; i++)
 //			mid[i] = p1[i] + frac * (p2[i] - p1[i]);
 
@@ -819,8 +827,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 	VectorSubtract (end, offset, end_l);
 
 	// rotate start and end into the models frame of reference
-	if (ent->v.solid == SOLID_BSP && 
-	(fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1) )
+	if (ent->v.solid == SOLID_BSP && (fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1))
 	{
 		vec3_t	forward, right, up;
 		vec3_t	temp;
@@ -851,8 +858,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 	}
 
 	// rotate endpos back to world frame of reference
-	if (ent->v.solid == SOLID_BSP && 
-	(fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1) )
+	if (ent->v.solid == SOLID_BSP && (fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1))
 	{
 		vec3_t	a;
 		vec3_t	forward, right, up;
@@ -873,11 +879,19 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 			trace.plane.normal[1] = -DotProduct (temp, right);
 			trace.plane.normal[2] = DotProduct (temp, up);
 		}
-	}
-
-// fix trace up by the offset
-	if (trace.fraction != 1)
+		
+	// fix trace up by the offset
 		VectorAdd (trace.endpos, offset, trace.endpos);
+	}
+	// Baker addition
+	// Cases where not Solid BSP or no avelocity
+	// Otherwise backpacks from dead monsters and such can fall through the floor
+	else
+	{
+	// fix trace up by the offset
+		if (trace.fraction != 1)
+			VectorAdd (trace.endpos, offset, trace.endpos);
+	}
 
 // did we clip the move?
 	if (trace.fraction < 1 || trace.startsolid)
@@ -906,15 +920,17 @@ void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 	{
 		next = l->next;
 		touch = EDICT_FROM_AREA(l);
+
 		if (touch->v.solid == SOLID_NOT)
 			continue;
+
 		if (touch == clip->passedict)
 			continue;
-		if (touch->v.solid == SOLID_TRIGGER)
-			Sys_Error ("Trigger in clipping list (%s)",touch->v.classname + pr_strings);
 
-		if ((clip->type == MOVE_NOMONSTERS || clip->type == MOVE_PHASE)
-				&& touch->v.solid != SOLID_BSP)
+		if (touch->v.solid == SOLID_TRIGGER)
+			Host_Error ("Trigger in clipping list (%s)",touch->v.classname + pr_strings);
+
+		if ((clip->type == MOVE_NOMONSTERS || clip->type == MOVE_PHASE) && touch->v.solid != SOLID_BSP)
 			continue;
 
 		if (clip->boxmins[0] > touch->v.absmax[0]
