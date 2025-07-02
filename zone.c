@@ -22,7 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-#define	DYNAMIC_SIZE	0x100000	// 1 Mb, was 0x50000 (320 kb), orig. 0xc000 (48 kb)
+//#define	DYNAMIC_SIZE	0x200000	// 2 Mb, was 0x50000 (320 kb), orig. 0xc000 (48 kb)
+#define	DYNAMIC_SIZE	(4 * 1024 * 1024) // ericw -- was 512KB (64-bit) / 384KB (32-bit)
 
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
@@ -32,8 +33,8 @@ typedef struct memblock_s
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
 	int     id;        		// should be ZONEID
-	struct memblock_s       *next, *prev;
 	int		pad;			// pad to 64 bit boundary
+	struct memblock_s       *next, *prev;
 } memblock_t;
 
 typedef struct
@@ -65,6 +66,8 @@ all big things are allocated on the hunk.
 memzone_t	*mainzone;
 
 void Z_ClearZone (memzone_t *zone, int size);
+void *Z_TagMalloc (int size, int tag);
+void Z_CheckHeap (void);
 
 
 /*
@@ -147,12 +150,17 @@ void *Z_Malloc (int size)
 Z_CheckHeap ();	// DEBUG
 	buf = Z_TagMalloc (size, 1);
 	if (!buf)
-		Sys_Error ("Z_Malloc: failed on allocation of %i bytes",size);
+		Sys_Error ("Z_Malloc: out of memory, failed on allocation of %i bytes", size);
 	memset (buf, 0, size);
 
 	return buf;
 }
 
+/*
+========================
+Z_TagMalloc
+========================
+*/
 void *Z_TagMalloc (int size, int tag)
 {
 	int		extra;
@@ -214,6 +222,58 @@ void *Z_TagMalloc (int size, int tag)
 
 /*
 ========================
+Z_Realloc
+========================
+*/
+void *Z_Realloc (void *ptr, int size)
+{
+	int old_size;
+	void *old_ptr;
+	memblock_t *block;
+
+	if (!ptr)
+		return Z_Malloc (size);
+
+	block = (memblock_t *) ((byte *) ptr - sizeof (memblock_t));
+	if (block->id != ZONEID)
+		Sys_Error ("Z_Realloc: realloced a pointer without ZONEID");
+	if (block->tag == 0)
+		Sys_Error ("Z_Realloc: realloced a freed pointer");
+
+	old_size = block->size;
+	old_size -= (4 + (int)sizeof(memblock_t));	/* see Z_TagMalloc() */
+	old_ptr = ptr;
+
+	Z_Free (ptr);
+	ptr = Z_TagMalloc (size, 1);
+	if (!ptr)
+		Sys_Error ("Z_Realloc: failed on allocation of %i bytes", size);
+
+	if (ptr != old_ptr)
+		memmove (ptr, old_ptr, min(old_size, size));
+	if (old_size < size)
+		memset ((byte *)ptr + old_size, 0, size - old_size);
+
+	return ptr;
+}
+
+/*
+========================
+Z_Strdup
+========================
+*/
+char *Z_Strdup (char *s)
+{
+	int size = strlen(s) + 1;
+	char *ptr = Z_Malloc (size);
+	memcpy (ptr, s, size);
+    
+	return ptr;
+}
+
+
+/*
+========================
 Z_Print
 ========================
 */
@@ -239,6 +299,18 @@ void Z_Print (memzone_t *zone)
 	}
 }
 
+
+/*
+===================
+Zone_Print_f
+
+console command to call Z_Print
+===================
+*/
+void Zone_Print_f (void)
+{
+	Z_Print (mainzone);
+}
 
 /*
 ========================
@@ -438,7 +510,7 @@ void *Hunk_AllocName (int size, char *name)
 	size = sizeof(hunk_t) + ((size+15)&~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
-		Sys_Error ("Hunk_AllocName: failed on %i bytes for '%s'", size, name);
+		Sys_Error ("Hunk_AllocName: out of memory, failed on allocation of %i bytes for '%s'", size, name);
 
 	h = (hunk_t *)(hunk_base + hunk_low_used);
 	hunk_low_used += size;
@@ -525,7 +597,7 @@ void *Hunk_HighAllocName (int size, char *name)
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size)
 	{
-		Con_Printf ("Hunk_HighAllocName: failed on %i bytes for '%s'\n", size, name);
+		Con_Printf ("Hunk_HighAllocName: out of memory, failed on allocation of %i bytes for '%s'\n", size, name);
 		return NULL;
 	}
 
@@ -573,6 +645,20 @@ void *Hunk_TempAlloc (int size)
 }
 
 /*
+=================
+Hunk_Strdup
+=================
+*/
+char *Hunk_Strdup (char *s, char *name)
+{
+	int size = strlen(s) + 1;
+	char *ptr = (char *) Hunk_AllocName (size, name);
+	memcpy (ptr, s, size);
+    
+	return ptr;
+}
+
+/*
 ===============================================================================
 
 CACHE MEMORY
@@ -613,14 +699,14 @@ void Cache_Move ( cache_system_t *c)
 		memcpy ( new+1, c+1, c->size - sizeof(cache_system_t) );
 		new->user = c->user;
 		memcpy (new->name, c->name, sizeof(new->name));
-		Cache_Free (c->user);
+		Cache_Free (c->user, false);
 		new->user->data = (void *)(new+1);
 	}
 	else
 	{
 //		Con_Printf ("Cache_Move failed\n");
 
-		Cache_Free (c->user);		// tough luck...
+		Cache_Free (c->user, true);		// tough luck...
 	}
 }
 
@@ -666,7 +752,7 @@ void Cache_FreeHigh (int new_high_hunk)
 		if ( (byte *)c + c->size <= hunk_base + hunk_size - new_high_hunk)
 			return;		// there is space to grow the hunk
 		if (c == prev)
-			Cache_Free (c->user);	// didn't move out of the way
+			Cache_Free (c->user, true);	// didn't move out of the way
 		else
 		{
 			Cache_Move (c);	// try to move it
@@ -787,7 +873,7 @@ Throw everything out, so new data will be demand cached
 void Cache_Flush (void)
 {
 	while (cache_head.next != &cache_head)
-		Cache_Free ( cache_head.next->user );	// reclaim the space
+		Cache_Free ( cache_head.next->user, true );	// reclaim the space
 }
 
 
@@ -849,7 +935,7 @@ Cache_Free
 Frees the memory and removes it from the LRU list
 ==============
 */
-void Cache_Free (cache_user_t *c)
+void Cache_Free (cache_user_t *c, qboolean freetextures) //johnfitz -- added second argument
 {
 	cache_system_t	*cs;
 
@@ -865,6 +951,12 @@ void Cache_Free (cache_user_t *c)
 	c->data = NULL;
 
 	Cache_UnlinkLRU (cs);
+	
+	//johnfitz -- if a model becomes uncached, free the gltextures.
+	//This only works because the cache_user_t is the last component of the model_t struct.
+	//Should fail harmlessly if *c is actually part of an sfx_t struct.  I FEEL DIRTY
+	if (freetextures)
+		TexMgr_FreeTexturesForOwner ((model_t *)(c + 1) - 1);
 }
 
 
@@ -924,7 +1016,7 @@ void *Cache_Alloc (cache_user_t *c, int size, char *name)
 		if (cache_head.lru_prev == &cache_head)
 			Sys_Error ("Cache_Alloc: out of memory, size %d, name '%s'", size, name); // not enough memory at all
 
-		Cache_Free ( cache_head.lru_prev->user );
+		Cache_Free ( cache_head.lru_prev->user, true );
 	} 
 	
 	return Cache_Check (c);
@@ -949,17 +1041,28 @@ void Memory_Init (void *buf, int size)
 	hunk_high_used = 0;
 	
 	Cache_Init ();
-	p = COM_CheckParm ("-zone");
-	if (p)
+	
+	if (COM_CheckParm ("-zone"))
 	{
+		p = COM_CheckParm ("-zone");
 		if (p < com_argc-1)
 			zonesize = atoi (com_argv[p+1]) * 1024;
 		else
 			Sys_Error ("Memory_Init: you must specify a size in KB after -zone");
 	}
+	else if (COM_CheckParm ("-zmem"))
+	{
+		p = COM_CheckParm ("-zmem");
+		if (p < com_argc-1)
+			zonesize = atoi (com_argv[p+1]) * 1024 * 1024;
+		else
+			Sys_Error ("Memory_Init: you must specify a size in MB after -zmem");
+	}
+	
 	mainzone = Hunk_AllocName (zonesize, "zone" );
 	Z_ClearZone (mainzone, zonesize);
 
 	Cmd_AddCommand ("hunk_print", Hunk_Print_f);
+	Cmd_AddCommand ("zone_print", Zone_Print_f);
 }
 

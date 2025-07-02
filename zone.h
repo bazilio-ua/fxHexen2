@@ -18,6 +18,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+// zone.h
+
 /*
  memory allocation
 
@@ -88,16 +90,13 @@ void Memory_Init (void *buf, int size);
 
 void Z_Free (void *ptr);
 void *Z_Malloc (int size);			// returns 0 filled memory
-void *Z_TagMalloc (int size, int tag);
-
-void Z_DumpHeap (void);
-void Z_CheckHeap (void);
-int Z_FreeMemory (void);
+void *Z_Realloc (void *ptr, int size);
+char *Z_Strdup (char *s);
 
 void *Hunk_Alloc (int size);		// returns 0 filled memory
 void *Hunk_AllocName (int size, char *name);
-
 void *Hunk_HighAllocName (int size, char *name);
+char *Hunk_Strdup (char *s, char *name);
 
 int	Hunk_LowMark (void);
 void Hunk_FreeToLowMark (int mark);
@@ -122,7 +121,7 @@ void *Cache_Check (cache_user_t *c);
 // returns the cached data, and moves to the head of the LRU list
 // if present, otherwise returns NULL
 
-void Cache_Free (cache_user_t *c);
+void Cache_Free (cache_user_t *c, qboolean freetextures); //johnfitz -- added second argument
 
 void *Cache_Alloc (cache_user_t *c, int size, char *name);
 // Returns NULL if all purgable data was tossed and there still
