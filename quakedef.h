@@ -19,6 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // quakedef.h -- primary header for client and server
 
+
+// Quake is a trademark of Id Software, Inc., (c) 1996 Id Software, Inc. All rights reserved.
+// Hexen II is a trademark of Raven Software, Inc., (c) 1997 Raven Software, Inc. All rights reserved.
+
+
 // disable data conversion warnings for MSVC++ 
 #ifdef _MSC_VER
 #pragma warning(disable : 4244)	// double|int to float truncation
@@ -27,24 +32,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#pragma warning(disable : 4996)	// deprecated
 #endif  
 
-#define	QUAKE_GAME			// as opposed to utilities
+
 #define VERSION				1.12
 
 #define	GAMENAME	"data1"		// directory to look in by default
 
 #include <math.h>
 #include <string.h>
+#include <float.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <ctype.h>
 #include <limits.h>
+#include <time.h>
 #include <errno.h>
 
-#ifdef _WIN32
-#include <windows.h>
-//#include <float.h>
+
+// MS Visual Studio provides stdint.h only starting with version 2010
+#if defined(_MSC_VER) && (_MSC_VER < 1600)
+#include "msstdint.h"
+#else
+#include <stdint.h>
 #endif 
 
 // MSVC++ has a different name for several standard functions
@@ -79,11 +89,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define HX_FPS				20
 
 
-#define	MAX_QPATH		128			// max length of a quake game pathname
+#define	MAX_QPATH		64			// max length of a quake game pathname
 #define	MAX_OSPATH		1024			// max length of a filesystem pathname
 
 #define	ON_EPSILON		0.1			// point on plane side epsilon
-#define	DIST_EPSILON	(0.03125)	// 1/32 epsilon to keep floating point happy
+#define	DIST_EPSILON		(0.03125)	// 1/32 epsilon to keep floating point happy (moved from world.c)
 
 //#define	MAX_MSGLEN		8000		// max length of a reliable message
 //#define	MAX_MSGLEN		16000		// max length of a reliable message
@@ -147,7 +157,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	IT_GRENADE_LAUNCHER		16
 #define	IT_ROCKET_LAUNCHER		32
 #define	IT_LIGHTNING			64
-#define IT_SUPER_LIGHTNING      128
+#define IT_EXTRA_WEAPON         128 // was IT_SUPER_LIGHTNING, unused at id
 #define IT_SHELLS               256
 #define IT_NAILS                512
 #define IT_ROCKETS              1024
@@ -192,96 +202,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 #include "common.h"
-#include "bspfile.h"
+#include "mathlib.h"
+#include "cvar.h"
 #include "vid.h"
 #include "sys.h"
 #include "zone.h"
-#include "mathlib.h"
 
-//#define BASE_ENT_ON		1
-//#define BASE_ENT_SENT	2
-
-typedef struct
-{
-	vec3_t	origin;
-	vec3_t	angles;
-	short	modelindex;
-	byte	frame;
-	byte	colormap;
-	byte	skin;
-	byte	effects;
-	byte	scale;
-	byte	drawflags;
-	byte	abslight;
-
-	byte	ClearCount[32];
-
-} entity_state_t;
-
-typedef struct
-{
-	byte	flags;
-	short	index;
-
-	vec3_t	origin;
-	vec3_t	angles;
-	short	modelindex;
-	byte	frame;
-	byte	colormap;
-	byte	skin;
-	byte	effects;
-	byte	scale;
-	byte	drawflags;
-	byte	abslight;
-} entity_state2_t;
-
-typedef struct
-{
-	byte	flags;
-
-	vec3_t	origin;
-	vec3_t	angles;
-	short	modelindex;
-	byte	frame;
-	byte	colormap;
-	byte	skin;
-	byte	effects;
-	byte	scale;
-	byte	drawflags;
-	byte	abslight;
-} entity_state3_t;
-
-#define MAX_CLIENT_STATES 150
-#define MAX_FRAMES 5
-#define MAX_CLIENTS 8
-#define CLEAR_LIMIT 2
-
-#define ENT_STATE_ON		1
-#define ENT_CLEARED			2
-
-typedef struct 
-{
-	entity_state2_t states[MAX_CLIENT_STATES];
-//	unsigned long frame;
-//	unsigned long flags;
-	int count;
-} client_frames_t;
-
-typedef struct 
-{
-	entity_state2_t states[MAX_CLIENT_STATES*2];
-	int count;
-} client_frames2_t;
-
-typedef struct
-{
-	client_frames_t frames[MAX_FRAMES+2]; // 0 = base, 1-max = proposed, max+1 = too late
-} client_state2_t;
-
-
+#include "bspfile.h"
 #include "wad.h"
 #include "draw.h"
-#include "cvar.h"
 #include "screen.h"
 #include "net.h"
 #include "protocol.h"
@@ -289,17 +218,18 @@ typedef struct
 #include "sbar.h"
 #include "sound.h"
 #include "render.h"
+#include "client.h"
 #include "effect.h"
 #include "progs.h"
-#include "client.h"
 #include "server.h"
 
-#include "gl_model.h"
+#include "model.h"
 
 #include "input.h"
 #include "world.h"
 #include "keys.h"
 #include "console.h"
+#include "config.h"
 #include "view.h"
 #include "menu.h"
 #include "crc.h"
@@ -321,23 +251,22 @@ typedef struct
 	char	**argv;
 	void	*membase;
 	int		memsize;
+	int		numcpus;
+	int		errstate;
 } quakeparms_t;
 
 
 //=============================================================================
 
 
-
-extern qboolean noclip_anglehack;
-
-
 //
 // host
 //
-extern	quakeparms_t host_parms;
+extern	quakeparms_t *host_parms;
 
 extern	cvar_t		sys_ticrate;
-extern	cvar_t		sys_nostdout;
+extern	cvar_t		sys_throttle;
+
 extern	cvar_t		developer;
 extern	cvar_t		host_timescale;
 
@@ -348,11 +277,13 @@ extern	byte		*host_colormap;
 extern	int			host_framecount;	// incremented every frame, never reset
 extern	double		realtime;			// not bounded in any way, changed at
 										// start of every frame, never reset
+extern	float		host_netinterval;	// for renderer/server isolation
 
 void Host_ClearMemory (void);
 void Host_ServerFrame (void);
+void Host_InitFileList (void);
 void Host_InitCommands (void);
-void Host_Init (quakeparms_t *parms);
+void Host_Init (void);
 void Host_Shutdown(void);
 void Host_Error (char *error, ...);
 void Host_EndGame (char *message, ...);
@@ -360,22 +291,31 @@ void Host_Frame (double time);
 void Host_Quit_f (void);
 void Host_ClientCommands (char *fmt, ...);
 void Host_ShutdownServer (qboolean crash);
+void Host_LoadPalettes (void);
+void Host_WriteConfiguration (char *configname);
+void Host_Resetdemos (void);
+void Host_MapListRebuild (void);
+void Host_DemoListRebuild (void);
+void Host_SaveListRebuild (void);
+void Host_ConfigListRebuild (void);
 
 void SaveGamestate(qboolean ClientsOnly);
 int LoadGamestate(char *level, char *startspot, int ClientsMode);
-										//  an fullscreen DIB focus gain/loss
+
 extern int			current_skill;		// skill level for currently loaded level (in case
 										//  the user changes the cvar while the level is
 										//  running, this reflects the level actually in use)
-
-
-extern int			minimum_memory;
 
 extern int			sv_kingofhill;
 extern qboolean		intro_playing;
 //extern qboolean		skip_start;
 //extern int			num_intro_msg;
-extern qboolean		check_bottom;
+
+extern filelist_t	*gamelist;
+extern filelist_t	*maplist;
+extern filelist_t	*demolist;
+extern filelist_t	*savelist;
+extern filelist_t	*configlist;
 
 //
 // chase

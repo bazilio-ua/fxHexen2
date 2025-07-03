@@ -16,8 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-*/
-// model.h
+ */
+
+#ifndef __MODEL__
+#define __MODEL__
 
 #include "modelgen.h"
 #include "spritegn.h"
@@ -35,10 +37,6 @@ m*_t structures are in-memory
 #define	EF_MUZZLEFLASH 			2
 #define	EF_BRIGHTLIGHT 			4
 #define	EF_DIMLIGHT 			8
-// Nehahra
-#define	EF_NODRAW				16
-#define	EF_BLUE					64
-#define	EF_RED					128
 
 
 /*
@@ -62,21 +60,6 @@ typedef struct
 #define	SIDE_BACK	1
 #define	SIDE_ON		2
 
-#define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
-    (((p)->type < 3)?						\
-    (										\
-        ((p)->dist <= (emins)[(p)->type])?	\
-            1								\
-        :									\
-        (									\
-            ((p)->dist >= (emaxs)[(p)->type])?\
-                2							\
-            :								\
-                3							\
-        )									\
-    )										\
-    :										\
-        BoxOnPlaneSide( (emins), (emaxs), (p)))
 
 // plane_t structure
 typedef struct mplane_s
@@ -88,24 +71,15 @@ typedef struct mplane_s
 	byte	pad[2];
 } mplane_t;
 
-// ericw -- each texture has two chains,
-// so we can clear the model chains without affecting the world
-typedef enum 
-{
-	chain_world = 0,
-	chain_model = 1
-} texchain_t;
-
 typedef struct texture_s
 {
 	char		name[16];
 	unsigned	width, height;
-	struct gltexture_s	*base;			// pointer to base texture
-	struct gltexture_s	*glow;			// fullbright mask texture
-	struct gltexture_s	*warpbase;		// for water animation
-	struct gltexture_s	*warpglow;		// for water animation (fullbright)
+	struct gltexture_s	*gltexture; // pointer to gltexture
+	struct gltexture_s	*fullbright; // fullbright mask texture
+	struct gltexture_s	*warpimage; // for water animation
 	qboolean	update_warp;			// update warp this frame
-	struct msurface_s	*texturechains[2];	// for texture chains
+	struct msurface_s	*texturechain;	// for texture chains
 	int			anim_total;				// total tenths in sequence ( 0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max
 	struct texture_s *anim_next;		// in the animation sequence
@@ -120,19 +94,22 @@ typedef struct texture_s
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
 #define SURF_UNDERWATER		0x80
-#define SURF_TRANSLUCENT	0x100 // EER1
-#define SURF_DRAWBLACK		0x200
-#define SURF_NOTEXTURE		0x400 // johnfitz
-#define SURF_DRAWALPHA		0x800
-#define SURF_DRAWLAVA		0x1000
-#define SURF_DRAWSLIME		0x2000
-#define SURF_DRAWTELEPORT	0x4000
-#define SURF_DRAWWATER		0x8000
-#define SURF_DRAWHOLEY		0x10000 // EER1 (fence)
+//#define SURF_TRANSLUCENT	0x100
+//#define SURF_DRAWBLACK		0x200
+
+#define SURF_NOTEXTURE		0x100 // johnfitz
+#define SURF_DRAWALPHA		0x200
+#define SURF_DRAWLAVA		0x400
+#define SURF_DRAWSLIME		0x800
+#define SURF_DRAWTELE		0x1000
+#define SURF_DRAWWATER		0x2000
+#define SURF_TRANSLUCENT	0x4000
+#define SURF_DRAWBLACK		0x8000
+
 
 typedef struct
 {
-	unsigned int	v[2]; // bsp2 support. was (short)
+	unsigned short	v[2];
 	unsigned int	cachededgeoffset;
 } medge_t;
 
@@ -151,23 +128,19 @@ typedef struct glpoly_s
 	struct	glpoly_s	*next;
 	struct	glpoly_s	*chain;
 	int		numverts;
-
+	int		flags;			// for SURF_UNDERWATER
 	float	verts[4][VERTEXSIZE];	// variable sized (xyz s1t1 s2t2)
 } glpoly_t;
 
 typedef struct msurface_s
 {
-	mtexinfo_t	*texinfo;
-	
 	int			visframe;		// should be drawn when node is crossed
-	float		mins[3];		// johnfitz -- for frustum culling
-	float		maxs[3];		// johnfitz -- for frustum culling
-
-    float		alpha;			// alpha value
-	float		midp[3];		// for alpha sorting
+	qboolean	culled;			// for frustum culling
+	float		mins[3];		// for frustum culling
+	float		maxs[3];		// for frustum culling
 
 	mplane_t	*plane;
-	int			flags;
+	unsigned int			flags;
 
 	int			firstedge;	// look up in model->surfedges[], negative numbers
 	int			numedges;	// are backwards edges
@@ -180,9 +153,11 @@ typedef struct msurface_s
 	glpoly_t	*polys;				// multiple if warped
 	struct	msurface_s	*texturechain;
 
+	mtexinfo_t	*texinfo;
+	
 // lighting info
 	int			dlightframe;
-	unsigned int		dlightbits[(MAX_DLIGHTS + 31) >> 5]; // int is 32 bits, need an array for MAX_DLIGHTS > 32
+	int			dlightbits;
 
 	int			lightmaptexture;
 	byte		styles[MAXLIGHTMAPS];
@@ -197,8 +172,7 @@ typedef struct mnode_s
 	int			contents;		// 0, to differentiate from leafs
 	int			visframe;		// node needs to be traversed if current
 	
-	float		mins[3];		// for bounding box culling
-	float		maxs[3];		// for bounding box culling
+	float		minmaxs[6];		// for bounding box culling
 
 	struct mnode_s	*parent;
 
@@ -206,8 +180,8 @@ typedef struct mnode_s
 	mplane_t	*plane;
 	struct mnode_s	*children[2];	
 
-	unsigned int		firstsurface; // bsp2 support. was (short)
-	unsigned int		numsurfaces; // bsp2 support. was (short)
+	unsigned short		firstsurface;
+	unsigned short		numsurfaces;
 } mnode_t;
 
 
@@ -217,8 +191,7 @@ typedef struct mleaf_s
 	int			contents;		// wil be a negative contents number
 	int			visframe;		// node needs to be traversed if current
 
-	float		mins[3];		// for bounding box culling
-	float		maxs[3];		// for bounding box culling
+	float		minmaxs[6];		// for bounding box culling
 
 	struct mnode_s	*parent;
 
@@ -231,13 +204,6 @@ typedef struct mleaf_s
 	int			key;			// BSP sequence number for leaf's contents
 	byte		ambient_sound_level[NUM_AMBIENTS];
 } mleaf_t;
-
-typedef struct mclipnode_s
-{
-//johnfitz -- for clipnodes>32k
-	int			planenum;
-	int			children[2];	// negative numbers are contents
-} mclipnode_t;
 
 typedef struct
 {
@@ -280,7 +246,8 @@ SPRITE MODELS
 // FIXME: shorten these?
 typedef struct mspriteframe_s
 {
-	int		width, height;
+	short	width;
+	short	height;
 	float	up, down, left, right;
 	float	smax, tmax; // image might be padded
 	struct	gltexture_s	*gltexture;
@@ -288,7 +255,7 @@ typedef struct mspriteframe_s
 
 typedef struct
 {
-	int				numframes;
+	short			numframes;
 	float			*intervals;
 	mspriteframe_t	*frames[1];
 } mspritegroup_t;
@@ -301,12 +268,12 @@ typedef struct
 
 typedef struct
 {
-	int					type;
-	int					maxwidth;
-	int					maxheight;
-	int					numframes;
+	short				type;
+	short				maxwidth;
+	short				maxheight;
+	short				numframes;
 	float				beamlength;		// remove?
-	void				*cachespot;		// remove?
+	//void				*cachespot;		// remove?
 	mspriteframedesc_t	frames[1];
 } msprite_t;
 
@@ -345,9 +312,11 @@ typedef struct
 	maliasgroupframedesc_t	frames[1];
 } maliasgroup_t;
 
+//this is only the GL version
 typedef struct mtriangle_s {
 	int					facesfront;
-	int					vertindex[3];
+	unsigned short		vertindex[3];
+	unsigned short		stindex[3];
 } mtriangle_t;
 
 
@@ -374,20 +343,20 @@ typedef struct {
 	int					posedata;	// numposes*poseverts trivert_t
 	int					commands;	// gl command list with embedded s/t
 
-	struct gltexture_s	*base[MAX_SKINS][4];
-	struct gltexture_s	*glow[MAX_SKINS][4];
-
-	int					texels[MAX_SKINS];	// only for player skins
+	struct gltexture_s	*gltexture[MAX_SKINS];
+	struct gltexture_s	*fullbright[MAX_SKINS];
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;
 
-#define	MAXALIASVERTS	4096	//1024
+#define	MAXALIASVERTS	4096	//2000
 #define	MAXALIASFRAMES	1024	//256
 #define	MAXALIASTRIS	4096	//2048
 extern	aliashdr_t	*pheader;
 extern	stvert_t	stverts[MAXALIASVERTS];
 extern	mtriangle_t	triangles[MAXALIASTRIS];
 extern	trivertx_t	*poseverts[MAXALIASFRAMES];
+
+extern	byte player_texels[MAX_PLAYER_CLASS][620*245];
 
 //===================================================================
 
@@ -397,16 +366,36 @@ extern	trivertx_t	*poseverts[MAXALIASFRAMES];
 
 typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 
-#define	EF_ROCKET	1			// leave a trail
-#define	EF_GRENADE	2			// leave a trail
-#define	EF_GIB		4			// leave a trail
-#define	EF_ROTATE	8			// rotate (bonus items)
-#define	EF_TRACER	16			// green split trail
-#define	EF_ZOMGIB	32			// small blood trail
-#define	EF_TRACER2	64			// orange split trail + rotate
-#define	EF_TRACER3	128			// purple trail
+// EF_ changes must also be made in model.h
 
-#define	MF_HOLEY	(1u<<14)		// MarkV/QSS -- make index 255 transparent on mdl's
+#define	EF_ROCKET		       1			// leave a trail
+#define	EF_GRENADE		       2			// leave a trail
+#define	EF_GIB			       4			// leave a trail
+#define	EF_ROTATE		       8			// rotate (bonus items)
+#define	EF_TRACER		      16			// green split trail
+#define	EF_ZOMGIB		      32			// small blood trail
+#define	EF_TRACER2			  64			// orange split trail + rotate
+#define	EF_TRACER3			 128			// purple trail
+#define  EF_FIREBALL		 256			// Yellow transparent trail in all directions
+#define  EF_ICE				 512			// Blue-white transparent trail, with gravity
+#define  EF_MIP_MAP			1024			// This model has mip-maps
+#define  EF_SPIT			2048			// Black transparent trail with negative light
+#define  EF_TRANSPARENT		4096			// Transparent sprite (texture_mode = 1)
+#define  EF_SPELL           8192			// Vertical spray of particles
+#define  EF_HOLEY		   16384			// Solid model with color 0 (texture_mode = 2)
+#define  EF_SPECIAL_TRANS  32768			// Translucency through the particle table (texture_mode = 3)
+#define  EF_FACE_VIEW	   65536			// Poly Model always faces you
+#define  EF_VORP_MISSILE  131072			// leave a trail at top and bottom of model
+#define  EF_SET_STAFF     262144			// slowly move up and left/right
+#define  EF_MAGICMISSILE  524288            // a trickle of blue/white particles with gravity
+#define  EF_BONESHARD    1048576           // a trickle of brown particles with gravity
+#define  EF_SCARAB       2097152           // white transparent particles with little gravity
+#define  EF_ACIDBALL	 4194304			// Green drippy acid shit
+#define  EF_BLOODSHOT	 8388608			// Blood rain shot trail
+
+#define  EF_MIP_MAP_FAR	  0x1000000	// Set per frame, this model will use the far mip map
+
+
 
 typedef struct model_s
 {
@@ -428,6 +417,14 @@ typedef struct model_s
 	vec3_t		mins, maxs;
 	vec3_t		ymins, ymaxs; // bounds for entities with nonzero yaw
 	vec3_t		rmins, rmaxs; // bounds for entities with nonzero pitch or roll
+// removed float radius
+//	float		radius;
+
+//
+// solid volume for clipping 
+//
+	qboolean	clipbox;
+	vec3_t		clipmins, clipmaxs;
 
 //
 // brush model
@@ -476,12 +473,8 @@ typedef struct model_s
 	byte		*lightdata;
 	char		*entities;
 
-	qboolean	viswarn; // for Mod_DecompressVis()
-    
 	qboolean	isworldmodel;
 	int			bspversion;
-
-	qboolean	haslitwater;
 
 //
 // additional model data
@@ -492,15 +485,17 @@ typedef struct model_s
 
 //============================================================================
 
+extern model_t *player_models[MAX_PLAYER_CLASS];
+
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-void	Mod_ResetAll (void); // for gamedir changes (Host_Game_f)
 model_t *Mod_ForName (char *name, qboolean crash);
 void	*Mod_Extradata (model_t *mod);	// handles caching
 void	Mod_TouchModel (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
-byte	*Mod_NoVisPVS (model_t *model);
 
-void	Mod_FloodFillSkin (byte *skin, int skinwidth, int skinheight, char *name);
+model_t *Mod_FindName (char *name);
+
+#endif	// __MODEL__
