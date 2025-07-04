@@ -453,21 +453,19 @@ void SV_LinkEdict (edict_t *ent, qboolean touch_triggers)
 
 // set the abs box
 	// expand for rotation
-	if (ent->v.solid == SOLID_BSP && (ent->v.angles[0] || ent->v.angles[1] || ent->v.angles[2]))
+	if (ent->v.solid == SOLID_BSP && (ent->v.angles[0] || ent->v.angles[1] || ent->v.angles[2]) && ent != sv.edicts)
 	{
 		float		maxvec, v;
 		int			i;
 
-		maxvec = 0;
-		for (i=0 ; i<3 ; i++)
-		{
-			v =fabs( ent->v.mins[i]);
-			if (v > maxvec)
+		maxvec = DotProduct(ent->v.mins, ent->v.mins);
+		v = DotProduct(ent->v.maxs, ent->v.maxs);
+
+		if (maxvec < v)
 				maxvec = v;
-			v =fabs( ent->v.maxs[i]);
-			if (v > maxvec)
-				maxvec = v;
-		}
+
+		maxvec = sqrt(maxvec);
+
 		for (i=0 ; i<3 ; i++)
 		{
 			ent->v.absmin[i] = ent->v.origin[i] - maxvec;
@@ -637,8 +635,6 @@ LINE TESTING IN HULLS
 ===============================================================================
 */
 
-// 1/32 epsilon to keep floating point happy
-#define	DIST_EPSILON	(0.03125)
 
 void WackyBugFixer(float *p1f, float *p2f, float *p1, float *p2, float *frac, float *midf, float *mid)
 {
@@ -762,7 +758,7 @@ restart:
 	}
 	else
 	{
-		VectorSubtract (vec3_origin, plane->normal, trace->plane.normal);
+		VectorNegate (plane->normal, trace->plane.normal);
 		trace->plane.dist = -plane->dist;
 	}
 
@@ -827,7 +823,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 	VectorSubtract (end, offset, end_l);
 
 	// rotate start and end into the models frame of reference
-	if (ent->v.solid == SOLID_BSP && (fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1))
+	if (ent->v.solid == SOLID_BSP && (fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1) && ent != sv.edicts)
 	{
 		vec3_t	forward, right, up;
 		vec3_t	temp;
@@ -858,7 +854,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 	}
 
 	// rotate endpos back to world frame of reference
-	if (ent->v.solid == SOLID_BSP && (fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1))
+	if (ent->v.solid == SOLID_BSP && (fabs(ent->v.angles[0]) > 1 || fabs(ent->v.angles[1]) > 1 || fabs(ent->v.angles[2]) > 1) && ent != sv.edicts)
 	{
 		vec3_t	a;
 		vec3_t	forward, right, up;
@@ -866,7 +862,7 @@ trace_t SV_ClipMoveToEntity (edict_t *ent, vec3_t start, vec3_t mins, vec3_t max
 
 		if (trace.fraction != 1)
 		{
-			VectorSubtract (vec3_origin, ent->v.angles, a);
+			VectorNegate (ent->v.angles, a);
 			AngleVectors (a, forward, right, up);
 
 			VectorCopy (trace.endpos, temp);
