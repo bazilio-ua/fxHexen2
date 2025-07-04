@@ -42,11 +42,11 @@ typedef struct
 {
 	int			width, height;
 	byte		data[4];			// variably sized
-} qpic_t;
+} qpic_t; 							// (aka '.lmp')
 
 typedef struct
 {
-	char		identification[4];		// should be WAD2 or 2DAW
+	char		ident[4];		// should be WAD2 or 2DAW
 	int			numlumps;
 	int			infotableofs;
 } wadinfo_t;

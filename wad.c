@@ -71,21 +71,25 @@ void W_LoadWadFile (void)
 	wadinfo_t		*header;
 	int		i;
 	int				infotableofs;
-	char			*filename = WADFILE;
+	char			*wadfilename = WADFILE;
 
-	// fixme: NOT modified to use malloc
+	//johnfitz -- dynamic gamedir loading
+	//johnfitz -- modified to use malloc
+	//TODO: use cache_alloc
 	// WADFILE need to be reloaded on every game change
-	wad_base = COM_LoadHunkFile (filename, NULL);
+	wad_base = COM_LoadMallocFile (wadfilename, wad_base, NULL);
 	if (!wad_base)
-		Sys_Error ("W_LoadWadFile: couldn't load %s", filename);
+		Sys_Error ("W_LoadWadFile: couldn't load %s\n\n"
+				   "Basedir is: %s\n\n"
+				   "Check that this has an " GAMENAME " subdirectory containing pak0.pak and pak1.pak, "
+				   "or use the -basedir command-line option to specify another directory.",
+				   wadfilename, com_basedir);
+
 
 	header = (wadinfo_t *)wad_base;
 	
-	if (header->identification[0] != 'W'
-	|| header->identification[1] != 'A'
-	|| header->identification[2] != 'D'
-	|| header->identification[3] != '2')
-		Sys_Error ("Wad file %s doesn't have WAD2 id", filename);
+	if (header->ident[0] != 'W' || header->ident[1] != 'A' || header->ident[2] != 'D' || header->ident[3] != '2')
+		Sys_Error ("W_LoadWadFile: %s is not a wadfile, can't read header WAD2 id", wadfilename);
 		
 	wad_numlumps = LittleLong(header->numlumps);
 	infotableofs = LittleLong(header->infotableofs);
@@ -95,7 +99,7 @@ void W_LoadWadFile (void)
 	{
 		lump_p->filepos = LittleLong(lump_p->filepos);
 		lump_p->size = LittleLong(lump_p->size);
-		W_CleanupName (lump_p->name, lump_p->name);
+		W_CleanupName (lump_p->name, lump_p->name); // CAUTION: in-place editing!!!
 		if (lump_p->type == TYP_QPIC)
 			SwapPic ( (qpic_t *)(wad_base + lump_p->filepos));
 	}
