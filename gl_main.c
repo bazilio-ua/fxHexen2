@@ -39,7 +39,7 @@ qboolean	envmap;				// true during envmap command capture
 gltexture_t *playertextures[MAX_SCOREBOARD]; // changed to an array of pointers
 gltexture_t			*gl_extra_textures[MAX_EXTRA_TEXTURES];   // generic textures for models
 
-mplane_t	*mirror_plane;
+//mplane_t	*mirror_plane;
 
 float		model_constant_alpha;
 

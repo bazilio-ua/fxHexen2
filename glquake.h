@@ -17,20 +17,35 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+// glquake.h
+
+#if defined __APPLE__ && defined __MACH__
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
+#include <dlfcn.h>
+#else
 
 #include <GL/gl.h>
-//#include <GL/glu.h>
 
 #ifndef _WIN32
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #endif
 
-extern unsigned int d_8to24table[256]; // for GL renderer
-extern unsigned int d_8to24table_fbright[256];
+#endif
+
+extern unsigned int d_8to24table_original[256];
+extern unsigned int d_8to24table_opaque[256];
+extern unsigned int d_8to24table[256];
+extern unsigned int d_8to24table_fullbright[256];
+extern unsigned int d_8to24table_fullbright_holey[256];
 extern unsigned int d_8to24table_nobright[256];
+extern unsigned int d_8to24table_nobright_holey[256];
 extern unsigned int d_8to24table_conchars[256];
 extern unsigned int d_8to24TranslucentTable[256];
+
+extern unsigned int is_fullbright[256/32];
 
 // wgl uses APIENTRY
 #ifndef APIENTRY
@@ -44,22 +59,23 @@ extern unsigned int d_8to24TranslucentTable[256];
 
 #ifdef _WIN32
 #define qglGetProcAddress wglGetProcAddress
-#else
+#elif defined __APPLE__ && defined __MACH__
+#define qglGetProcAddress(x) dlsym(RTLD_DEFAULT, (x))
+#elif defined GLX_GLXEXT_PROTOTYPES
 #define glXGetProcAddress glXGetProcAddressARB
 #define qglGetProcAddress(x) glXGetProcAddress((const GLubyte *)(x))
 #endif
 
-// GL_ARB_multitexture
+// Multitexture
 void (GLAPIENTRY *qglMultiTexCoord1f) (GLenum, GLfloat);
 void (GLAPIENTRY *qglMultiTexCoord2f) (GLenum, GLfloat, GLfloat);
 void (GLAPIENTRY *qglMultiTexCoord3f) (GLenum, GLfloat, GLfloat, GLfloat);
 void (GLAPIENTRY *qglMultiTexCoord4f) (GLenum, GLfloat, GLfloat, GLfloat, GLfloat);
 void (GLAPIENTRY *qglActiveTexture) (GLenum);
 void (GLAPIENTRY *qglClientActiveTexture) (GLenum);
-#ifndef GL_ACTIVE_TEXTURE_ARB
-#define GL_ACTIVE_TEXTURE_ARB			0x84E0
-#define GL_CLIENT_ACTIVE_TEXTURE_ARB	0x84E1
-#define GL_MAX_TEXTURE_UNITS_ARB		0x84E2
+
+// GL_ARB_multitexture
+#ifndef GL_ARB_multitexture
 #define GL_TEXTURE0_ARB					0x84C0
 #define GL_TEXTURE1_ARB					0x84C1
 #define GL_TEXTURE2_ARB					0x84C2
@@ -92,43 +108,57 @@ void (GLAPIENTRY *qglClientActiveTexture) (GLenum);
 #define GL_TEXTURE29_ARB				0x84DD
 #define GL_TEXTURE30_ARB				0x84DE
 #define GL_TEXTURE31_ARB				0x84DF
-#endif 
+#define GL_ACTIVE_TEXTURE_ARB                                0x84E0
+#define GL_CLIENT_ACTIVE_TEXTURE_ARB                         0x84E1
+#define GL_MAX_TEXTURE_UNITS_ARB                             0x84E2
+#endif
 
-// GL_EXT_texture_env_combine, the values for GL_ARB_ are identical
-#define GL_COMBINE_EXT					0x8570
-#define GL_COMBINE_RGB_EXT				0x8571
-#define GL_COMBINE_ALPHA_EXT			0x8572
-#define GL_RGB_SCALE_EXT				0x8573
-#define GL_CONSTANT_EXT					0x8576
-#define GL_PRIMARY_COLOR_EXT			0x8577
-#define GL_PREVIOUS_EXT					0x8578
-#define GL_SOURCE0_RGB_EXT				0x8580
-#define GL_SOURCE1_RGB_EXT				0x8581
-#define GL_SOURCE0_ALPHA_EXT			0x8588
-#define GL_SOURCE1_ALPHA_EXT			0x8589
+// GL_ARB_texture_env_combine, the values for GL_EXT_ are identical
+#ifndef GL_ARB_texture_env_combine
+#define GL_COMBINE_ARB                                       0x8570
+#define GL_COMBINE_RGB_ARB                                   0x8571
+#define GL_COMBINE_ALPHA_ARB                                 0x8572
+#define GL_RGB_SCALE_ARB                                     0x8573
+#define GL_ADD_SIGNED_ARB                                    0x8574
+#define GL_INTERPOLATE_ARB                                   0x8575
+#define GL_CONSTANT_ARB                                      0x8576
+#define GL_PRIMARY_COLOR_ARB                                 0x8577
+#define GL_PREVIOUS_ARB                                      0x8578
+#define GL_SUBTRACT_ARB                                      0x84E7
+#define GL_SOURCE0_RGB_ARB                                   0x8580
+#define GL_SOURCE1_RGB_ARB                                   0x8581
+#define GL_SOURCE2_RGB_ARB                                   0x8582
+#define GL_SOURCE0_ALPHA_ARB                                 0x8588
+#define GL_SOURCE1_ALPHA_ARB                                 0x8589
+#define GL_SOURCE2_ALPHA_ARB                                 0x858A
+#define GL_OPERAND0_RGB_ARB                                  0x8590
+#define GL_OPERAND1_RGB_ARB                                  0x8591
+#define GL_OPERAND2_RGB_ARB                                  0x8592
+#define GL_OPERAND0_ALPHA_ARB                                0x8598
+#define GL_OPERAND1_ALPHA_ARB                                0x8599
+#define GL_OPERAND2_ALPHA_ARB                                0x859A
+#endif
 
-// Multitexture
-extern GLenum TEXTURE0, TEXTURE1;
-extern qboolean mtexenabled;
 
-extern const char *gl_vendor;
-extern const char *gl_renderer;
-extern const char *gl_version;
-extern const char *gl_extensions;
-#ifndef _WIN32
-extern const char *glx_extensions;
+extern char *gl_vendor;
+extern char *gl_renderer;
+extern char *gl_version;
+extern char *gl_extensions;
+#ifdef GLX_GLXEXT_PROTOTYPES
+extern char *glx_extensions;
 #endif
 
 extern qboolean fullsbardraw;
 extern qboolean isIntel; // intel video workaround
-extern qboolean gl_mtexable;
-extern qboolean gl_texture_env_combine;
-extern qboolean gl_texture_env_add;
 
-extern int gl_hardware_max_size;
-extern int gl_texture_max_size;
+extern qboolean gl_texture_NPOT;
+extern qboolean gl_texture_compression;
+extern qboolean gl_swap_control;
+extern int		gl_stencilbits;
 
-extern int gl_warpimage_size;
+extern GLint gl_hardware_max_size;
+
+extern int warpimage_size;
 
 // Swap control
 GLint (GLAPIENTRY *qglSwapInterval)(GLint interval);
@@ -136,22 +166,31 @@ GLint (GLAPIENTRY *qglSwapInterval)(GLint interval);
 #ifdef _WIN32
 #define SWAPCONTROLSTRING "WGL_EXT_swap_control"
 #define SWAPINTERVALFUNC "wglSwapIntervalEXT"
-#else
+#elif defined GLX_GLXEXT_PROTOTYPES
 #define SWAPCONTROLSTRING "GLX_SGI_swap_control"
 #define SWAPINTERVALFUNC "glXSwapIntervalSGI"
 #endif
 
 // Anisotropic filtering
+#ifndef GL_EXT_texture_filter_anisotropic
 #define GL_TEXTURE_MAX_ANISOTROPY_EXT		0x84FE
 #define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT	0x84FF
+#endif
 
 extern float gl_hardware_max_anisotropy;
 extern float gl_texture_anisotropy;
 
-//====================================================
-// mh - new defines for lightmapping
-#define GL_BGRA 0x80E1
-#define GL_UNSIGNED_INT_8_8_8_8_REV 0x8367 
+// Texture compression
+qboolean gl_texture_compression;
+void (GLAPIENTRY *qglCompressedTexImage2D) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data);
+
+// GL_EXT_texture_compression_s3tc
+#ifndef GL_EXT_texture_compression_s3tc
+#define GL_COMPRESSED_RGB_S3TC_DXT1_EXT                      0x83F0
+#define GL_COMPRESSED_RGBA_S3TC_DXT1_EXT                     0x83F1
+#define GL_COMPRESSED_RGBA_S3TC_DXT3_EXT                     0x83F2
+#define GL_COMPRESSED_RGBA_S3TC_DXT5_EXT                     0x83F3
+#endif
 
 //====================================================
 
@@ -167,20 +206,28 @@ extern float gl_texture_anisotropy;
 #define TEXPREF_FULLBRIGHT		0x0100	// use fullbright mask palette
 #define TEXPREF_NOBRIGHT		0x0200	// use nobright mask palette
 #define TEXPREF_CONCHARS		0x0400	// use conchars palette
-#define TEXPREF_WARPIMAGE		0x0800	// resize this texture when gl_warpimage_size changes (UNUSED)
-#define TEXPREF_BLOOM			0x1000	// bloom texture (UNUSED)
-/*
-* mode:
-* 0 - standard
-* 1 - color 0 transparent, odd - translucent, even - full value
-* 2 - color 0 transparent
-* 3 - special (particle translucency table)
-*/
-#define TEXPREF_TRANSPARENT		0x2000	// EF_TRANSPARENT	(mode 1)
-#define TEXPREF_HOLEY			0x4000	// EF_HOLEY			(mode 2)
-#define TEXPREF_SPECIAL_TRANS	0x8000	// EF_SPECIAL_TRANS	(mode 3)
+#define TEXPREF_WARP			0x0800	// warp texture
+#define TEXPREF_WARPIMAGE		0x1000	// resize this texture when warpimage_size changes
+#define TEXPREF_SKY				0x2000	// sky texture
+#define TEXPREF_BLOOM			0x4000 	// bloom texture (UNUSED)
+
+// mode: (H2)
+// 0 - standard
+// 1 - color 0 transparent, odd - translucent, even - full value
+// 2 - color 0 transparent
+// 3 - special (particle translucency table)
+#define TEXPREF_TRANSPARENT		0x8000	// EF_TRANSPARENT	(mode 1)
+#define TEXPREF_HOLEY			0x10000	// EF_HOLEY			(mode 2)
+#define TEXPREF_SPECIAL_TRANS	0x20000	// EF_SPECIAL_TRANS	(mode 3)
 
 enum srcformat {SRC_INDEXED, SRC_LIGHTMAP, SRC_RGBA, SRC_BLOOM};
+
+typedef struct
+{
+	vec3_t		basecolor;
+	vec3_t		glowcolor;
+	vec3_t		flatcolor;
+} flatcolors_t;
 
 typedef struct gltexture_s {
 //managed by texture manager
@@ -191,146 +238,157 @@ typedef struct gltexture_s {
 	char				name[64];
 	unsigned int		width;						// size of image as it exists in opengl
 	unsigned int		height;						// size of image as it exists in opengl
+	unsigned int		max_miplevel;
 	unsigned int		flags;						// texture preference flags
 	char				source_file[MAX_QPATH];		// relative filepath to data source, or "" if source is in memory
-	unsigned int		source_offset;				// byte offset into file, or memory address
+	uintptr_t			source_offset;				// byte offset into file, or memory address
 	enum srcformat		source_format;				// format of pixel data (indexed, lightmap, or rgba)
 	unsigned int		source_width;				// size of image in source data
 	unsigned int		source_height;				// size of image in source data
 	unsigned short		source_crc;					// generated by source data before modifications
+	
+	signed char			top_color;					// 0-13 top color, or -1 if never colormapped
+	signed char			bottom_color;				// 0-13 bottom color, or -1 if never colormapped
+	
+	flatcolors_t		colors;
 } gltexture_t;
-
-extern	model_t	*loadmodel;
 
 typedef struct
 {
-//	int		gltexture;
 	gltexture_t	*gltexture;
 	float	sl, tl, sh, th;
 } glpic_t;
 
 
+//============================================================================
+
 // vid_*gl*.c
 void GL_BeginRendering (int *x, int *y, int *width, int *height);
 void GL_EndRendering (void);
 
-// gl_main.c
-qboolean R_CullBox (vec3_t mins, vec3_t maxs);
-qboolean R_CullModelForEntity (entity_t *e);
+// image.c
+byte *Image_LoadImage (char *name, int *width, int *height);
+qboolean Image_WriteTGA (char *name, byte *data, int width, int height, int bpp, qboolean upsidedown);
 
-// gl_draw.c
-void GL_Upload8 (gltexture_t *glt, byte *data);
-void GL_Upload32 (gltexture_t *glt, unsigned *data);
-void GL_UploadBloom (gltexture_t *glt, unsigned *data);
-void GL_UploadLightmap (gltexture_t *glt, byte *data);
-void GL_FreeTexture (gltexture_t *free);
-void GL_FreeTextures (model_t *owner);
-void GL_ReloadTexture (gltexture_t *glt);
-void GL_ReloadTextures_f (void);
-gltexture_t *GL_LoadTexture (model_t *owner, char *name, int width, int height, enum srcformat format, byte *data, char *source_file, unsigned source_offset, unsigned flags);
-gltexture_t *GL_FindTexture (model_t *owner, char *name);
-void GL_Set2D (void);
-//void Draw_Pic (int x, int y, qpic_t *pic);
-//void Draw_SubPic (int x, int y, qpic_t *pic, int srcx, int srcy, int width, int height);
-void GL_SelectTexture (GLenum target);
-void GL_Bind (gltexture_t *texture);
-void GL_DisableMultitexture (void);
-void GL_EnableMultitexture (void);
-void GL_Init (void);
-void GL_SetupState (void);
-void GL_SwapInterval (void);
-void GL_UploadWarpImage (void);
-
-// gl_mesh.c
-void R_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
-
-// gl_misc.c
-void R_InitTranslatePlayerTextures (void);
-void R_TranslatePlayerSkin (int playernum);
-
-// gl_part.c
-void R_InitParticles (void);
-void R_DrawParticles (void);
-void R_ClearParticles (void);
-void R_DarkFieldParticles (entity_t *ent);
+// gl_bloom.c
+void R_InitBloomTextures (void);
+void R_BloomBlend (void);
 
 // gl_efrag.c
-void R_StoreEfrags (efrag_t **ppefrag);
- 
-// gl_light.c
-void R_AnimateLight (void);
+void R_StoreEfrags (efrag_t **efrags);
 
-
-
-extern	int texture_extension_number;
-extern	int		texture_mode;
-
-
-#define MAX_EXTRA_TEXTURES 156   // 255-100+1
-extern gltexture_t			*gl_extra_textures[MAX_EXTRA_TEXTURES];   // generic textures for models
-
-
-void GL_SubdivideSurface (msurface_t *fa);
-void R_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
-int R_LightPoint (vec3_t p);
-void R_DrawBrushModel (entity_t *e, qboolean Translucent);
-void R_AnimateLight (void);
-void V_CalcBlend (void);
-void R_DrawWorld (void);
-void R_RenderDlights (void);
-void R_DrawParticles (void);
-void R_DrawWaterSurfaces (void);
-void R_RenderBrushPoly (msurface_t *fa, qboolean override);
-void R_InitParticles (void);
-void R_BuildLightmaps (void);
-void EmitWaterPolys (msurface_t *fa);
-void EmitSkyPolys (msurface_t *fa, qboolean save);
-void EmitBothSkyLayers (msurface_t *fa);
-void R_DrawSkyChain (msurface_t *s);
-
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
-void R_RotateForEntity (entity_t *e);
-void R_StoreEfrags (efrag_t **ppefrag);
-void GL_Set2D (void);
-int M_DrawBigCharacter (int x, int y, int num, int numnext); // EER1
-
-void D_ShowLoadingSize (void);
-
-// gl_surf.c
-void R_CullSurfaces (void);
-void R_DrawBrushModel (entity_t *e, qboolean water);
-void R_DrawWorld (void);
-void R_DrawTextureChainsWater (void);
-void R_DrawSequentialPoly (msurface_t *s);
-void R_DrawSequentialWaterPoly (msurface_t *s);
-void R_DrawGLPoly34 (glpoly_t *p);
-void R_DrawGLPoly56 (glpoly_t *p);
-void R_BuildLightmaps (void);
-
-// gl_screen.c
-void SCR_TileClear (void);
-
-// gl_anim.c
-void R_UpdateWarpTextures (void);
-byte *GL_LoadImage (char *name, int *width, int *height);
-
-void R_InitMapGlobals (void);
-void R_ParseWorldspawnNewMap (void);
-void R_DrawSky (void);
-void R_LoadSkyBox (char *skybox);
-
+// gl_fog.c
+void R_FogUpdate (float density, float red, float green, float blue, float time);
 void R_FogParseServerMessage (void);
 void R_FogParseServerMessage2 (void);
 float *R_FogGetColor (void);
 float R_FogGetDensity (void);
 void R_FogEnableGFog (void);
 void R_FogDisableGFog (void);
-void R_FogStartAdditive (void);
-void R_FogStopAdditive (void);
 void R_FogSetupFrame (void);
+void R_Fog_f (void);
 
-void R_InitBloomTextures (void);
-void R_BloomBlend (void);
+// gl_light.c
+void R_AnimateLight (void);
+void R_LightPoint (vec3_t p, vec3_t color);
+void R_MarkLights (dlight_t *light, int num, mnode_t *node);
+void R_SetupDlights (void);
+void R_RenderDlight (dlight_t *light);
+
+// gl_main.c
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, mplane_t *p);
+qboolean R_CullBox (vec3_t emins, vec3_t emaxs);
+qboolean R_CullSphere (vec3_t origin, float radius);
+qboolean R_CullModelForEntity (entity_t *e);
+void R_DrawAliasModel (entity_t *e);
+void R_DrawSpriteModel (entity_t *e);
+
+// gl_mesh.c
+void R_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
+
+// gl_misc.c
+void R_InitPlayerTextures (void);
+void R_TranslatePlayerSkin (int playernum);
+void R_TranslateNewPlayerSkin (int playernum); //johnfitz -- this handles cases when the actual texture changes
+void R_InitSkyBoxTextures (void);
+void R_ParseWorldspawn (void);
+void R_TimeRefresh_f (void);
+
+// gl_part.c
+void R_InitParticles (void);
+void R_SetupParticles (void);
+void R_DrawParticle (particle_t *p);
+void R_ClearParticles (void);
+void R_ReadPointFile_f (void);
+
+// gl_screen.c
+void SCR_TileClear (void);
+
+// gl_sky.c
+void R_DrawSky (void);
+void R_LoadSkyBox (char *skybox);
+void R_FastSkyColor (void);
+void R_Sky_f (void);
+void Sky_ClearAll (void);
+
+// gl_surf.c
+void R_MarkLeaves (void);
+void R_SetupSurfaces (void);
+void R_ClearTextureChains (model_t *model, texchain_t chain);
+void R_ChainSurface (msurface_t *surf, texchain_t chain);
+void R_DrawTextureChains (model_t *model, entity_t *ent, texchain_t chain);
+void R_DrawBrushModel (entity_t *e);
+void R_DrawWorld (void);
+void R_DrawGLPoly34 (glpoly_t *p);
+void R_DrawGLPoly56 (glpoly_t *p);
+void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t *ent);
+void R_BuildLightmaps (void);
+void R_UploadLightmaps (void);
+void R_RebuildAllLightmaps (void);
+texture_t *R_TextureAnimation (texture_t *base, int frame);
+
+// gl_texmgr.c
+void TexMgr_NewGame (void);
+void TexMgr_UploadWarpImage (void);
+void TexMgr_LoadPalette (void);
+void TexMgr_Init (void);
+int TexMgr_PadConditional (int s);
+int TexMgr_SafeTextureSize (int s);
+void TexMgr_Upload8 (gltexture_t *glt, byte *data);
+void TexMgr_Upload32 (gltexture_t *glt, unsigned *data);
+void TexMgr_UploadBloom (gltexture_t *glt, unsigned *data);
+void TexMgr_UploadLightmap (gltexture_t *glt, byte *data);
+void TexMgr_FreeTexture (gltexture_t *texture);
+void TexMgr_FreeTextures (unsigned int flags, unsigned int mask);
+void TexMgr_FreeTexturesForOwner (model_t *owner);
+void TexMgr_ReloadTexture (gltexture_t *glt);
+void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom);
+void TexMgr_ReloadTextures (void);
+void TexMgr_DeleteTextures (void);
+void TexMgr_GenerateTextures (void);
+gltexture_t *TexMgr_LoadTexture (model_t *owner, char *name, int width, int height, enum srcformat format, byte *data, char *source_file, uintptr_t source_offset, unsigned flags);
+gltexture_t *TexMgr_FindTexture (model_t *owner, char *name);
+gltexture_t *TexMgr_NewTexture (void);
+void GL_SetFilterModes (gltexture_t *glt);
+void GL_Set2D (void);
+void GL_SelectTexture (GLenum target);
+void GL_BindTexture (gltexture_t *texture);
+void GL_DeleteTexture (gltexture_t *texture);
+void GL_SelectTMU0 (void);
+void GL_SelectTMU1 (void);
+void GL_SelectTMU2 (void);
+void GL_SelectTMU3 (void);
+void GL_Init (void);
+void GL_GetGLInfo (void);
+void GL_SetupState (void);
+void GL_SwapInterval (void);
+void GL_CheckSwapInterval (void);
+void GL_GetPixelFormatInfo (void);
+void GL_CheckMultithreadedGL (void);
+
+// gl_warp.c
+void R_UpdateWarpTextures (void);
+
 
 extern float turbsin[];
 #define TURBSCALE (256.0 / (2 * M_PI))
@@ -339,6 +397,7 @@ extern float turbsin[];
 
 extern	int glx, gly, glwidth, glheight;
 
+#define	GL_UNUSED_TEXTURE	(~(GLuint)0)
 
 // private refresh defs
 
@@ -352,28 +411,51 @@ extern	int glx, gly, glwidth, glheight;
 #define BACKFACE_EPSILON	0.01
 #define COLINEAR_EPSILON	0.001
 
-#define FARCLIP		16384 // 4096
-#define NEARCLIP		1 // 4
-
-void R_TimeRefresh_f (void);
-void R_ReadPointFile_f (void);
-void R_Sky_f (void);
-void R_Fog_f (void);
-
-texture_t *R_TextureAnimation (texture_t *base, int frame);
+#define FARCLIP			16384 // orig. 4096
+#define NEARCLIP		4
 
 
 //====================================================
+// GL Alpha Sorting
 
+#define ALPHA_SURFACE 				2
+#define ALPHA_ALIAS 				6
+#define ALPHA_SPRITE 				7
+#define ALPHA_PARTICLE 				8
+#define ALPHA_DLIGHTS 				9
+
+#define MAX_ALPHA_ITEMS			65536
+typedef struct gl_alphalist_s 
+{
+	int			type;
+	vec_t		dist;
+	void 		*data;
+	model_t 	*model;
+	
+	// for alpha surface
+	entity_t	*entity;
+	float		alpha;
+} gl_alphalist_t;
+
+extern gl_alphalist_t	gl_alphalist[MAX_ALPHA_ITEMS];
+extern int				gl_alphalist_num;
+
+qboolean R_SetAlphaSurface(msurface_t *s, float alpha);
+float R_GetTurbAlpha (msurface_t *s);
+vec_t R_GetAlphaDist (vec3_t origin);
+void R_AddToAlpha (int type, vec_t dist, void *data, model_t *model, entity_t *entity, float alpha);
+void R_DrawAlpha (void);
+
+//====================================================
 
 extern	entity_t	r_worldentity;
 extern	vec3_t		modelorg, r_entorigin;
-extern	entity_t	*currententity;
 extern	int			r_visframecount;	// ??? what difs?
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];
 extern	int			rs_c_brush_polys, rs_c_brush_passes, rs_c_alias_polys, rs_c_alias_passes, rs_c_sky_polys, rs_c_sky_passes;
 extern	int			rs_c_dynamic_lightmaps, rs_c_particles;
+extern	qboolean	r_cache_thrash;		// compatability
 
 //
 // view origin
@@ -388,17 +470,21 @@ extern	vec3_t	r_origin;
 //
 extern	refdef_t	r_refdef;
 extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
-extern	texture_t	*r_notexture_mip;
+
+//
+// light style
+//
 extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
-extern int	lightmap_bytes;		// 1, 2, or 4
+//
+// texture stuff
+//
 extern int	indexed_bytes;
 extern int	rgba_bytes;
-extern int	bgra_bytes;
+extern int	lightmap_bytes;
 
-extern	int		gl_lightmap_format;
-extern	int		gl_solid_format;
-extern	int		gl_alpha_format;
+#define MAX_EXTRA_TEXTURES 156   // 255-100+1
+extern gltexture_t			*gl_extra_textures[MAX_EXTRA_TEXTURES];   // generic textures for models
 
 extern	gltexture_t *notexture;
 extern	gltexture_t *nulltexture;
@@ -410,13 +496,18 @@ extern	gltexture_t *particletexture2;
 extern	gltexture_t	*playertextures[MAX_SCOREBOARD];
 extern	gltexture_t	*skyboxtextures[6];
 
+extern	qboolean	oldsky;
+extern	char	skybox_name[MAX_OSPATH];
 extern float globalwateralpha;
 
-//
-//
-//
-extern	cvar_t	scr_weaponfov;
+#define	OVERBRIGHT_SCALE	2.0
+extern	int		d_overbright;
+extern	float	d_overbrightscale;
 
+
+//
+// cvars
+//
 extern	cvar_t	r_norefresh;
 extern	cvar_t	r_drawentities;
 extern	cvar_t	r_drawworld;
@@ -424,75 +515,64 @@ extern	cvar_t	r_drawviewmodel;
 extern	cvar_t	r_speeds;
 extern	cvar_t	r_waterwarp;
 extern	cvar_t	r_fullbright;
+extern	cvar_t	r_ambient;
+extern	cvar_t	r_flatturb;
 extern	cvar_t	r_waterquality;
 extern	cvar_t	r_wateralpha;
 extern	cvar_t	r_lockalpha;
-extern	cvar_t	r_lavafog;
-extern	cvar_t	r_slimefog;
 extern	cvar_t	r_lavaalpha;
 extern	cvar_t	r_slimealpha;
-extern	cvar_t	r_telealpha;
+extern	cvar_t	r_teleportalpha;
+extern	cvar_t	r_litwater;
+extern	cvar_t	r_noalphasort;
 extern	cvar_t	r_dynamic;
+extern	cvar_t	r_dynamicscale;
 extern	cvar_t	r_novis;
 extern	cvar_t	r_lockfrustum;
 extern	cvar_t	r_lockpvs;
 extern	cvar_t	r_clearcolor;
 extern	cvar_t	r_fastsky;
+extern	cvar_t	r_fastskycolor;
 extern	cvar_t	r_skyquality;
 extern	cvar_t	r_skyalpha;
 extern	cvar_t	r_skyfog;
 extern	cvar_t	r_oldsky;
+extern	cvar_t	r_flatworld;
+extern	cvar_t	r_flatmodels;
 
+extern	cvar_t	gl_swapinterval;
 extern	cvar_t	gl_finish;
 extern	cvar_t	gl_clear;
 extern	cvar_t	gl_cull;
-extern	cvar_t	gl_poly;
-
+extern	cvar_t	gl_farclip;
 extern	cvar_t	gl_smoothmodels;
 extern	cvar_t	gl_affinemodels;
+extern	cvar_t	gl_gammablend;
 extern	cvar_t	gl_polyblend;
-extern	cvar_t	gl_keeptjunctions;
-extern	cvar_t	gl_reporttjunctions;
 extern	cvar_t	gl_flashblend;
+extern	cvar_t	gl_flashblendview;
+extern	cvar_t	gl_flashblendscale;
+extern	cvar_t	gl_overbright;
+extern	cvar_t	gl_oldspr;
 extern	cvar_t	gl_nocolors;
 
-extern	cvar_t	gl_zfix; // z-fighting fix
-
-extern	cvar_t	gl_max_size;
-extern	cvar_t	gl_playermip;
-
-// Nehahra
+// fog cvars (Q1 Nehahra)
 extern	cvar_t  gl_fogenable;
 extern	cvar_t  gl_fogdensity;
 extern	cvar_t  gl_fogred;
 extern	cvar_t  gl_foggreen;
 extern	cvar_t  gl_fogblue;
 
-extern	cvar_t	r_bloom;
-extern	cvar_t	r_bloom_darken;
-extern	cvar_t	r_bloom_alpha;
-extern	cvar_t	r_bloom_intensity;
-extern	cvar_t	r_bloom_diamond_size;
-extern	cvar_t	r_bloom_sample_size;
-extern	cvar_t	r_bloom_fast_sample;
+extern	cvar_t	gl_bloom;
+extern	cvar_t	gl_bloomdarken;
+extern	cvar_t	gl_bloomalpha;
+extern	cvar_t	gl_bloomintensity;
+extern	cvar_t	gl_bloomdiamondsize;
+extern	cvar_t	gl_bloomsamplesize;
+extern	cvar_t	gl_bloomfastsample;
 
-
-extern	mplane_t	*mirror_plane;
-
-extern	float	r_world_matrix[16];
-
-extern	const char *gl_vendor;
-extern	const char *gl_renderer;
-extern	const char *gl_version;
-extern	const char *gl_extensions;
-
-void R_InitTranslatePlayerTextures (void);
-void R_TranslatePlayerSkin (int playernum);
-
-extern byte *playerTranslation;
 
 //tmp here
 extern float RTint[256],GTint[256],BTint[256];
-
-
+extern byte *playerTranslation;
 

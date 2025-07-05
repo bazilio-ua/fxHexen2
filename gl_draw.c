@@ -115,7 +115,7 @@ qboolean gl_texture_env_add = false;
 qboolean gl_swap_control = false;
 
 
-int		texture_mode = GL_LINEAR;
+//int		texture_mode = GL_LINEAR;
 
 //int		texture_extension_number = 1;
 /*
