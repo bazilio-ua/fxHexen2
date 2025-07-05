@@ -19,6 +19,83 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // client.h
 
+// R_RocketTrail types -- // Changes to rtype_t must also be made in glquake.h
+typedef enum
+{
+   rt_rocket_trail = 0,
+	rt_smoke,
+	rt_blood,
+	rt_tracer,
+	rt_slight_blood,
+	rt_tracer2,
+	rt_voor_trail,
+	rt_fireball,
+	rt_ice,
+	rt_spit,
+	rt_spell,
+	rt_vorpal,
+	rt_setstaff,
+	rt_magicmissile,
+	rt_boneshard,
+	rt_scarab,
+	rt_acidball,
+	rt_bloodshot,
+} rt_type_t;
+
+
+// particles stuff
+
+typedef enum
+{
+	pt_static,
+	pt_grav,
+	pt_fastgrav,
+	pt_slowgrav,
+	pt_fire,
+	pt_explode,
+	pt_explode2,
+	pt_blob,
+	pt_blob2,
+	pt_rain,
+	pt_c_explode,
+	pt_c_explode2,
+	pt_spit,
+	pt_fireball,
+	pt_ice,
+	pt_spell,
+	pt_test,
+	pt_quake,
+	pt_rd,			// rider's death
+	pt_vorpal,
+	pt_setstaff,
+	pt_magicmissile,
+	pt_boneshard,
+	pt_scarab,
+	pt_acidball,
+	pt_darken,
+	pt_snow,
+	pt_gravwell,
+	pt_redfire
+} ptype_t;
+
+typedef struct particle_s
+{
+// driver-usable fields
+	vec3_t		org;
+	float		color;	// fixme: int/short/byte (palette index???)
+// drivers never touch the following fields
+	struct particle_s	*next;
+	vec3_t		vel;
+	vec3_t		min_org;
+	vec3_t		max_org;
+	float		ramp;
+	float		die;
+	byte		type;	// ptype_t
+	byte		flags;	// int
+	byte		count;	// int
+} particle_t;
+
+
 typedef struct
 {
 	vec3_t	viewangles;
@@ -67,8 +144,6 @@ typedef struct
 // client_state_t should hold all pieces of the client state
 //
 
-#define	SIGNONS		4			// signon messages to receive before connected
-
 #define	MAX_DLIGHTS		32
 typedef struct
 {
@@ -82,16 +157,23 @@ typedef struct
 	qboolean	dark;			// subtracts light instead of adding
 } dlight_t;
 
-#define	MAX_EFRAGS		2048 //640
+// keep dlight colours in the one place so that if i need to change them i only need to do it once
+
+//define DL_COLOR
+
+
+#define	MAX_EFRAGS	2048 // was 640
 
 #define	MAX_MAPSTRING	2048
 #define	MAX_DEMOS		8
 #define	MAX_DEMONAME	16
 
-typedef enum {
-ca_dedicated, 		// a dedicated server with no ability to start a client
-ca_disconnected, 	// full screen console with no connection
-ca_connected		// valid netcon, talking to a server
+#define	SIGNONS		4			// signon messages to receive before connected
+typedef enum
+{
+	ca_dedicated, 		// a dedicated server with no ability to start a client
+	ca_disconnected, 	// full screen console with no connection
+	ca_connected		// valid netcon, talking to a server
 } cactive_t;
 
 //
@@ -121,7 +203,7 @@ typedef struct
 	int			td_lastframe;		// to meter out one message a frame
 	int			td_startframe;		// host_framecount at start
 	float		td_starttime;		// realtime at second frame of timedemo
-
+	int			stufftext_frame;	// host_framecount when svc_stufftext is received
 
 // connection information
 	int			signon;			// 0 to SIGNONS
@@ -143,6 +225,7 @@ typedef struct
 								// doesn't accidentally do something the 
 								// first frame
 	usercmd_t	cmd;			// last command sent to the server
+	usercmd_t	pendingcmd;		// accumulated state from mice or other external controllers
 
 // information for local display
 	int			stats[MAX_CL_STATS];	// health, etc
@@ -190,6 +273,7 @@ typedef struct
 	qboolean	paused;			// send over by server
 	qboolean	onground;
 	qboolean	inwater;
+	qboolean	fixangle;		// freeze view angle until next server frame
 	
 	int			intermission;	// don't change view angle, full screen, etc
 	int			completed_time;	// latched at intermission start
@@ -212,12 +296,12 @@ typedef struct
 
 	char		worldname[MAX_QPATH];
 	char		levelname[256];	// for display on solo scoreboard
-	int			viewentity;		// cl_entitites[cl.viewentity] = player
+	int			viewentity;		// cl_entities[cl.viewentity] = player
 	int			maxclients;
 	int			gametype;
 
 // refresh related state
-	struct model_s	*worldmodel;	// cl_entitites[0].model
+	struct model_s	*worldmodel;	// cl_entities[0].model
 	struct efrag_s	*free_efrags;
 	int			num_entities;	// held in cl_entities array
 	int			num_statics;	// held in cl_staticentities array
@@ -233,8 +317,8 @@ typedef struct
 // frag scoreboard
 	scoreboard_t	*scores;		// [cl.maxclients]
 
-	double			last_angle_time;
-	vec3_t			lerpangles;
+	double			last_angle_time;	// JPG - for smooth chasecam
+	vec3_t			lerpangles;			// JPG - angles now used by view.c so that smooth chasecam doesn't fuck up demos
 
 	qboolean		noclip_anglehack;
 
@@ -258,11 +342,10 @@ typedef struct
 extern	cvar_t	cl_name;
 extern	cvar_t	cl_color;
 extern	cvar_t	cl_playerclass;
+extern	cvar_t	cl_run;
 
 extern	cvar_t	cl_upspeed;
 extern	cvar_t	cl_forwardspeed;
-extern	cvar_t	cl_backspeed;
-extern  cvar_t	cl_prettylights;
 extern	cvar_t	cl_sidespeed;
 
 extern	cvar_t	cl_movespeedkey;
@@ -279,6 +362,13 @@ extern	cvar_t	cl_autofire;
 
 extern	cvar_t	cl_shownet;
 extern	cvar_t	cl_nolerp;
+extern	cvar_t	cl_lerpmuzzleflash;
+
+extern	cvar_t	cl_prettylights;
+
+extern	cvar_t	cl_coloredlight;
+extern	cvar_t	cl_extradlight;
+extern	cvar_t	cl_extradlightstatic;
 
 extern	cvar_t	cl_pitchdriftspeed;
 extern	cvar_t	lookspring;
@@ -306,7 +396,7 @@ extern	dlight_t		cl_dlights[MAX_DLIGHTS];
 //=============================================================================
 
 //
-// cl_main
+// cl_main.c
 //
 dlight_t *CL_AllocDlight (int key);
 void	CL_DecayLights (void);
@@ -320,21 +410,20 @@ void CL_Signon3 (void);
 void CL_Signon4 (void);
 void CL_SignonReply (void);
 
+void CL_Reconnect (void);
 void CL_Disconnect (void);
-void CL_Disconnect_f (void);
-void CL_NextDemo (void);
+//void CL_Disconnect_f (void); // fixme:
 
 void CL_RemoveGIPFiles (char *path);
 qboolean CL_CopyFiles(char *source, char *pat, char *dest);
-void SV_UpdateEffects(sizebuf_t *sb);
-void SV_ParseEffect(sizebuf_t *sb);
 
-#define		MAX_VISEDICTS		MAX_EDICTS //256
+// bumped for new value of MAX_EDICTS
+#define		MAX_VISEDICTS		MAX_EDICTS // was 256
 extern	int				cl_numvisedicts;
 extern	entity_t		*cl_visedicts[MAX_VISEDICTS];
 
 //
-// cl_input
+// cl_input.c
 //
 typedef struct
 {
@@ -342,11 +431,18 @@ typedef struct
 	int		state;			// low bit is down state
 } kbutton_t;
 
+// kbutton_t states:
+// DOWN				1
+// IMPULSE DOWN		2	// used for "attack" and "use" only
+// IMPULSE UP		4	// not used
+
 extern	kbutton_t	in_mlook, in_klook;
 extern 	kbutton_t 	in_strafe;
 extern 	kbutton_t 	in_speed;
+extern	kbutton_t	in_attack; // JPG - added this for completeness
 
 void CL_InitInput (void);
+void CL_AccumulateCmd (void);
 void CL_SendCmd (void);
 void CL_SendMove (usercmd_t *cmd);
 
@@ -354,6 +450,7 @@ void CL_ClearState (void);
 
 int  CL_ReadFromServer (void);
 void CL_WriteToServer (usercmd_t *cmd);
+void CL_AdjustAngles (void);
 void CL_BaseMove (usercmd_t *cmd);
 
 
@@ -363,6 +460,7 @@ char *Key_KeynumToString (int keynum);
 //
 // cl_demo.c
 //
+void CL_NextDemo (void);
 void CL_StopPlayback (void);
 int CL_GetMessage (void);
 
@@ -380,28 +478,39 @@ void CL_ParseEffect (void);
 void CL_EndEffect (void);
 
 //
+// sv_effect.c
+//
+void SV_UpdateEffects(sizebuf_t *sb);
+void SV_ParseEffect(sizebuf_t *sb);
+
+//
 // cl_parse.c
 //
 void CL_ParseServerMessage (void);
 void CL_NewTranslation (int slot);
 
 //
-// view
+// view.c
 //
 void V_StartPitchDrift (void);
 void V_StopPitchDrift (void);
 
-void V_RenderView (void);
-void V_UpdatePalette (void);
+//void V_RenderView (void); // fixme:
+//void V_UpdatePalette (void); // fixme:
 void V_Register (void);
 void V_ParseDamage (void);
 void V_SetContentsColor (int contents);
 
 //
-// cl_tent
+// cl_tent.c
 //
-void CL_InitTEnts(void);
-void CL_ClearTEnts(void);
-void CL_ParseTEnt(void);
-void CL_UpdateTEnts(void);
+void CL_InitTEnts (void);
+void CL_ClearTEnts (void);
+void CL_ParseTEnt (void);
+void CL_UpdateTEnts (void);
+
+//
+// chase.c
+//
+void TraceLine (vec3_t start, vec3_t end, vec3_t impact);
 
