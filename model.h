@@ -17,9 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
  */
-
-#ifndef __MODEL__
-#define __MODEL__
+// model.h
 
 #include "modelgen.h"
 #include "spritegn.h"
@@ -60,6 +58,21 @@ typedef struct
 #define	SIDE_BACK	1
 #define	SIDE_ON		2
 
+#define BOX_ON_PLANE_SIDE(emins, emaxs, p)	\
+    (((p)->type < 3)?						\
+    (										\
+        ((p)->dist <= (emins)[(p)->type])?	\
+            1								\
+        :									\
+        (									\
+            ((p)->dist >= (emaxs)[(p)->type])?\
+                2							\
+            :								\
+                3							\
+        )									\
+    )										\
+    :										\
+        BoxOnPlaneSide( (emins), (emaxs), (p)))
 
 // plane_t structure
 typedef struct mplane_s
@@ -71,15 +84,24 @@ typedef struct mplane_s
 	byte	pad[2];
 } mplane_t;
 
+// ericw -- each texture has two chains,
+// so we can clear the model chains without affecting the world
+typedef enum 
+{
+	chain_world = 0,
+	chain_model = 1
+} texchain_t;
+
 typedef struct texture_s
 {
 	char		name[16];
 	unsigned	width, height;
-	struct gltexture_s	*gltexture; // pointer to gltexture
-	struct gltexture_s	*fullbright; // fullbright mask texture
-	struct gltexture_s	*warpimage; // for water animation
+	struct gltexture_s	*base;			// pointer to base texture
+	struct gltexture_s	*glow;			// fullbright mask texture
+	struct gltexture_s	*warpbase;		// for water animation
+	struct gltexture_s	*warpglow;		// for water animation (fullbright)
 	qboolean	update_warp;			// update warp this frame
-	struct msurface_s	*texturechain;	// for texture chains
+	struct msurface_s	*texturechains[2];	// for texture chains
 	int			anim_total;				// total tenths in sequence ( 0 = no)
 	int			anim_min, anim_max;		// time for this frame min <=time< max
 	struct texture_s *anim_next;		// in the animation sequence
@@ -94,18 +116,15 @@ typedef struct texture_s
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
 #define SURF_UNDERWATER		0x80
-//#define SURF_TRANSLUCENT	0x100
-//#define SURF_DRAWBLACK		0x200
-
-#define SURF_NOTEXTURE		0x100 // johnfitz
-#define SURF_DRAWALPHA		0x200
-#define SURF_DRAWLAVA		0x400
-#define SURF_DRAWSLIME		0x800
-#define SURF_DRAWTELE		0x1000
-#define SURF_DRAWWATER		0x2000
-#define SURF_TRANSLUCENT	0x4000
-#define SURF_DRAWBLACK		0x8000
-
+#define SURF_TRANSLUCENT	0x100 // EER1
+#define SURF_DRAWBLACK		0x200
+#define SURF_NOTEXTURE		0x400 // johnfitz
+#define SURF_DRAWALPHA		0x800
+#define SURF_DRAWLAVA		0x1000
+#define SURF_DRAWSLIME		0x2000
+#define SURF_DRAWTELEPORT	0x4000
+#define SURF_DRAWWATER		0x8000
+#define SURF_DRAWHOLEY		0x10000 // EER1 (fence)
 
 typedef struct
 {
@@ -128,16 +147,20 @@ typedef struct glpoly_s
 	struct	glpoly_s	*next;
 	struct	glpoly_s	*chain;
 	int		numverts;
-	int		flags;			// for SURF_UNDERWATER
+
 	float	verts[4][VERTEXSIZE];	// variable sized (xyz s1t1 s2t2)
 } glpoly_t;
 
 typedef struct msurface_s
 {
+	mtexinfo_t	*texinfo;
+	
 	int			visframe;		// should be drawn when node is crossed
-	qboolean	culled;			// for frustum culling
-	float		mins[3];		// for frustum culling
-	float		maxs[3];		// for frustum culling
+	float		mins[3];		// johnfitz -- for frustum culling
+	float		maxs[3];		// johnfitz -- for frustum culling
+
+	float		alpha;			// alpha value
+	float		midp[3];		// for alpha sorting
 
 	mplane_t	*plane;
 	unsigned int			flags;
@@ -153,11 +176,9 @@ typedef struct msurface_s
 	glpoly_t	*polys;				// multiple if warped
 	struct	msurface_s	*texturechain;
 
-	mtexinfo_t	*texinfo;
-	
 // lighting info
 	int			dlightframe;
-	int			dlightbits;
+	unsigned int		dlightbits[(MAX_DLIGHTS + 31) >> 5]; // int is 32 bits, need an array for MAX_DLIGHTS > 32
 
 	int			lightmaptexture;
 	byte		styles[MAXLIGHTMAPS];
@@ -172,7 +193,8 @@ typedef struct mnode_s
 	int			contents;		// 0, to differentiate from leafs
 	int			visframe;		// node needs to be traversed if current
 	
-	float		minmaxs[6];		// for bounding box culling
+	float		mins[3];		// for bounding box culling
+	float		maxs[3];		// for bounding box culling
 
 	struct mnode_s	*parent;
 
@@ -191,7 +213,8 @@ typedef struct mleaf_s
 	int			contents;		// wil be a negative contents number
 	int			visframe;		// node needs to be traversed if current
 
-	float		minmaxs[6];		// for bounding box culling
+	float		mins[3];		// for bounding box culling
+	float		maxs[3];		// for bounding box culling
 
 	struct mnode_s	*parent;
 
@@ -204,6 +227,13 @@ typedef struct mleaf_s
 	int			key;			// BSP sequence number for leaf's contents
 	byte		ambient_sound_level[NUM_AMBIENTS];
 } mleaf_t;
+
+typedef struct mclipnode_s
+{
+//johnfitz -- for clipnodes>32k
+	int			planenum;
+	int			children[2];	// negative numbers are contents
+} mclipnode_t;
 
 typedef struct
 {
@@ -273,7 +303,6 @@ typedef struct
 	short				maxheight;
 	short				numframes;
 	float				beamlength;		// remove?
-	//void				*cachespot;		// remove?
 	mspriteframedesc_t	frames[1];
 } msprite_t;
 
@@ -343,8 +372,10 @@ typedef struct {
 	int					posedata;	// numposes*poseverts trivert_t
 	int					commands;	// gl command list with embedded s/t
 
-	struct gltexture_s	*gltexture[MAX_SKINS];
-	struct gltexture_s	*fullbright[MAX_SKINS];
+	struct gltexture_s	*base[MAX_SKINS][4];
+	struct gltexture_s	*glow[MAX_SKINS][4];
+
+	int					texels[MAX_SKINS];	// only for player skins
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;
 
@@ -356,8 +387,6 @@ extern	stvert_t	stverts[MAXALIASVERTS];
 extern	mtriangle_t	triangles[MAXALIASTRIS];
 extern	trivertx_t	*poseverts[MAXALIASFRAMES];
 
-extern	byte player_texels[MAX_PLAYER_CLASS][620*245];
-
 //===================================================================
 
 //
@@ -365,8 +394,6 @@ extern	byte player_texels[MAX_PLAYER_CLASS][620*245];
 //
 
 typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
-
-// EF_ changes must also be made in model.h
 
 #define	EF_ROCKET		       1			// leave a trail
 #define	EF_GRENADE		       2			// leave a trail
@@ -417,14 +444,6 @@ typedef struct model_s
 	vec3_t		mins, maxs;
 	vec3_t		ymins, ymaxs; // bounds for entities with nonzero yaw
 	vec3_t		rmins, rmaxs; // bounds for entities with nonzero pitch or roll
-// removed float radius
-//	float		radius;
-
-//
-// solid volume for clipping 
-//
-	qboolean	clipbox;
-	vec3_t		clipmins, clipmaxs;
 
 //
 // brush model
@@ -473,8 +492,12 @@ typedef struct model_s
 	byte		*lightdata;
 	char		*entities;
 
+	qboolean	viswarn; // for Mod_DecompressVis()
+    
 	qboolean	isworldmodel;
 	int			bspversion;
+
+	qboolean	haslitwater;
 
 //
 // additional model data
@@ -483,19 +506,22 @@ typedef struct model_s
 
 } model_t;
 
+extern	model_t	*loadmodel;
+
 //============================================================================
 
 extern model_t *player_models[MAX_PLAYER_CLASS];
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
+void	Mod_ResetAll (void); // for gamedir changes (Host_Game_f)
 model_t *Mod_ForName (char *name, qboolean crash);
 void	*Mod_Extradata (model_t *mod);	// handles caching
 void	Mod_TouchModel (char *name);
+model_t *Mod_FindName (char *name);
 
 mleaf_t *Mod_PointInLeaf (float *p, model_t *model);
 byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
+byte	*Mod_NoVisPVS (model_t *model);
 
-model_t *Mod_FindName (char *name);
-
-#endif	// __MODEL__
+void	Mod_FloodFillSkin (byte *skin, int skinwidth, int skinheight, char *name);
