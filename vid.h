@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // vid.h -- video driver defs
 
+#define VID_CBITS    6
+#define VID_GRADES    (1 << VID_CBITS)
+
 typedef struct vrect_s
 {
 	int				x,y,width,height;
@@ -27,10 +30,14 @@ typedef struct vrect_s
 
 typedef struct
 {
+	byte			*colormap;		// 256 * VID_GRADES size
 	int		width;		
 	int		height;
+	int				refreshrate;
+	int				bpp;
+	qboolean		fullscreen;
 	int				numpages;
-	qboolean				recalc_refdef;	// if true, recalc vid-based stuff
+	qboolean		recalc_refdef;	// if true, recalc vid-based stuff
 	int		conwidth;
 	int		conheight;
 } viddef_t;
@@ -45,9 +52,6 @@ extern qboolean vid_hiddenwindow;
 extern qboolean vid_activewindow;
 extern qboolean vid_notifywindow;
 
-// gamma stuff
-void VID_Gamma_Set (void);
-void VID_Gamma_Restore (void);
 
 void	VID_Init (void);
 // Called at startup to set up translation tables, takes 256 8 bit RGB values
@@ -57,7 +61,11 @@ void	VID_Init (void);
 void	VID_Shutdown (void);
 // Called at shutdown
 
-int VID_SetMode (int modenum);
-// sets the mode; only used by the Quake engine for resetting to mode 0 (the
-// base mode) on memory allocation failures
+void	VID_Toggle (void);
+// Called by alt-return key binding
 
+
+void VID_MenuInit (void); //johnfitz
+void VID_MenuCmd (void); //johnfitz
+void VID_MenuDraw (void);
+void VID_MenuKey (int key);

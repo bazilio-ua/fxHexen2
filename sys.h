@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // file IO
 //
 void Sys_mkdir (char *path);
+void Sys_ScanDirList (char *path, filelist_t **list);
+void Sys_ScanDirFileList(char *path, char *subdir, char *ext, qboolean stripext, filelist_t **list);
 
 //
 // system IO
@@ -33,6 +35,9 @@ void Sys_Error (char *error, ...);
 void Sys_Printf (char *fmt, ...);
 // send text to the console
 
+extern qboolean has_smp;
+
+void Sys_Init (void);
 void Sys_Shutdown (void);
 void Sys_Quit (int code);
 
