@@ -38,6 +38,7 @@ typedef struct
 
 	qboolean	paused;
 	qboolean	loadgame;			// handle connections specially
+	qboolean	nomonsters;			// server started with 'nomonsters' cvar active
 
 	double		time;
 	
@@ -73,8 +74,10 @@ typedef struct
 
 	sizebuf_t	signon;
 	byte		signon_buf[MAX_MSGLEN-2]; // was NET_MAXMESSAGE
-	int		signondiff;		// Track extra bytes due to >256 model support, kludge
+
 	int			Protocol;
+
+	int			frozen;
 } server_t;
 
 
@@ -86,6 +89,7 @@ typedef struct client_s
 	qboolean		active;				// false = client is free
 	qboolean		spawned;			// false = don't send datagrams
 	qboolean		dropasap;			// has been told to go to another level
+
 	qboolean		sendsignon;			// only valid before spawned
 
 	double			last_message;		// reliable messages must be sent
@@ -273,15 +277,22 @@ extern	cvar_t	sv_maxvelocity;
 extern	cvar_t	sv_gravity;
 extern	cvar_t	sv_nostep;
 extern	cvar_t	sv_friction;
+extern	cvar_t	sv_waterfriction;
 extern	cvar_t	sv_edgefriction;
 extern	cvar_t	sv_stopspeed;
 extern	cvar_t	sv_maxspeed;
+extern	cvar_t	sv_maxairspeed;
 extern	cvar_t	sv_accelerate;
+extern	cvar_t	sv_airaccelerate;
+extern	cvar_t	sv_q2airaccelerate;
+extern	cvar_t	sv_wateraccelerate;
 extern	cvar_t	sv_idealpitchscale;
-extern	cvar_t	sv_idealrollscale;
 extern	cvar_t	sv_aim;
-extern	cvar_t	sv_walkpitch;
-extern	cvar_t	sv_flypitch;
+extern	cvar_t	sv_altnoclip;
+extern	cvar_t	sv_touchnoclip;
+extern	cvar_t	sv_bouncedownslopes;
+extern	cvar_t	sv_novis;
+extern	cvar_t	sv_stupidquakebugfix;
 
 extern	cvar_t	teamplay;
 extern	cvar_t	skill;
@@ -298,9 +309,9 @@ extern	client_t	*host_client;
 
 extern	jmp_buf 	host_abortserver;
 
-extern	double		host_time;
-
 extern	edict_t		*sv_player;
+
+extern qboolean stupidquakebugfix;
 
 //===========================================================
 
@@ -349,3 +360,6 @@ void SV_SaveSpawnparms ();
 
 void SV_SpawnServer (char *server, char *startspot);
 
+void SV_Freezeall_f (void);
+
+void SV_StupidQuakeBugFix (void);
