@@ -19,16 +19,23 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // view.h
 
-extern	cvar_t		vid_gamma;
-extern	cvar_t	crosshair;
+extern	cvar_t crosshair, cl_crossx, cl_crossy;
 
-extern	byte		gammatable[256];	// palette is sent through this
-extern	byte		ramps[3][256];
 extern float v_blend[4];
-
 
 void V_Init (void);
 void V_RenderView (void);
 float V_CalcRoll (vec3_t angles, vec3_t velocity);
-void V_UpdatePalette (void);
+void V_CalcBlend (void);
+void V_UpdateBlend (void);
 
+void V_FindFullbrightColors (void);
+void V_SetOriginalPalette (void);
+void V_SetPalette (byte *palette);
+// called at startup and after any gamma correction
+
+void V_ShiftPalette (byte *palette);
+// called after gammatable updates
+
+extern	cvar_t		v_gamma;
+extern	cvar_t		v_contrast;

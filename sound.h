@@ -19,9 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sound.h -- client sound i/o functions
 
-#ifndef __SOUND__
-#define __SOUND__
-
 #define DEFAULT_SOUND_PACKET_VOLUME 255
 #define DEFAULT_SOUND_PACKET_ATTENUATION 1.0
 
@@ -49,9 +46,6 @@ typedef struct
 
 typedef struct
 {
-	qboolean		gamealive;
-	qboolean		soundalive;
-	qboolean		splitbuffer;
 	int				channels;
 	int				samples;				// mono samples in buffer
 	int				submission_chunk;		// don't mix less than this #
@@ -153,8 +147,7 @@ extern vec3_t listener_origin;
 extern vec3_t listener_forward;
 extern vec3_t listener_right;
 extern vec3_t listener_up;
-extern volatile dma_t *shm;
-extern volatile dma_t sn;
+extern dma_t dma;
 extern vec_t sound_nominal_clip_dist;
 
 extern	cvar_t loadas8bit;
@@ -173,4 +166,3 @@ wavinfo_t GetWavinfo (char *name, byte *wav, int wavlength);
 
 void S_InitScaletable (void);
 
-#endif
