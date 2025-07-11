@@ -150,9 +150,10 @@ extern vec3_t listener_up;
 extern dma_t dma;
 extern vec_t sound_nominal_clip_dist;
 
-extern	cvar_t loadas8bit;
 extern	cvar_t bgmvolume;
 extern	cvar_t bgmtype;
+
+extern	cvar_t loadas8bit;
 extern	cvar_t volume;
 
 extern qboolean	snd_initialized;

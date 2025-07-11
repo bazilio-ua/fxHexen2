@@ -1,31 +1,49 @@
+/*
+Copyright (C) 1996-1997 Id Software, Inc.
 
-//**************************************************************************
-//**
-//** sbar.h
-//**
-//** $Header: /H3/game/SBAR.H 12    8/04/97 3:34p Bgokey $
-//**
-//**************************************************************************
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-// HEADER FILES ------------------------------------------------------------
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
 
-// MACROS ------------------------------------------------------------------
+See the GNU General Public License for more details.
 
-// TYPES -------------------------------------------------------------------
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+*/
+// sbar.h
 
-void Sbar_Init(void);
-void Sbar_Changed(void);
-void Sbar_Draw(void);
-void Sbar_IntermissionOverlay(void);
-void Sbar_FinaleOverlay(void);
-void Sbar_InvChanged(void);
-void Sbar_InvReset(void);
-void Sbar_ViewSizeChanged(void);
-void Sbar_DeathmatchOverlay(void);
-
-// PUBLIC DATA DECLARATIONS ------------------------------------------------
+// the status bar is only redrawn if something has changed, but if anything
+// does, the entire thing will be redrawn for the next vid.numpages frames.
 
 extern int sb_lines; // scan lines to draw
 extern int color_offsets[MAX_PLAYER_CLASS];
+
+extern	cvar_t	scr_sbar;
+extern	cvar_t	scr_overdrawsbar;
+extern	cvar_t	scr_sbaralpha;
+
+void Sbar_Init (void);
+void Sbar_LoadPics (void);
+
+void Sbar_Changed (void);
+// call whenever any of the client stats represented on the sbar changes
+
+void Sbar_Draw (void);
+// called every frame by screen
+
+void Sbar_IntermissionOverlay (void);
+// called each frame after the level has been completed
+
+void Sbar_FinaleOverlay (void);
+void Sbar_InvChanged (void);
+void Sbar_InvReset (void);
+void Sbar_ViewSizeChanged (void);
+void Sbar_DeathmatchOverlay (void);
+
