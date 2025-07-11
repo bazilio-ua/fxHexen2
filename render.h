@@ -17,8 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-
-// refresh.h -- public interface to refresh functions
+// render.h -- public interface to refresh functions
 
 #define	MAXCLIPPLANES	11
 
@@ -53,30 +52,9 @@ typedef struct {
 } lerpdata_t;
 //johnfitz
 
-// Baker change (RMQ Engine)
-typedef struct glmatrix_s
-{
-	union
-	{
-		// put first because gcc barfs a little
-		float m16[16];
-		float m4x4[4][4];
-
-		struct
-		{
-			float _11, _12, _13, _14;
-			float _21, _22, _23, _24;
-			float _31, _32, _33, _34;
-			float _41, _42, _43, _44;
-		};
-	};
-} glmatrix_t;
-
 typedef struct entity_s
 {
 	qboolean				forcelink;		// model changed
-
-	int						update_type;
 
 	entity_state3_t			baseline;		// to fill in defaults in updates
 
@@ -91,23 +69,21 @@ typedef struct entity_s
 	float					syncbase;		// for client-side animations
 	byte					*colormap, *sourcecolormap;
 	byte					colorshade;
-	int						effects;		// light, particals, etc
+	int						effects;		// light, particles, etc
 	int						skinnum;		// for Alias models
 	int						scale;			// for Alias models
 	int						drawflags;		// for Alias models
 	int						abslight;		// for Alias models
-	int						visframe;		// last frame this entity was
-											//  found in an active leaf
+	int						visframe;		// last frame this entity was found in an active leaf
 											
-	int						dlightframe;	// dynamic lighting
-	int						dlightbits;
+	qboolean				rotated;
+	float					matrix[16];		// the matrix used for transforming this entity
 	
-// FIXME: could turn these into a union
-	int						trivial_accept;
-	struct mnode_s			*topnode;		// for bmodels, first world node
-											//  that splits bmodel, or NULL if
-											//  not split
+	float					dist;			// distance from client (for depth sorting)
+	
+
 	byte					alpha;			// alpha
+	byte					scale;			// scale
 	float					fullbright;		// fullbright
 
 	// fitzquake protocol+lerping
@@ -129,21 +105,18 @@ typedef struct entity_s
 typedef struct
 {
 	vrect_t		vrect;				// subwindow in video for refresh
-/*									// FIXME: not need vrect next field here?
-*/
+
 	vec3_t		vieworg;
 	vec3_t		viewangles;
 
 	float		fov_x, fov_y;
-	int			ambientlight;
+	float		weaponfov_x;		// weaponfov
 } refdef_t;
 
 
 //
 // refresh
 //
-
-
 extern	refdef_t	r_refdef;
 extern vec3_t	r_origin, vpn, vright, vup;
 
@@ -154,20 +127,15 @@ extern	entity_t r_worldentity;
 
 void R_Init (void);
 void R_InitTextures (void);
-void R_LoadPalette (void);
 void R_InitEfrags (void);
 void R_SndExtraUpdate (void);
 void R_RenderView (void);		// must set r_refdef first
-void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect); // called whenever r_refdef or vid change
-								
-void R_MarkSurfaces (void);
 void R_InitSky (struct texture_s *mt);	// called at level load
 
 void R_AddEfrags (entity_t *ent);
 void R_RemoveEfrags (entity_t *ent);
 
 void R_NewMap (void);
-
 
 void R_ParseParticleEffect (void);
 void R_ParseParticleEffect2 (void);
@@ -191,5 +159,4 @@ void R_LavaSplash (vec3_t org);
 void R_TeleportSplash (vec3_t org);
 
 void R_PushDlights (void);
-
 
