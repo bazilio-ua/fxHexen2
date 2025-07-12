@@ -69,7 +69,7 @@ void InsertLinkAfter (link_t *l, link_t *after);
 // (type *)STRUCT_FROM_LINK(link_t *link, type, member)
 // ent = STRUCT_FROM_LINK(link,entity_t,order)
 // FIXME: remove this mess!
-#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (int)&(((t *)0)->m)))
+#define	STRUCT_FROM_LINK(l,t,m) ((t *)((byte *)l - (intptr_t)&(((t *)0)->m)))
 
 //============================================================================
 
@@ -77,17 +77,27 @@ void InsertLinkAfter (link_t *l, link_t *after);
 #define NULL ((void *)0)
 #endif
 
-#define Q_MAXCHAR ((char)0x7f)
-#define Q_MAXSHORT ((short)0x7fff)
-#define Q_MAXINT	((int)0x7fffffff)
-#define Q_MAXLONG ((int)0x7fffffff)
-#define Q_MAXFLOAT ((int)0x7fffffff)
+//============================================================================
 
-#define Q_MINCHAR ((char)0x80)
-#define Q_MINSHORT ((short)0x8000)
-#define Q_MININT 	((int)0x80000000)
-#define Q_MINLONG ((int)0x80000000)
-#define Q_MINFLOAT ((int)0x7fffffff)
+static inline qboolean GetBit (unsigned int *a, unsigned int i)
+{
+	return (a[i/32u] & (1u<<(i%32u))) != 0u;
+}
+
+static inline void SetBit (unsigned int *a, unsigned int i)
+{
+	a[i/32u] |= 1u<<(i%32u);
+}
+
+static inline void ClearBit (unsigned int *a, unsigned int i)
+{
+	a[i/32u] &= ~(1u<<(i%32u));
+}
+
+static inline void ToggleBit (unsigned int *a, unsigned int i)
+{
+	a[i/32u] ^= 1u<<(i%32u);
+}
 
 //============================================================================
 
@@ -161,10 +171,14 @@ int COM_CheckParm (char *parm);
 void COM_Init (void);
 void COM_InitArgv (int argc, char **argv);
 
-char *COM_SkipPath (char *pathname);
+char *COM_SkipPath (char *path);
 void COM_StripExtension (char *in, char *out);
+char *COM_FileExtension (char *in);
 void COM_FileBase (char *in, char *out);
-void COM_DefaultExtension (char *path, char *extension);
+void COM_DefaultExtension (char *path, char *ext);
+
+const char sys_char_map[256];
+// the translation table between the graphical font and plain ASCII
 
 char	*va(char *format, ...);
 // does a varargs printf into a temp buffer
@@ -187,22 +201,73 @@ int Sys_FileRead (int handle, void *dst, int count);
 int Sys_FileWrite (int handle, void *src, int count);
 int Sys_FileTime (char *path);
 
-//tmp
-int Sys_FileLength (FILE *f);
-
+//============================================================================
+//	QUAKE FILESYSTEM
 //============================================================================
 
 extern int com_filesize;
-struct cache_user_s;
 
+//
+// in memory
+//
+
+typedef struct
+{
+	char    name[MAX_QPATH];
+	int             filepos, filelen;
+} packfile_t;
+
+typedef struct pack_s
+{
+	char    filename[MAX_OSPATH];
+	int             handle;
+	int             numfiles;
+	packfile_t      *files;
+} pack_t;
+
+//
+// on disk
+//
+
+typedef struct
+{
+	char    name[56];
+	int             filepos, filelen;
+} dpackfile_t;
+
+typedef struct
+{
+	char    ident[4];		// should be PACK
+	int             dirofs;
+	int             dirlen;
+} dpackheader_t;
+
+#define MAX_FILES_IN_PACK       2048
+
+extern	char	com_cachedir[MAX_OSPATH];
 extern	char	com_gamedir[MAX_OSPATH];
 extern	char	com_basedir[MAX_OSPATH];
 extern	char	com_savedir[MAX_OSPATH];
+
+typedef struct searchpath_s
+{
+	unsigned int path_id;	// identifier assigned to the game directory
+							// Note that <install_dir>/game1 and
+							// <userdir>/game1 have the same id.
+	char    filename[MAX_OSPATH];
+	pack_t  *pack;          // only one of filename / pack will be used
+	struct searchpath_s *next;
+} searchpath_t;
+
+extern	searchpath_t    *com_searchpaths;
+extern	searchpath_t	*com_base_searchpaths;
 
 void COM_WriteFile (char *filename, void *data, int len);
 int COM_OpenFile (char *filename, int *handle, unsigned int *path_id);
 int COM_FOpenFile (char *filename, FILE **file, unsigned int *path_id);
 void COM_CloseFile (int h);
+
+struct cache_user_s;
 
 byte *COM_LoadMallocFile (char *path, void *buffer, unsigned int *path_id);
 byte *COM_LoadStackFile (char *path, void *buffer, int bufsize, unsigned int *path_id);
@@ -218,3 +283,20 @@ extern	struct cvar_s	oem;
 
 // This variable is set during file system init and determines Portals or non-Portals behavior of the game.
 extern qboolean portals;
+
+//==============================================================================
+//	FILELIST
+//==============================================================================
+
+typedef struct filelist_s
+{
+	char			name[MAX_QPATH];
+	struct filelist_s	*next;
+} filelist_t;
+
+void COM_FileListAdd (char *name, filelist_t **list);
+void COM_FileListClear (filelist_t **list);
+void COM_ScanDirList (char *path, filelist_t **list);
+void COM_ScanDirFileList(char *path, char *subdir, char *ext, qboolean stripext, filelist_t **list);
+void COM_ScanPakFileList(pack_t *pack, char *subdir, char *ext, qboolean stripext, filelist_t **list);
+
