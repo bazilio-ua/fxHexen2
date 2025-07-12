@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef _WIN32
 /* windows includes and compatibility macros */
 
+// TODO: add winsock2 here
+#include <winsock.h>
+
 /* there is no in_addr_t on windows: define it as the type of the S_addr of in_addr structure */
 typedef u_long	in_addr_t; /* uint32_t */
 /* on windows, socklen_t is to be a winsock2 thing */
@@ -43,13 +46,21 @@ typedef int	sys_socket_t;
 
 /* macros which may still be missing */
 
-#ifndef INADDR_NONE
-#define INADDR_NONE	((in_addr_t) 0xffffffff)
-#endif /* INADDR_NONE */
+#ifndef INADDR_ANY
+#define INADDR_ANY ((in_addr_t) 0x00000000)
+#endif /* INADDR_ANY */
 
 #ifndef INADDR_LOOPBACK
 #define INADDR_LOOPBACK	((in_addr_t) 0x7f000001) /* 127.0.0.1 */
 #endif /* INADDR_LOOPBACK */
+
+#ifndef INADDR_BROADCAST
+#define INADDR_BROADCAST ((in_addr_t) 0xffffffff)
+#endif /* INADDR_BROADCAST */
+
+#ifndef INADDR_NONE
+#define INADDR_NONE	((in_addr_t) 0xffffffff)
+#endif /* INADDR_NONE */
 
 #ifndef MAXHOSTNAMELEN
 /* SUSv2 guarantees that `Host names are limited to 255 bytes'.
@@ -61,7 +72,10 @@ typedef int	sys_socket_t;
 
 struct qsockaddr
 {
-#ifdef __FreeBSD__
+/* struct sockaddr has unsigned char 'dummy' as the first member in BSD variants 
+ and the family member is also an unsigned char instead of an unsigned short. 
+ This should matter only when UNIX is defined */
+#if defined __FreeBSD__ || defined __OpenBSD__ || defined __NetBSD__ || defined __APPLE__ && defined __MACH__
 	byte dummy;
 	byte qsa_family;
 #else
@@ -189,7 +203,8 @@ typedef struct qsocket_s
 	
 	struct net_driver_s		*driver;
 	struct net_landriver_s	*landriver;
-	sys_socket_t					socket;
+	sys_socket_t			net_socket;
+	int						mtu;
 	void			*driverdata;
 
 	unsigned int	ackSequence;
@@ -210,7 +225,7 @@ typedef struct qsocket_s
 	byte					mod; // (compat. with PQ)
 	byte					mod_version;	// = floor(version * 10) (must fit in one byte)
 	byte					mod_flags; // reserved (compat. with PQ)
-	int						client_port; // NAT fix
+	int						client_port; // ProQuake NAT fix
 	qboolean				net_wait; // wait for the client to send a packet to the private port
 } qsocket_t;
 
@@ -226,17 +241,17 @@ typedef struct net_landriver_s
 	void		(*Shutdown) (void);
 	void		(*Listen) (qboolean state);
 	sys_socket_t	(*OpenSocket) (int port);
-	int 		(*CloseSocket) (sys_socket_t socket);
-	int 		(*Connect) (sys_socket_t socket, struct qsockaddr *addr);
+	int 		(*CloseSocket) (sys_socket_t net_socket);
 	sys_socket_t	(*CheckNewConnections) (void);
-	int 		(*Read) (sys_socket_t socket, byte *buf, int len, struct qsockaddr *addr);
-	int 		(*Write) (sys_socket_t socket, byte *buf, int len, struct qsockaddr *addr);
-	int 		(*Broadcast) (sys_socket_t socket, byte *buf, int len);
+	int 		(*Read) (sys_socket_t net_socket, byte *buf, int len, struct qsockaddr *addr);
+	int 		(*Write) (sys_socket_t net_socket, byte *buf, int len, struct qsockaddr *addr);
+	int 		(*Broadcast) (sys_socket_t net_socket, byte *buf, int len);
 	char *		(*AddrToString) (struct qsockaddr *addr);
 	int 		(*StringToAddr) (char *string, struct qsockaddr *addr);
-	int 		(*GetSocketAddr) (sys_socket_t socket, struct qsockaddr *addr);
+	int 		(*GetSocketAddr) (sys_socket_t net_socket, struct qsockaddr *addr);
 	int 		(*GetNameFromAddr) (struct qsockaddr *addr, char *name);
 	int 		(*GetAddrFromName) (char *name, struct qsockaddr *addr);
+	int 		(*GetDefaultMTU) (void);
 	int			(*AddrCompare) (struct qsockaddr *addr1, struct qsockaddr *addr2);
 	int			(*GetSocketPort) (struct qsockaddr *addr);
 	int			(*SetSocketPort) (struct qsockaddr *addr, int port);
@@ -338,8 +353,7 @@ int			NET_SendUnreliableMessage (struct qsocket_s *sock, sizebuf_t *data);
 // returns 1 if the message was sent properly
 // returns -1 if the connection died
 
-int			NET_SendToAll (sizebuf_t *data, int blocktime);
-int			NET_SendToAll2 (sizebuf_t *data, int blocktime, qboolean nolocals);
+int			NET_SendToAll (sizebuf_t *data, int blocktime, qboolean nolocals);
 // This is a reliable *blocking* send to all attached clients.
 
 

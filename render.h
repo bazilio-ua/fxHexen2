@@ -83,7 +83,7 @@ typedef struct entity_s
 	
 
 	byte					alpha;			// alpha
-	byte					scale;			// scale
+//	byte					scale;			// scale
 	float					fullbright;		// fullbright
 
 	// fitzquake protocol+lerping
