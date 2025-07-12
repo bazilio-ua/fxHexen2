@@ -30,32 +30,31 @@ when crossing a water boudnary.
 
 */
 
+cvar_t	scr_ofsx = {"scr_ofsx","0", CVAR_NONE};
+cvar_t	scr_ofsy = {"scr_ofsy","0", CVAR_NONE};
+cvar_t	scr_ofsz = {"scr_ofsz","0", CVAR_NONE};
 
-cvar_t	scr_ofsx = {"scr_ofsx","0", false};
-cvar_t	scr_ofsy = {"scr_ofsy","0", false};
-cvar_t	scr_ofsz = {"scr_ofsz","0", false};
+cvar_t	cl_rollspeed = {"cl_rollspeed", "200", CVAR_NONE};
+cvar_t	cl_rollangle = {"cl_rollangle", "2.0", CVAR_NONE};
 
-cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
-cvar_t	cl_rollangle = {"cl_rollangle", "2.0"};
+cvar_t	cl_bob = {"cl_bob","0.02", CVAR_NONE};
+cvar_t	cl_bobcycle = {"cl_bobcycle","0.6", CVAR_NONE};
+cvar_t	cl_bobup = {"cl_bobup","0.5", CVAR_NONE};
 
-cvar_t	cl_bob = {"cl_bob","0.02", false};
-cvar_t	cl_bobcycle = {"cl_bobcycle","0.6", false};
-cvar_t	cl_bobup = {"cl_bobup","0.5", false};
+cvar_t	v_kicktime = {"v_kicktime", "0.5", CVAR_NONE};
+cvar_t	v_kickroll = {"v_kickroll", "0.6", CVAR_NONE};
+cvar_t	v_kickpitch = {"v_kickpitch", "0.6", CVAR_NONE};
 
-cvar_t	v_kicktime = {"v_kicktime", "0.5", false};
-cvar_t	v_kickroll = {"v_kickroll", "0.6", false};
-cvar_t	v_kickpitch = {"v_kickpitch", "0.6", false};
+cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", CVAR_NONE};
+cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5", CVAR_NONE};
+cvar_t	v_ipitch_cycle = {"v_ipitch_cycle", "1", CVAR_NONE};
+cvar_t	v_iyaw_level = {"v_iyaw_level", "0.3", CVAR_NONE};
+cvar_t	v_iroll_level = {"v_iroll_level", "0.1", CVAR_NONE};
+cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", CVAR_NONE};
 
-cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", false};
-cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5", false};
-cvar_t	v_ipitch_cycle = {"v_ipitch_cycle", "1", false};
-cvar_t	v_iyaw_level = {"v_iyaw_level", "0.3", false};
-cvar_t	v_iroll_level = {"v_iroll_level", "0.1", false};
-cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", false};
+cvar_t	v_idlescale = {"v_idlescale", "0", CVAR_NONE};
 
-cvar_t	v_idlescale = {"v_idlescale", "0", false};
-
-cvar_t	crosshair = {"crosshair", "0", true};
+cvar_t	crosshair = {"crosshair", "0", CVAR_ARCHIVE};
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
@@ -292,13 +291,12 @@ void V_DriftRoll (void)
 /*
 ============================================================================== 
  
-						PALETTE FLASHES 
+	VIEW BLENDING
  
 ============================================================================== 
 */ 
  
- 
-cshift_t	cshift_empty = { {130,80,50}, 0 };
+cshift_t	cshift_empty = { {0,0,0}, 0 };
 cshift_t	cshift_water = { {130,80,50}, 128 };
 cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
@@ -1076,32 +1074,32 @@ void V_Init (void)
 
 	Cmd_AddCommand ("centerview", V_StartPitchDrift);
 
-	Cvar_RegisterVariable (&v_centermove, NULL);
-	Cvar_RegisterVariable (&v_centerspeed, NULL);
-	Cvar_RegisterVariable (&v_centerrollspeed, NULL);
+	Cvar_RegisterVariable (&v_centermove);
+	Cvar_RegisterVariable (&v_centerspeed);
+	Cvar_RegisterVariable (&v_centerrollspeed);
 
-	Cvar_RegisterVariable (&v_iyaw_cycle, NULL);
-	Cvar_RegisterVariable (&v_iroll_cycle, NULL);
-	Cvar_RegisterVariable (&v_ipitch_cycle, NULL);
-	Cvar_RegisterVariable (&v_iyaw_level, NULL);
-	Cvar_RegisterVariable (&v_iroll_level, NULL);
-	Cvar_RegisterVariable (&v_ipitch_level, NULL);
+	Cvar_RegisterVariable (&v_iyaw_cycle);
+	Cvar_RegisterVariable (&v_iroll_cycle);
+	Cvar_RegisterVariable (&v_ipitch_cycle);
+	Cvar_RegisterVariable (&v_iyaw_level);
+	Cvar_RegisterVariable (&v_iroll_level);
+	Cvar_RegisterVariable (&v_ipitch_level);
 
-	Cvar_RegisterVariable (&v_idlescale, NULL);
-	Cvar_RegisterVariable (&crosshair, NULL);
+	Cvar_RegisterVariable (&v_idlescale);
+	Cvar_RegisterVariable (&crosshair);
 
-	Cvar_RegisterVariable (&scr_ofsx, NULL);
-	Cvar_RegisterVariable (&scr_ofsy, NULL);
-	Cvar_RegisterVariable (&scr_ofsz, NULL);
-	Cvar_RegisterVariable (&cl_rollspeed, NULL);
-	Cvar_RegisterVariable (&cl_rollangle, NULL);
-	Cvar_RegisterVariable (&cl_bob, NULL);
-	Cvar_RegisterVariable (&cl_bobcycle, NULL);
-	Cvar_RegisterVariable (&cl_bobup, NULL);
+	Cvar_RegisterVariable (&scr_ofsx);
+	Cvar_RegisterVariable (&scr_ofsy);
+	Cvar_RegisterVariable (&scr_ofsz);
+	Cvar_RegisterVariable (&cl_rollspeed);
+	Cvar_RegisterVariable (&cl_rollangle);
+	Cvar_RegisterVariable (&cl_bob);
+	Cvar_RegisterVariable (&cl_bobcycle);
+	Cvar_RegisterVariable (&cl_bobup);
 
-	Cvar_RegisterVariable (&v_kicktime, NULL);
-	Cvar_RegisterVariable (&v_kickroll, NULL);
-	Cvar_RegisterVariable (&v_kickpitch, NULL);	
+	Cvar_RegisterVariable (&v_kicktime);
+	Cvar_RegisterVariable (&v_kickroll);
+	Cvar_RegisterVariable (&v_kickpitch);	
 /*	
 	BuildGammaTable (1.0);	// no gamma yet
 	Cvar_RegisterVariable (&vid_gamma, NULL);
