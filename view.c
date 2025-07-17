@@ -44,6 +44,7 @@ cvar_t	cl_bobup = {"cl_bobup","0.5", CVAR_NONE};
 cvar_t	v_kicktime = {"v_kicktime", "0.5", CVAR_NONE};
 cvar_t	v_kickroll = {"v_kickroll", "0.6", CVAR_NONE};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.6", CVAR_NONE};
+cvar_t	v_gunkick = {"v_gunkick", "1", CVAR_NONE}; //johnfitz
 
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", CVAR_NONE};
 cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5", CVAR_NONE};
@@ -55,12 +56,18 @@ cvar_t	v_ipitch_level = {"v_ipitch_level", "0.3", CVAR_NONE};
 cvar_t	v_idlescale = {"v_idlescale", "0", CVAR_NONE};
 
 cvar_t	crosshair = {"crosshair", "0", CVAR_ARCHIVE};
+cvar_t	cl_crossx = {"cl_crossx", "0", CVAR_NONE};
+cvar_t	cl_crossy = {"cl_crossy", "0", CVAR_NONE};
+
+cvar_t	gl_cshiftpercent = {"gl_cshiftpercent", "100", CVAR_NONE};
+
+cvar_t	v_contentblend = {"v_contentblend", "1", CVAR_NONE};
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
 extern	int			in_forward, in_forward2, in_back;
-extern	cvar_t	sv_idealrollscale;
 
+vec3_t	v_punchangles[2]; //johnfitz -- copied from cl.punchangle.  0 is current, 1 is previous value. never the same unless map just loaded
 
 /*
 ===============
@@ -69,10 +76,9 @@ V_CalcRoll
 Used by view and sv_user
 ===============
 */
-vec3_t	forward, right, up;
-
 float V_CalcRoll (vec3_t angles, vec3_t velocity)
 {
+	vec3_t	forward, right, up;
 	float	sign;
 	float	side;
 	float	value;
@@ -107,6 +113,9 @@ float V_CalcBob (void)
 	float	bob;
 	float	cycle;
 	
+	if (!cl_bobcycle.value) // avoid divide by zero, don't bob
+		return 0;
+
 	cycle = cl.time - (int)(cl.time/cl_bobcycle.value)*cl_bobcycle.value;
 	cycle /= cl_bobcycle.value;
 	if (cycle < cl_bobup.value)
@@ -132,10 +141,9 @@ float V_CalcBob (void)
 //=============================================================================
 
 
-cvar_t	v_centermove = {"v_centermove", "0.15", false};
-cvar_t	v_centerspeed = {"v_centerspeed","500"};
-
-cvar_t	v_centerrollspeed = {"v_centerrollspeed","125"};
+cvar_t	v_centermove = {"v_centermove", "0.15", CVAR_NONE};
+cvar_t	v_centerspeed = {"v_centerspeed","500", CVAR_NONE};
+cvar_t	v_centerrollspeed = {"v_centerrollspeed","125", CVAR_NONE};
 
 void V_StartPitchDrift (void)
 {
@@ -194,7 +202,8 @@ void V_DriftPitch (void)
 	
 		if ( cl.driftmove > v_centermove.value)
 		{
-			V_StartPitchDrift ();
+			if (lookspring.value) //jkrige - mlook and lookspring fix
+				V_StartPitchDrift ();
 		}
 		return;
 	}
@@ -301,54 +310,44 @@ cshift_t	cshift_water = { {130,80,50}, 128 };
 cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
+cvar_t		v_gamma = {"gamma", "1", CVAR_ARCHIVE};
+cvar_t		v_contrast = {"contrast", "1", CVAR_ARCHIVE}; // QuakeSpasm, MarkV
 
 byte		gammatable[256];	// palette is sent through this
 
-byte		ramps[3][256];
 float		v_blend[4];		// rgba 0.0 - 1.0
-/*
-void BuildGammaTable (float g)
+
+
+void BuildGammaTable (float gamma, float contrast)
 {
-	int		i, inf;
-	
-	if (g == 1.0)
-	{
-		for (i=0 ; i<256 ; i++)
-			gammatable[i] = i;
-		return;
-	}
-	
+	int		i;
+
+	// Refresh gamma table
 	for (i=0 ; i<256 ; i++)
-	{
-		inf = 255 * pow ( (i+0.5)/255.5 , g ) + 0.5;
-		if (inf < 0)
-			inf = 0;
-		if (inf > 255)
-			inf = 255;
-		gammatable[i] = inf;
-	}
+		gammatable[i] = CLAMP(0, (int)((255 * pow ((i+0.5)/255.5, gamma) + 0.5) * contrast), 255);
 }
-*/
+
 /*
 =================
 V_CheckGamma
 =================
 */
-/*
 qboolean V_CheckGamma (void)
 {
-	static float oldgammavalue;
+	static float oldgamma;
+	static float oldcontrast;
 	
-	if (vid_gamma.value == oldgammavalue)
+	if (v_gamma.value == oldgamma && v_contrast.value == oldcontrast)
 		return false;
-	oldgammavalue = vid_gamma.value;
 	
-	BuildGammaTable (vid_gamma.value);
-	vid.recalc_refdef = 1;				// force a surface cache flush
+	oldgamma = v_gamma.value;
+	oldcontrast = v_contrast.value;
+	
+	BuildGammaTable (v_gamma.value, v_contrast.value);
+	vid.recalc_refdef = true;				// force a surface cache flush
 	
 	return true;
 }
-*/
 
 
 /*
@@ -476,10 +475,14 @@ Underwater, lava, etc each has a color shift
 */
 void V_SetContentsColor (int contents)
 {
+	if (!v_contentblend.value) {
+		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
+		return;
+	}
+	
 	switch (contents)
 	{
 	case CONTENTS_EMPTY:
-	case CONTENTS_SOLID:
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
 		break;
 	case CONTENTS_LAVA:
@@ -488,8 +491,11 @@ void V_SetContentsColor (int contents)
 	case CONTENTS_SLIME:
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_slime;
 		break;
-	default:
+	case CONTENTS_WATER:
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_water;
+		break;
+	default:
+		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
 	}
 }
 
@@ -498,7 +504,7 @@ void V_SetContentsColor (int contents)
 V_CalcPowerupCshift
 =============
 */
-void V_CalcPowerupCshift(void)
+void V_CalcPowerupCshift (void)
 {
 /*	if (cl.items & IT_QUAD)
 	{
@@ -575,12 +581,19 @@ void V_CalcBlend (void)
 
 	for (j=0 ; j<NUM_CSHIFTS ; j++)	
 	{
+		if (!gl_cshiftpercent.value)
+			continue;
+
+		//johnfitz -- only apply leaf contents color shifts during intermission
+		if (cl.intermission && j != CSHIFT_CONTENTS)
+			continue;
+
 		if(cl.cshifts[j].percent > 10000)
 		{ // Set percent for grayscale
 			cl.cshifts[j].percent = 80;
 		}
 
-		a2 = cl.cshifts[j].percent/255.0;
+		a2 = ((cl.cshifts[j].percent * gl_cshiftpercent.value) / 100.0) / 255.0;
 		if (!a2)
 			continue;
 		a = a + a2*(1-a);
@@ -601,42 +614,33 @@ void V_CalcBlend (void)
 		v_blend[3] = 0;
 }
 
-
-void	VID_ShiftPalette (byte *palette)
-{
-	extern	byte ramps[3][256];
-}
-
 /*
 =============
-V_UpdatePalette
+V_UpdateBlend
+
+cleaned up and renamed V_UpdatePalette
 =============
 */
-void V_UpdatePalette (void)
+void V_UpdateBlend (void)
 {
 	int		i, j;
-	qboolean	new;
-//	byte	*basepal, *newpal;
-//	byte	pal[768];
-//	float	r,g,b,a;
-//	int		ir, ig, ib;
-//	qboolean force;
+	qboolean	changed;
 
 	V_CalcPowerupCshift ();
 	
-	new = false;
+	changed = false;
 	
 	for (i=0 ; i<NUM_CSHIFTS ; i++)
 	{
 		if (cl.cshifts[i].percent != cl.prev_cshifts[i].percent)
 		{
-			new = true;
+			changed = true;
 			cl.prev_cshifts[i].percent = cl.cshifts[i].percent;
 		}
 		for (j=0 ; j<3 ; j++)
 			if (cl.cshifts[i].destcolor[j] != cl.prev_cshifts[i].destcolor[j])
 			{
-				new = true;
+				changed = true;
 				cl.prev_cshifts[i].destcolor[j] = cl.cshifts[i].destcolor[j];
 			}
 	}
@@ -650,57 +654,174 @@ void V_UpdatePalette (void)
 	cl.cshifts[CSHIFT_BONUS].percent -= host_frametime*100;
 	if (cl.cshifts[CSHIFT_BONUS].percent <= 0)
 		cl.cshifts[CSHIFT_BONUS].percent = 0;
-/*
-	force = V_CheckGamma ();
-	if (!new && !force)
-		return;
-*/
-	if (new)
+
+	if (changed)
 		V_CalcBlend ();
-/*
-	a = v_blend[3];
-	r = 255*v_blend[0]*a;
-	g = 255*v_blend[1]*a;
-	b = 255*v_blend[2]*a;
-
-	a = 1-a;
-	for (i=0 ; i<256 ; i++)
-	{
-		ir = i*a + r;
-		ig = i*a + g;
-		ib = i*a + b;
-		if (ir > 255)
-			ir = 255;
-		if (ig > 255)
-			ig = 255;
-		if (ib > 255)
-			ib = 255;
-
-		ramps[0][i] = gammatable[ir];
-		ramps[1][i] = gammatable[ig];
-		ramps[2][i] = gammatable[ib];
-	}
-
-	basepal = host_basepal;
-	newpal = pal;
-	
-	for (i=0 ; i<256 ; i++)
-	{
-		ir = basepal[0];
-		ig = basepal[1];
-		ib = basepal[2];
-		basepal += 3;
-		
-		newpal[0] = ramps[0][ir];
-		newpal[1] = ramps[1][ig];
-		newpal[2] = ramps[2][ib];
-		newpal += 3;
-	}
-
-	VID_ShiftPalette (pal);	
-*/
 }
 
+/*
+================
+V_UpdateGamma
+
+callback when the gamma/contrast cvar changes
+================
+*/
+void V_UpdateGamma (void)
+{
+	int		i;
+	byte	*basepal, *newpal;
+	byte	pal[768];
+	int		ir, ig, ib;
+	qboolean force;
+
+	force = V_CheckGamma ();
+	
+	if (force)
+	{
+		basepal = host_basepal;
+		newpal = pal;
+		
+		for (i=0 ; i<256 ; i++)
+		{
+			ir = basepal[0];
+			ig = basepal[1];
+			ib = basepal[2];
+			basepal += 3;
+			
+			newpal[0] = gammatable[ir];
+			newpal[1] = gammatable[ig];
+			newpal[2] = gammatable[ib];
+			newpal += 3;
+		}
+
+		V_ShiftPalette (pal);
+	}
+
+}
+
+void V_ShiftPalette (byte *palette)
+{
+	V_SetPalette (palette);
+	TexMgr_ReloadTextures ();
+	R_FastSkyColor ();
+}
+
+static void SetPaletteColor (unsigned int *dst, byte r, byte g, byte b, byte a)
+{
+	((byte *)dst)[0] = r;
+	((byte *)dst)[1] = g;
+	((byte *)dst)[2] = b;
+	((byte *)dst)[3] = a;
+}
+
+void V_SetPalette (byte *palette)
+{
+	byte *pal, *src;
+	int i;
+
+	pal = palette;
+	
+	//
+	// fill color tables
+	//
+	src = pal;
+	for (i = 0; i < 256; i++, src += 3)
+	{
+		// standard palette with alpha 255 for all colors
+		SetPaletteColor (&d_8to24table_opaque[i], src[0], src[1], src[2], 255);
+		if (GetBit (is_fullbright, i))
+		{
+			SetPaletteColor (&d_8to24table_fullbright[i], src[0], src[1], src[2], 255);
+			// nobright palette, fullbright indices (224-255) are black (for additive blending)
+			SetPaletteColor (&d_8to24table_nobright[i], 0, 0, 0, 255);
+		}
+		else
+		{
+			// fullbright palette, nobright indices (0-223) are black (for additive blending)
+			SetPaletteColor (&d_8to24table_fullbright[i], 0, 0, 0, 255);
+			SetPaletteColor (&d_8to24table_nobright[i], src[0], src[1], src[2], 255);
+		}
+	}
+	
+	// standard palette, 255 is transparent
+	memcpy (d_8to24table, d_8to24table_opaque, 256*4);
+	((byte *)&d_8to24table[255])[3] = 0;
+	
+	// fullbright palette, for holey textures (fence)
+	memcpy (d_8to24table_fullbright_holey, d_8to24table_fullbright, 256*4);
+	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
+	
+	// nobright palette, for holey textures (fence)
+	memcpy (d_8to24table_nobright_holey, d_8to24table_nobright, 256*4);
+	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
+	
+	// conchars palette, 0 and 255 are transparent
+	memcpy (d_8to24table_conchars, d_8to24table, 256*4);
+	((byte *)&d_8to24table_conchars[0])[3] = 0;
+}
+
+void V_SetOriginalPalette (void)
+{
+	byte *pal, *src;
+	int i;
+
+	pal = host_basepal;
+
+	//
+	// fill color table
+	//
+	src = pal;
+	for (i = 0; i < 256; i++, src += 3)
+	{
+		// standard palette - no transparency
+		SetPaletteColor (&d_8to24table_original[i], src[0], src[1], src[2], 255);
+	}
+
+	// keep original table untouched from palette shifting by gamma changes
+	// used in flood fill skin routine to detect black pixels
+}
+
+/*
+==================
+V_FindFullbrightColors
+ 
+Use colormap to determine which colors are fullbright
+instead of using a hardcoded index threshold of 224
+==================
+*/
+void V_FindFullbrightColors (void)
+{
+	byte *pal, *src;
+	byte *colormap;
+	int i, j, numfb;
+	
+	pal = host_basepal;
+	colormap = host_colormap;
+	
+	//
+	// find fullbright colors
+	//
+	memset (is_fullbright, 0, sizeof (is_fullbright));
+	numfb = 0;
+	src = pal;
+	for (i = 0; i < 256; i++, src += 3)
+	{
+		if (!src[0] && !src[1] && !src[2])
+			continue; // black can't be fullbright
+		
+		for (j = 1; j < 64; j++)
+			if (colormap[i + j * 256] != colormap[i])
+				break;
+		
+		if (j == 64)
+		{
+			SetBit (is_fullbright, i);
+			numfb++;
+		}
+	}
+	
+	Con_DPrintf ("Colormap has %d fullbright colors\n", numfb);
+}
 
 /* 
 ============================================================================== 
@@ -836,8 +957,11 @@ void V_CalcViewRoll (void)
 
 	if (v_dmg_time > 0)
 	{
-		r_refdef.viewangles[ROLL] += v_dmg_time/v_kicktime.value*v_dmg_roll;
-		r_refdef.viewangles[PITCH] += v_dmg_time/v_kicktime.value*v_dmg_pitch;
+		if (v_kicktime.value)
+		{
+			r_refdef.viewangles[ROLL] += v_dmg_time/v_kicktime.value*v_dmg_roll;
+			r_refdef.viewangles[PITCH] += v_dmg_time/v_kicktime.value*v_dmg_pitch;
+		}
 		v_dmg_time -= host_frametime;
 	}
 
@@ -846,8 +970,8 @@ void V_CalcViewRoll (void)
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 		return;
 	}
-}
 
+}
 
 /*
 ==================
@@ -872,15 +996,14 @@ void V_CalcIntermissionRefdef (void)
 
 // always idle in intermission
 	old = v_idlescale.value;
-	v_idlescale.value = 1;
+	Cvar_SetValue ("v_idlescale", 1);
 	V_AddIdle ();
-	v_idlescale.value = old;
+	Cvar_SetValue ("v_idlescale", old);
 }
 
 /*
 ==================
 V_CalcRefdef
-
 ==================
 */
 void V_CalcRefdef (void)
@@ -891,6 +1014,8 @@ void V_CalcRefdef (void)
 	vec3_t		angles;
 	float		bob;
 	static float oldz = 0;
+	static vec3_t punch = {0,0,0}; // GL lerped v_gunkick
+	float delta; // GL lerped v_gunkick
 
 	if (!cl.v.cameramode)
 	{		
@@ -906,8 +1031,9 @@ void V_CalcRefdef (void)
 
 // transform the view offset by the model's matrix to get the offset from
 // model origin for the view
-	ent->angles[YAW] = cl.viewangles[YAW];	// the model should face the view dir
-	ent->angles[PITCH] = -cl.viewangles[PITCH];	// the model should face the view dir
+	// JPG - viewangles -> lerpangles
+	ent->angles[YAW] = cl.lerpangles[YAW];	// the model should face the view dir
+	ent->angles[PITCH] = -cl.lerpangles[PITCH];	// the model should face the view dir
 	
 	if (cl.v.movetype != MOVETYPE_FLY)
 		bob = V_CalcBob ();
@@ -926,7 +1052,8 @@ void V_CalcRefdef (void)
 	r_refdef.vieworg[1] += 1.0/32;
 	r_refdef.vieworg[2] += 1.0/32;
 
-	VectorCopy (cl.viewangles, r_refdef.viewangles);
+	VectorCopy (cl.lerpangles, r_refdef.viewangles); // JPG - viewangles -> lerpangles
+
 	V_CalcViewRoll ();
 	V_AddIdle ();
 
@@ -945,7 +1072,7 @@ void V_CalcRefdef (void)
 	V_BoundOffsets ();
 		
 // set up gun position
-	VectorCopy (cl.viewangles, view->angles);
+	VectorCopy (cl.lerpangles, view->angles); // JPG - viewangles -> lerpangles
 	
 	CalcGunAngle ();
 
@@ -960,29 +1087,29 @@ void V_CalcRefdef (void)
 	}
 	view->origin[2] += bob;
 
-	
 // fudge position around to keep amount of weapon visible
 // roughly equal with different FOV
-
-	if (scr_viewsize.value == 110)
-		view->origin[2] += 1;
-	else if (scr_viewsize.value == 100)
+	if (scr_weaponsize.value == 100) // scr_viewsize
 		view->origin[2] += 2;
-	else if (scr_viewsize.value == 90)
+	else if (scr_weaponsize.value == 90) // scr_viewsize
 		view->origin[2] += 1;
-	else if (scr_viewsize.value == 80)
+	else if (scr_weaponsize.value == 80) // scr_viewsize
 		view->origin[2] += 0.5;
+	else if (scr_weaponsize.value == 70) // scr_viewsize
+		view->origin[2] += 0.25;
+	else if (scr_weaponsize.value == 60) // scr_viewsize
+		view->origin[2] += 0;
 
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];
 
 	if (!view->colorshade)
 	{
-		view->colormap = 0; //vid.colormap;
+		view->colormap = vid.colormap; //vid.colormap;
 	}
 	else
 	{
-		view->colormap = 0; //vid.colormap;
+		view->colormap = vid.colormap; //vid.colormap;
 	}
 
 	// Place weapon in powered up mode
@@ -992,7 +1119,22 @@ void V_CalcRefdef (void)
 		view->drawflags = (view->drawflags & MLS_MASKOUT) | 0;
 
 // set up the refresh position
-	VectorAdd (r_refdef.viewangles, cl.punchangle, r_refdef.viewangles);
+	if (v_gunkick.value) // lerped kick for GL
+	{
+		for (i=0; i<3; i++)
+			if (punch[i] != v_punchangles[0][i])
+			{
+				// speed determined by how far we need to lerp in 1/10th of a second
+				delta = (v_punchangles[0][i]-v_punchangles[1][i]) * host_frametime * 10;
+
+				if (delta > 0)
+					punch[i] = min(punch[i]+delta, v_punchangles[0][i]);
+				else if (delta < 0)
+					punch[i] = max(punch[i]+delta, v_punchangles[0][i]);
+			}
+
+		VectorAdd (r_refdef.viewangles, punch, r_refdef.viewangles);
+	}
 
 // smooth out stair step ups
 if (!cl.noclip_anglehack && cl.onground && ent->origin[2] - oldz > 0)
@@ -1028,8 +1170,6 @@ The player's clipping box goes from (-16 -16 -24) to (16 16 32) from
 the entity origin, so any view position inside that will be valid
 ==================
 */
-extern vrect_t	scr_vrect;
-
 void V_RenderView (void)
 {
 	if (con_forcedup)
@@ -1043,22 +1183,26 @@ void V_RenderView (void)
 		Cvar_Set ("scr_ofsz", "0");
 	}
 
+// intermission / finale rendering
 	if (cl.intermission)
-	{	// intermission / finale rendering
+	{
 		V_CalcIntermissionRefdef ();	
 	}
 	else
 	{
-		if (!cl.paused /* && (sv.maxclients > 1 || key_dest == key_game) */ )
 			V_CalcRefdef ();
 	}
-
-	R_PushDlights ();
 
 	R_RenderView ();
 }
 
-//============================================================================
+/*
+==============================================================================
+
+	INIT
+
+==============================================================================
+*/
 
 /*
 =============
@@ -1087,6 +1231,10 @@ void V_Init (void)
 
 	Cvar_RegisterVariable (&v_idlescale);
 	Cvar_RegisterVariable (&crosshair);
+	Cvar_RegisterVariable (&cl_crossx);
+	Cvar_RegisterVariable (&cl_crossy);
+	Cvar_RegisterVariable (&gl_cshiftpercent);
+	Cvar_RegisterVariable (&v_contentblend);
 
 	Cvar_RegisterVariable (&scr_ofsx);
 	Cvar_RegisterVariable (&scr_ofsy);
@@ -1100,10 +1248,10 @@ void V_Init (void)
 	Cvar_RegisterVariable (&v_kicktime);
 	Cvar_RegisterVariable (&v_kickroll);
 	Cvar_RegisterVariable (&v_kickpitch);	
-/*	
-	BuildGammaTable (1.0);	// no gamma yet
-	Cvar_RegisterVariable (&vid_gamma, NULL);
-*/
+	Cvar_RegisterVariable (&v_gunkick);	
+	
+	Cvar_RegisterVariableCallback (&v_gamma, V_UpdateGamma);
+	Cvar_RegisterVariableCallback (&v_contrast, V_UpdateGamma);
 }
 
 
