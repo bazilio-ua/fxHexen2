@@ -44,7 +44,7 @@ cvar_t	cl_bobup = {"cl_bobup","0.5", CVAR_NONE};
 cvar_t	v_kicktime = {"v_kicktime", "0.5", CVAR_NONE};
 cvar_t	v_kickroll = {"v_kickroll", "0.6", CVAR_NONE};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.6", CVAR_NONE};
-cvar_t	v_gunkick = {"v_gunkick", "1", CVAR_NONE}; //johnfitz
+cvar_t	v_gunkick = {"v_gunkick", "1", CVAR_ARCHIVE}; //johnfitz
 
 cvar_t	v_iyaw_cycle = {"v_iyaw_cycle", "2", CVAR_NONE};
 cvar_t	v_iroll_cycle = {"v_iroll_cycle", "0.5", CVAR_NONE};
@@ -1014,8 +1014,8 @@ void V_CalcRefdef (void)
 	vec3_t		angles;
 	float		bob;
 	static float oldz = 0;
-	static vec3_t punch = {0,0,0}; // GL lerped v_gunkick
-	float delta; // GL lerped v_gunkick
+	static vec3_t punchangle = {0,0,0}; //johnfitz -- lerped kick
+	float delta; //johnfitz -- lerped kick
 
 	if (!cl.v.cameramode)
 	{		
@@ -1119,25 +1119,27 @@ void V_CalcRefdef (void)
 		view->drawflags = (view->drawflags & MLS_MASKOUT) | 0;
 
 // set up the refresh position
-	if (v_gunkick.value) // lerped kick for GL
+	if (v_gunkick.value == 1) //original quake kick
+		VectorAdd (r_refdef.viewangles, cl.punchangle, r_refdef.viewangles);
+	else if (v_gunkick.value == 2) //johnfitz -- lerped kick
 	{
 		for (i=0; i<3; i++)
-			if (punch[i] != v_punchangles[0][i])
+			if (punchangle[i] != v_punchangles[0][i])
 			{
 				// speed determined by how far we need to lerp in 1/10th of a second
 				delta = (v_punchangles[0][i]-v_punchangles[1][i]) * host_frametime * 10;
 
 				if (delta > 0)
-					punch[i] = min(punch[i]+delta, v_punchangles[0][i]);
+					punchangle[i] = min(punchangle[i]+delta, v_punchangles[0][i]);
 				else if (delta < 0)
-					punch[i] = max(punch[i]+delta, v_punchangles[0][i]);
+					punchangle[i] = max(punchangle[i]+delta, v_punchangles[0][i]);
 			}
 
-		VectorAdd (r_refdef.viewangles, punch, r_refdef.viewangles);
+		VectorAdd (r_refdef.viewangles, punchangle, r_refdef.viewangles);
 	}
 
 // smooth out stair step ups
-if (!cl.noclip_anglehack && cl.onground && ent->origin[2] - oldz > 0)
+if (!cl.noclip_anglehack && cl.onground && ent->origin[2] - oldz > 0) //johnfitz -- added exception for noclip
 	//FIXME: noclip_anglehack is set on the server, so in a nonlocal game this won't work.
 {
 	float steptime;
@@ -1160,6 +1162,24 @@ else
 
 	if (chase_active.value)
 		Chase_Update ();
+}
+
+/*
+==================
+V_RestoreAngles
+
+Resets the viewentity angles to the last values received from the server
+(undoing the manual adjustments performed by V_CalcRefdef)
+==================
+*/
+void V_RestoreAngles (void)
+{
+	if (cls.demoplayback)
+	{
+		// Fix camera view angles (better way to do it?)
+		entity_t *ent = &cl_entities[cl.viewentity];
+		VectorCopy (ent->msg_angles[0], ent->angles);
+	}
 }
 
 /*
@@ -1248,7 +1268,7 @@ void V_Init (void)
 	Cvar_RegisterVariable (&v_kicktime);
 	Cvar_RegisterVariable (&v_kickroll);
 	Cvar_RegisterVariable (&v_kickpitch);	
-	Cvar_RegisterVariable (&v_gunkick);	
+	Cvar_RegisterVariable (&v_gunkick); //johnfitz
 	
 	Cvar_RegisterVariableCallback (&v_gamma, V_UpdateGamma);
 	Cvar_RegisterVariableCallback (&v_contrast, V_UpdateGamma);
