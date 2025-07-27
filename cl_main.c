@@ -851,9 +851,9 @@ void CL_Sensitivity_save_f (void)
 		return;
 	}
 
-	if (strcmpi(Cmd_Argv(1),"save") == 0)
+	if (strcasecmp(Cmd_Argv(1),"save") == 0)
 		save_sensitivity = sensitivity.value;
-	else if (strcmpi(Cmd_Argv(1),"restore") == 0)
+	else if (strcasecmp(Cmd_Argv(1),"restore") == 0)
 		Cvar_SetValue ("sensitivity", save_sensitivity);
 }
 /*

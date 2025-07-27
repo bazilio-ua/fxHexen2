@@ -163,7 +163,7 @@ int Datagram_SendMessage (qsocket_t *sock, sizebuf_t *data)
 
 	sock->canSend = false;
 
-	if (sock->landriver->Write(sock->socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
+	if (sock->landriver->Write(sock->net_socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
 		return -1;
 
 	sock->lastSendTime = net_time;
@@ -197,7 +197,7 @@ int SendMessageNext (qsocket_t *sock)
 
 	sock->sendNext = false;
 
-	if (sock->landriver->Write(sock->socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
+	if (sock->landriver->Write(sock->net_socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
 		return -1;
 
 	sock->lastSendTime = net_time;
@@ -231,7 +231,7 @@ int ReSendMessage (qsocket_t *sock)
 
 	sock->sendNext = false;
 
-	if (sock->landriver->Write(sock->socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
+	if (sock->landriver->Write(sock->net_socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
 		return -1;
 
 	sock->lastSendTime = net_time;
@@ -274,7 +274,7 @@ int Datagram_SendUnreliableMessage (qsocket_t *sock, sizebuf_t *data)
 	packetBuffer.sequence = BigLong(sock->unreliableSendSequence++);
 	memcpy (packetBuffer.data, data->data, data->cursize);
 
-	if (sock->landriver->Write(sock->socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
+	if (sock->landriver->Write(sock->net_socket, (byte *)&packetBuffer, packetLen, &sock->addr) == -1)
 		return -1;
 
 	packetsSent++;
@@ -297,7 +297,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 
 	while(1)
 	{	
-		length = sock->landriver->Read(sock->socket, (byte *)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
+		length = sock->landriver->Read(sock->net_socket, (byte *)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
 /*
 		// for testing packet loss effects
 		if ((rand() & 255) > 220)
@@ -416,7 +416,7 @@ int	Datagram_GetMessage (qsocket_t *sock)
 		{
 			packetBuffer.length = BigLong(NET_HEADERSIZE | NETFLAG_ACK);
 			packetBuffer.sequence = BigLong(sequence);
-			sock->landriver->Write(sock->socket, (byte *)&packetBuffer, NET_HEADERSIZE, &readaddr);
+			sock->landriver->Write(sock->net_socket, (byte *)&packetBuffer, NET_HEADERSIZE, &readaddr);
 
 			if (sequence != sock->receiveSequence)
 			{
@@ -1053,7 +1053,7 @@ void Datagram_Shutdown (void)
 
 void Datagram_Close (qsocket_t *sock)
 {
-	sock->landriver->CloseSocket(sock->socket);
+	sock->landriver->CloseSocket(sock->net_socket);
 }
 
 
@@ -1186,23 +1186,27 @@ static qsocket_t *_Datagram_CheckNewConnections (net_landriver_t *driver)
 
 		// find the search start location
 		prevCvarName = MSG_ReadString(net_message);
-		if (*prevCvarName)
-		{
-			var = Cvar_FindVar (prevCvarName);
-			if (!var)
-				return NULL;
-			var = var->next;
-		}
-		else
-			var = cvar_vars;
+		var = Cvar_NextServerVar(prevCvarName);
+		if (!var)
+			return NULL;
 
-		// search for the next server cvar
-		while (var)
-		{
-			if (var->server)
-				break;
-			var = var->next;
-		}
+//		if (*prevCvarName)
+//		{
+//			var = Cvar_FindVar (prevCvarName);
+//			if (!var)
+//				return NULL;
+//			var = var->next;
+//		}
+//		else
+//			var = cvar_vars;
+//
+//		// search for the next server cvar
+//		while (var)
+//		{
+//			if (var->server)
+//				break;
+//			var = var->next;
+//		}
 
 		// send the response
 
@@ -1291,7 +1295,7 @@ static qsocket_t *_Datagram_CheckNewConnections (net_landriver_t *driver)
 				// save space for the header, filled in later
 				MSG_WriteLong(net_message->message, 0);
 				MSG_WriteByte(net_message->message, CCREP_ACCEPT);
-				driver->GetSocketAddr(s->socket, &newaddr);
+				driver->GetSocketAddr(s->net_socket, &newaddr);
 				MSG_WriteLong(net_message->message, driver->GetSocketPort(&newaddr));
 				*((int *)net_message->message->data) = BigLong(NETFLAG_CTL | (net_message->message->cursize & NETFLAG_LENGTH_MASK));
 				driver->Write(acceptsock, net_message->message->data, net_message->message->cursize, &clientaddr);
@@ -1336,13 +1340,13 @@ static qsocket_t *_Datagram_CheckNewConnections (net_landriver_t *driver)
 		return NULL;
 	}
 
-	// connect to the client
-	if (driver->Connect (newsock, &clientaddr) == -1)
-	{
-		driver->CloseSocket(newsock);
-		NET_FreeQSocket(sock);
-		return NULL;
-	}
+//	// connect to the client
+//	if (driver->Connect (newsock, &clientaddr) == -1)
+//	{
+//		driver->CloseSocket(newsock);
+//		NET_FreeQSocket(sock);
+//		return NULL;
+//	}
 
 	// support for mods
 	sock->mod = mod;
@@ -1352,7 +1356,7 @@ static qsocket_t *_Datagram_CheckNewConnections (net_landriver_t *driver)
 		sock->net_wait = true; // NAT fix
 
 	// everything is allocated, just fill in the details	
-	sock->socket = newsock;
+	sock->net_socket = newsock;
 	sock->landriver = driver;
 	sock->addr = clientaddr;
 	strcpy(sock->address, driver->AddrToString(&clientaddr));
@@ -1536,12 +1540,12 @@ static qsocket_t *_Datagram_Connect (char *host, net_landriver_t *driver)
 	sock = NET_NewQSocket ();
 	if (sock == NULL)
 		goto ErrorReturn2;
-	sock->socket = newsock;
+	sock->net_socket = newsock;
 	sock->landriver = driver;
 
-	// connect to the host
-	if (driver->Connect(newsock, &sendaddr) == -1)
-		goto ErrorReturn;
+//	// connect to the host
+//	if (driver->Connect(newsock, &sendaddr) == -1)
+//		goto ErrorReturn;
 
 	// send the connection request
 	Con_Printf("trying...\n"); 
@@ -1686,17 +1690,17 @@ static qsocket_t *_Datagram_Connect (char *host, net_landriver_t *driver)
 			goto ErrorReturn;
 		driver->CloseSocket(newsock);
 		newsock = clientsock;
-		sock->socket = newsock;
+		sock->net_socket = newsock;
 	}
 
-	// switch the connection to the specified address
-	if (driver->Connect(newsock, &sock->addr) == -1)
-	{
-		reason = "Connect to Game failed";
-		Con_Printf("%s\n", reason);
-		strcpy(m_return_reason, reason);
-		goto ErrorReturn;
-	}
+//	// switch the connection to the specified address
+//	if (driver->Connect(newsock, &sock->addr) == -1)
+//	{
+//		reason = "Connect to Game failed";
+//		Con_Printf("%s\n", reason);
+//		strcpy(m_return_reason, reason);
+//		goto ErrorReturn;
+//	}
 
 	m_return_onerror = false;
 	return sock;

@@ -1080,7 +1080,7 @@ void PR_Profile_f(void)
 	do
 	{
 		tally = 0;
-		bestFile = Q_MAXINT;
+		bestFile = INT_MAX;
 		for(i = 0; i < progs->numfunctions; i++)
 		{
 			if(pr_functions[i].s_file > currentFile
@@ -1096,7 +1096,7 @@ void PR_Profile_f(void)
 			}
 		}
 		currentFile = bestFile;
-		if(tally && currentFile != Q_MAXINT)
+		if(tally && currentFile != INT_MAX)
 		{
 			if(*saveName)
 			{
@@ -1144,7 +1144,7 @@ void PR_Profile_f(void)
 				}
 			} while(bestFunc);
 		}
-	} while(currentFile != Q_MAXINT);
+	} while(currentFile != INT_MAX);
 	if(*saveName)
 	{
 		fclose(saveFile);

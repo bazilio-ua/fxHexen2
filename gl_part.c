@@ -164,13 +164,13 @@ void R_InitParticles (void)
 	particles = (particle_t *)
 			Hunk_AllocName (r_numparticles * sizeof(particle_t), "particles");
 
-	Cvar_RegisterVariable (&leak_color, NULL);
+	Cvar_RegisterVariable (&leak_color);
 
 	//JFM: snow test
-	Cvar_RegisterVariable (&snow_flurry, NULL);
-	Cvar_RegisterVariable (&snow_active, NULL);
+	Cvar_RegisterVariable (&snow_flurry);
+	Cvar_RegisterVariable (&snow_active);
 	
-	Cvar_RegisterVariable (&r_particles, R_Particles);
+	Cvar_RegisterVariableCallback (&r_particles, R_Particles);
 
 	R_InitParticleTextures ();
 }

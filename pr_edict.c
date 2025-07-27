@@ -291,7 +291,7 @@ dfunction_t *ED_FindFunctioni (char *name)
 	for (i=0 ; i<progs->numfunctions ; i++)
 	{
 		func = &pr_functions[i];
-		if (!strcmpi(pr_strings + func->s_name,name) )
+		if (!strcasecmp(pr_strings + func->s_name,name) )
 			return func;
 	}
 	return NULL;
@@ -938,12 +938,12 @@ if (!strcmp(com_token, "light"))
 		if (keyname[0] == '_')
 			continue;
 
-		if (strcmpi(keyname,"MIDI") == 0)
+		if (strcasecmp(keyname,"MIDI") == 0)
 		{
 			strcpy(sv.midi_name,com_token);
 			continue;
 		}
-		else if (strcmpi(keyname,"CD") == 0)
+		else if (strcasecmp(keyname,"CD") == 0)
 		{
 			sv.cd_track = (byte)atol(com_token);
 			continue;
@@ -1212,7 +1212,7 @@ void PR_LoadProgs (void)
 					while (*test == ' ')
 						test++;
 					strcpy(progname, test);
-					if (strcmpi(mapname, sv.name) == 0)
+					if (strcasecmp(mapname, sv.name) == 0)
 					{
 						strcpy(finalprogname, progname);
 						break;
@@ -1430,18 +1430,18 @@ void PR_Init (void)
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR_Profile_f);
 
-	Cvar_RegisterVariable (&nomonsters, NULL);
-	Cvar_RegisterVariable (&gamecfg, NULL);
-	Cvar_RegisterVariable (&scratch1, NULL);
-	Cvar_RegisterVariable (&scratch2, NULL);
-	Cvar_RegisterVariable (&scratch3, NULL);
-	Cvar_RegisterVariable (&scratch4, NULL);
-	Cvar_RegisterVariable (&savedgamecfg, NULL);
-	Cvar_RegisterVariable (&saved1, NULL);
-	Cvar_RegisterVariable (&saved2, NULL);
-	Cvar_RegisterVariable (&saved3, NULL);
-	Cvar_RegisterVariable (&saved4, NULL);
-	Cvar_RegisterVariable (&max_temp_edicts, NULL);
+	Cvar_RegisterVariable (&nomonsters);
+	Cvar_RegisterVariable (&gamecfg);
+	Cvar_RegisterVariable (&scratch1);
+	Cvar_RegisterVariable (&scratch2);
+	Cvar_RegisterVariable (&scratch3);
+	Cvar_RegisterVariable (&scratch4);
+	Cvar_RegisterVariable (&savedgamecfg);
+	Cvar_RegisterVariable (&saved1);
+	Cvar_RegisterVariable (&saved2);
+	Cvar_RegisterVariable (&saved3);
+	Cvar_RegisterVariable (&saved4);
+	Cvar_RegisterVariable (&max_temp_edicts);
 }
 
 

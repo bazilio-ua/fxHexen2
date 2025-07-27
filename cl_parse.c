@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "winquake.h"
 #endif
 
-extern	cvar_t	sv_flypitch;
-extern	cvar_t	sv_walkpitch;
+//extern	cvar_t	sv_flypitch;
+//extern	cvar_t	sv_walkpitch;
 extern 	cvar_t	bgmtype;
 
 char *svc_strings[] =
@@ -1407,7 +1407,7 @@ void CL_ParseServerMessage (void)
 		case svc_cdtrack:
 			cl.cdtrack = MSG_ReadByte (net_message);
 			cl.looptrack = MSG_ReadByte (net_message);
-			if (strcmpi(bgmtype.string,"cd") == 0)
+			if (strcasecmp(bgmtype.string,"cd") == 0)
 			{
 				if ( (cls.demoplayback || cls.demorecording) && (cls.forcetrack != -1) )
 					CDAudio_Play ((byte)cls.forcetrack, true);
@@ -1420,7 +1420,7 @@ void CL_ParseServerMessage (void)
 
 		case svc_midi_name:
 			strcpy(cl.midi_name, MSG_ReadString (net_message));
-			if (strcmpi(bgmtype.string,"midi") == 0)
+			if (strcasecmp(bgmtype.string,"midi") == 0)
 				MIDI_Play(cl.midi_name);
 			else 
 				MIDI_Stop();

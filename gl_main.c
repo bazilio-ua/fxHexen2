@@ -105,12 +105,12 @@ cvar_t	gl_smoothmodels = {"gl_smoothmodels","1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels","0"};
 cvar_t	gl_polyblend = {"gl_polyblend","1"};
 cvar_t	gl_flashblend = {"gl_flashblend","0"};
-cvar_t	gl_playermip = {"gl_playermip","0"};
+//cvar_t	gl_playermip = {"gl_playermip","0"};
 cvar_t	gl_nocolors = {"gl_nocolors","0"};
-cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","1",true};
-cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
+//cvar_t	gl_keeptjunctions = {"gl_keeptjunctions","1",true};
+//cvar_t	gl_reporttjunctions = {"gl_reporttjunctions","0"};
 
-cvar_t	gl_zfix = {"gl_zfix","0"}; // z-fighting fix
+//cvar_t	gl_zfix = {"gl_zfix","0"}; // z-fighting fix
 
 
 //extern	cvar_t	gl_ztrick;

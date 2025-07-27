@@ -184,10 +184,10 @@ void Sbar_Init(void)
 	Cmd_AddCommand("invoff", InvOff_f);
 	Cmd_AddCommand("toggle_dm", ToggleDM_f);
 
-	Cvar_RegisterVariable(&DMMode, NULL);
+	Cvar_RegisterVariable(&DMMode);
 
-	Cvar_RegisterVariable(&BarSpeed, NULL);
-	Cvar_RegisterVariable(&sbtemp, NULL);
+	Cvar_RegisterVariable(&BarSpeed);
+	Cvar_RegisterVariable(&sbtemp);
 
 	BarHeight = BarTargetHeight = BAR_TOP_HEIGHT;
 }
@@ -1086,7 +1086,7 @@ void FindName(char *which, char *name)
 		strncpy(test,pos,p2-pos);
 		test[p2-pos] = 0;
 
-		if (strcmpi(which,test) == 0)
+		if (strcasecmp(which,test) == 0)
 		{
 			pos = p2;
 			pos++;

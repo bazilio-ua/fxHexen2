@@ -26,7 +26,7 @@ server_static_t	svs;
 
 char	localmodels[MAX_MODELS][5];			// inline model names for precache
 
-cvar_t	sv_sound_distance = {"sv_sound_distance","800", true};
+cvar_t	sv_sound_distance = {"sv_sound_distance","800", true}; /* doesn't seem functional, but the hcode calls it */
 
 cvar_t	sv_update_player	= {"sv_update_player","1", true};
 cvar_t	sv_update_monsters	= {"sv_update_monsters","1", true};
@@ -85,27 +85,27 @@ void SV_Init (void)
 {
 	int		i;
 
-	Cvar_RegisterVariable (&sv_maxvelocity, NULL);
-	Cvar_RegisterVariable (&sv_gravity, NULL);
-	Cvar_RegisterVariable (&sv_friction, NULL);
-	Cvar_RegisterVariable (&sv_edgefriction, NULL);
-	Cvar_RegisterVariable (&sv_stopspeed, NULL);
-	Cvar_RegisterVariable (&sv_maxspeed, NULL);
-	Cvar_RegisterVariable (&sv_accelerate, NULL);
-	Cvar_RegisterVariable (&sv_idealpitchscale, NULL);
-	Cvar_RegisterVariable (&sv_idealrollscale, NULL);
-	Cvar_RegisterVariable (&sv_aim, NULL);
-	Cvar_RegisterVariable (&sv_nostep, NULL);
-	Cvar_RegisterVariable (&sv_walkpitch, NULL);
-	Cvar_RegisterVariable (&sv_flypitch, NULL);
+	Cvar_RegisterVariable (&sv_maxvelocity);
+	Cvar_RegisterVariable (&sv_gravity);
+	Cvar_RegisterVariable (&sv_friction);
+	Cvar_RegisterVariable (&sv_edgefriction);
+	Cvar_RegisterVariable (&sv_stopspeed);
+	Cvar_RegisterVariable (&sv_maxspeed);
+	Cvar_RegisterVariable (&sv_accelerate);
+	Cvar_RegisterVariable (&sv_idealpitchscale);
+	Cvar_RegisterVariable (&sv_idealrollscale);
+	Cvar_RegisterVariable (&sv_aim);
+	Cvar_RegisterVariable (&sv_nostep);
+	Cvar_RegisterVariable (&sv_walkpitch);
+	Cvar_RegisterVariable (&sv_flypitch);
 
-	Cvar_RegisterVariable (&sv_sound_distance, NULL);
-	Cvar_RegisterVariable (&sv_update_player, NULL);
-	Cvar_RegisterVariable (&sv_update_monsters, NULL);
-	Cvar_RegisterVariable (&sv_update_missiles, NULL);
-	Cvar_RegisterVariable (&sv_update_misc, NULL);
-	Cvar_RegisterVariable (&sv_ce_scale, NULL);
-	Cvar_RegisterVariable (&sv_ce_max_size, NULL);
+	Cvar_RegisterVariable (&sv_sound_distance);
+	Cvar_RegisterVariable (&sv_update_player);
+	Cvar_RegisterVariable (&sv_update_monsters);
+	Cvar_RegisterVariable (&sv_update_missiles);
+	Cvar_RegisterVariable (&sv_update_misc);
+	Cvar_RegisterVariable (&sv_ce_scale);
+	Cvar_RegisterVariable (&sv_ce_max_size);
 
 	Cmd_AddCommand ("sv_edicts", Sv_Edicts_f);
 	Cmd_AddCommand ("sv_protocol", &SV_SetProtocol_f);
@@ -344,7 +344,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	int			i;
 	int			ent;
 	
-	if (strcmpi(sample,"misc/null.wav") == 0)
+	if (strcasecmp(sample,"misc/null.wav") == 0)
 	{
 		SV_StopSound(entity,channel);
 		return;

@@ -112,7 +112,7 @@ qsocket_t *NET_NewQSocket (void)
 	sock->connecttime = net_time;
 	strcpy(sock->address, "UNSET ADDRESS");
 	sock->driver = net_driver;
-	sock->socket = 0;
+	sock->net_socket = 0;
 	sock->driverdata = NULL;
 	sock->canSend = true;
 	sock->sendNext = false;
@@ -650,12 +650,18 @@ qboolean NET_CanSendMessage (qsocket_t *sock)
 }
 
 
-int NET_SendToAll(sizebuf_t *data, int blocktime)
-{
-	return NET_SendToAll2 (data, blocktime, false);
-}
+//int NET_SendToAll(sizebuf_t *data, int blocktime)
+//{
+//	return NET_SendToAll2 (data, blocktime, false);
+//}
+/*
+==================
+NET_SendToAll
 
-int NET_SendToAll2 (sizebuf_t *data, int blocktime, qboolean nolocals)
+added nolocals parameter
+==================
+*/
+int NET_SendToAll (sizebuf_t *data, int blocktime, qboolean nolocals)
 {
 	double		start;
 	int			i;
@@ -777,12 +783,12 @@ void NET_Init (void)
 	// allocate space for network message buffer
 	SZ_Alloc (&_net_message_message, NET_MAXMESSAGE);
 
-	Cvar_RegisterVariable (&net_messagetimeout, NULL);
-	Cvar_RegisterVariable (&net_connecttimeout, NULL); // qkick/qflood protection
-	Cvar_RegisterVariable (&hostname, NULL);
-	Cvar_RegisterVariable (&pq_password, NULL); // password protection for server
-	Cvar_RegisterVariable (&rcon_password, NULL); // rcon password
-	Cvar_RegisterVariable (&rcon_server, NULL); // rcon server
+	Cvar_RegisterVariable (&net_messagetimeout);
+	Cvar_RegisterVariable (&net_connecttimeout); // qkick/qflood protection
+	Cvar_RegisterVariable (&hostname);
+	Cvar_RegisterVariable (&pq_password); // password protection for server
+	Cvar_RegisterVariable (&rcon_password); // rcon password
+	Cvar_RegisterVariable (&rcon_server); // rcon server
 
 	Cmd_AddCommand ("slist", NET_Slist_f);
 	Cmd_AddCommand ("listen", NET_Listen_f);

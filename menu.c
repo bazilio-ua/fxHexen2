@@ -611,7 +611,7 @@ void ScrollTitle (char *name)
 		}
 	}
 
-	if (strcmpi(LastName,name) != 0 && TitleTargetPercent != 0) 
+	if (strcasecmp(LastName,name) != 0 && TitleTargetPercent != 0)
 		TitleTargetPercent = 0;
 
     if (CanSwitch) 
@@ -1689,14 +1689,14 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("sensitivity", sensitivity.value);
 		break;
 	case OPT_MUSICTYPE: // bgm type
-		if (strcmpi(bgmtype.string,"midi") == 0)
+		if (strcasecmp(bgmtype.string,"midi") == 0)
 		{
 			if (dir < 0)
 				Cvar_Set("bgmtype","none");
 			else
 				Cvar_Set("bgmtype","cd");
 		}
-		else if (strcmpi(bgmtype.string,"cd") == 0)
+		else if (strcasecmp(bgmtype.string,"cd") == 0)
 		{
 			if (dir < 0)
 				Cvar_Set("bgmtype","midi");
@@ -1811,9 +1811,9 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 60+(5*8), r);
 
 	M_Print (16, 60+(6*8), "            Music Type");
-	if (strcmpi(bgmtype.string,"midi") == 0)
+	if (strcasecmp(bgmtype.string,"midi") == 0)
 		M_Print (220, 60+(6*8), "MIDI");
-	else if (strcmpi(bgmtype.string,"cd") == 0)
+	else if (strcasecmp(bgmtype.string,"cd") == 0)
 		M_Print (220, 60+(6*8), "CD");
 	else
 		M_Print (220, 60+(6*8), "None");

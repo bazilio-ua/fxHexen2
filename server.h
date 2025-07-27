@@ -276,6 +276,8 @@ typedef struct client_s
 extern	cvar_t	sv_maxvelocity;
 extern	cvar_t	sv_gravity;
 extern	cvar_t	sv_nostep;
+extern	cvar_t	sv_walkpitch;
+extern	cvar_t	sv_flypitch;
 extern	cvar_t	sv_friction;
 extern	cvar_t	sv_waterfriction;
 extern	cvar_t	sv_edgefriction;
@@ -287,6 +289,7 @@ extern	cvar_t	sv_airaccelerate;
 extern	cvar_t	sv_q2airaccelerate;
 extern	cvar_t	sv_wateraccelerate;
 extern	cvar_t	sv_idealpitchscale;
+extern	cvar_t	sv_idealrollscale;
 extern	cvar_t	sv_aim;
 extern	cvar_t	sv_altnoclip;
 extern	cvar_t	sv_touchnoclip;

@@ -4,12 +4,12 @@
 
 #include "quakedef.h"
 
-#include <windows.h>
+//#include <windows.h>
 #include <time.h>
 
 extern cvar_t	pausable;
-extern	cvar_t	sv_flypitch;
-extern	cvar_t	sv_walkpitch;
+//extern	cvar_t	sv_flypitch;
+//extern	cvar_t	sv_walkpitch;
 
 int	current_skill;
 static double		old_time;
@@ -22,7 +22,7 @@ void RestoreClients(void);
 // EER1
 void R_ClearParticles (void);
 
-UINT	info_mask, info_mask2;
+unsigned int	info_mask, info_mask2;
 
 #define TESTSAVE
 
@@ -350,7 +350,7 @@ void Host_Restart_f (void)
 	strcpy (mapname, sv.name);	// must copy out, because it gets cleared
 	strcpy(startspot, sv.startspot);
 
-	if (Cmd_Argc() == 2 && strcmpi(Cmd_Argv(1),"restore") == 0)
+	if (Cmd_Argc() == 2 && strcasecmp(Cmd_Argv(1),"restore") == 0)
 	{
 		if (LoadGamestate (mapname, startspot, 3))
 		{
@@ -1799,7 +1799,7 @@ void Host_Create_f(void)
 		for (i=0 ; i<progs->numfunctions ; i++)
 		{
 			Search = &pr_functions[i];
-			if (!_strnicmp(pr_strings + Search->s_name,FindName,Length) )
+			if (!strncasecmp(pr_strings + Search->s_name,FindName,Length) )
 			{
 				if (NumFound == 1)
 				{
