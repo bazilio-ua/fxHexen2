@@ -1007,6 +1007,9 @@ void TexMgr_Init (void)
 	free_gltextures[i].next = NULL;
 	numgltextures = 0;
 
+	for(i=0;i<MAX_EXTRA_TEXTURES;i++)
+		gl_extra_textures[i] = NULL;
+
 	// palette
 	TexMgr_LoadPalette ();
 	
