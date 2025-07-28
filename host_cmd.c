@@ -422,7 +422,7 @@ LOAD / SAVE GAME
 #define ShortTime "%m/%d/%Y %H:%M"
 
 
-char	name[MAX_OSPATH],dest[MAX_OSPATH],tempdir[MAX_OSPATH];
+char	savename[MAX_OSPATH],savedest[MAX_OSPATH],tempdir[MAX_OSPATH];
 
 /*
 ===============
@@ -521,28 +521,31 @@ void Host_Savegame_f (void)
 retry:
 	attempts++;
 
-	sprintf (name, "%s/%s", com_savedir, Cmd_Argv(1));
-	Sys_mkdir (name);
+	sprintf (savename, "%s/%s", com_savedir, Cmd_Argv(1));
+	Sys_mkdir (savename);
 
-	CL_RemoveGIPFiles(name);
+	CL_RemoveGIPFiles(savename);
 
-	i = GetTempPath(sizeof(tempdir),tempdir);
-	if (!i) 
+	//TODO: Sys_GetTempPath?
+	//FIXME: do we really need the tempdir?
+//	i = GetTempPath(sizeof(tempdir),tempdir);
+//	if (!i) 
 	{
 		sprintf(tempdir,"%s\\",com_savedir);
 	}
 
-	sprintf (name, "%sclients.gip",tempdir);
-	DeleteFile(name);
+	sprintf (savename, "%sclients.gip",tempdir);
+//	DeleteFile(savename);
+	Sys_unlink(savename);
 
-	sprintf (name, "%s*.gip", tempdir);
-	sprintf (dest, "%s/%s/",com_savedir, Cmd_Argv(1));
-	Con_Printf ("Saving game to %s...\n", dest);
+	sprintf (savename, "%s*.gip", tempdir);
+	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
+	Con_Printf ("Saving game to %s...\n", savedest);
 
-	error_state = CL_CopyFiles(tempdir, name, dest);
+	error_state = CL_CopyFiles(tempdir, savename, savedest);
 
-	sprintf(dest,"%s/%s/info.dat",com_savedir, Cmd_Argv(1));
-	f = fopen (dest, "w");
+	sprintf(savedest,"%s/%s/info.dat",com_savedir, Cmd_Argv(1));
+	f = fopen (savedest, "w");
 	if (!f)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
@@ -622,19 +625,19 @@ void Host_Loadgame_f (void)
 	CL_Disconnect();
 	CL_RemoveGIPFiles(NULL);
 
-	sprintf (name, "%s/%s", com_savedir, Cmd_Argv(1));
+	sprintf (savename, "%s/%s", com_savedir, Cmd_Argv(1));
 
-	Con_Printf ("Loading game from %s...\n", name);
+	Con_Printf ("Loading game from %s...\n", savename);
 
-	i = GetTempPath(sizeof(tempdir),tempdir);
-	if (!i) 
+//	i = GetTempPath(sizeof(tempdir),tempdir);
+//	if (!i) 
 	{
 		sprintf(tempdir,"%s\\",com_savedir);
 	}
 
-	sprintf(dest,"%s/info.dat",name);
+	sprintf(savedest,"%s/info.dat",savename);
 
-	f = fopen (dest, "r");
+	f = fopen (savedest, "r");
 	if (!f)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
@@ -705,11 +708,11 @@ void Host_Loadgame_f (void)
 	retry:
 	attempts++;
 
-	sprintf (name, "%s/%s/*.gip", com_savedir, Cmd_Argv(1));
-	sprintf (dest, "%s/%s/",com_savedir, Cmd_Argv(1));
+	sprintf (savename, "%s/%s/*.gip", com_savedir, Cmd_Argv(1));
+	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
 	strcat(tempdir,"/");
 
-	error_state = CL_CopyFiles(dest, name, tempdir);
+	error_state = CL_CopyFiles(savedest, savename, tempdir);
 
 	if (error_state)
 	{
@@ -767,8 +770,8 @@ retry:
 
 	attempts++;
 
-	i = GetTempPath(sizeof(tempdir),tempdir);
-	if (!i) 
+//	i = GetTempPath(sizeof(tempdir),tempdir);
+//	if (!i) 
 	{
 		sprintf(tempdir,"%s\\",com_savedir);
 	}
@@ -778,19 +781,19 @@ retry:
 		start = 1;
 		end = svs.maxclients+1;
 
-		sprintf (name, "%sclients.gip",tempdir);
+		sprintf (savename, "%sclients.gip",tempdir);
 	}
 	else
 	{
 		start = 1;
 		end = sv.num_edicts;
 
-		sprintf (name, "%s%s.gip", tempdir, sv.name);
+		sprintf (savename, "%s%s.gip", tempdir, sv.name);
 		
 //		Con_Printf ("Saving game to %s...\n", name);
 	}
 
-	f = fopen (name, "w");
+	f = fopen (savename, "w");
 	if (!f)
 	{
 		Con_Printf ("ERROR: couldn't open.\n");
@@ -943,25 +946,25 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 //	float	spawn_parms[NUM_SPAWN_PARMS];
 	qboolean auto_correct = false;
 
-	i = GetTempPath(sizeof(tempdir),tempdir);
-	if (!i) 
+//	i = GetTempPath(sizeof(tempdir),tempdir);
+//	if (!i) 
 	{
 		sprintf(tempdir,"%s\\",com_savedir);
 	}
 
 	if (ClientsMode == 1)
 	{
-		sprintf (name, "%sclients.gip",tempdir);
+		sprintf (savename, "%sclients.gip",tempdir);
 	}
 	else
 	{
-		sprintf (name, "%s%s.gip", tempdir, level);
+		sprintf (savename, "%s%s.gip", tempdir, level);
 	
 		if (ClientsMode != 2 && ClientsMode != 3)
-			Con_Printf ("Loading game from %s...\n", name);
+			Con_Printf ("Loading game from %s...\n", savename);
 	}
 
-	f = fopen (name, "r");
+	f = fopen (savename, "r");
 	if (!f)
 	{
 		if (ClientsMode == 2)

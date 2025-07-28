@@ -32,3 +32,4 @@ void M_PrintWhite (int cx, int cy, char *str);
 void M_DrawTransPic (int x, int y, qpic_t *pic);
 void ScrollTitle (char *name);
 
+void M_Menu_Quit_f (void);

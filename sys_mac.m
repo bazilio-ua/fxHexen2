@@ -56,6 +56,39 @@ void Sys_mkdir (char *path)
 	} 
 }
 
+void Sys_rmdir (char *path)
+{
+	int rc = rmdir(path);
+	
+	if (rc != 0)
+	{
+		rc = errno;
+		Con_Error("Unable to remove directory file %s: %s", path, strerror(rc)); // Sys_Error?
+	}
+}
+
+void Sys_unlink (char *path)
+{
+	int rc = unlink(path);
+	
+	if (rc != 0)
+	{
+		rc = errno;
+		Con_Error("Unable to remove directory entry %s: %s", path, strerror(rc)); // Sys_Error?
+	}
+}
+
+void Sys_rename (char *oldp, char *newp)
+{
+	int rc = rename(oldp, newp);
+	
+	if (rc != 0)
+	{
+		rc = errno;
+		Con_Error("Unable to rename file %s to %s: %s", oldp, newp, strerror(rc)); // Sys_Error?
+	}
+}
+
 /*
 ================
 Sys_ScanDirList

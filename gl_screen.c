@@ -438,13 +438,13 @@ SCR_Init
 */
 void SCR_Init (void)
 {
-	Cvar_RegisterVariable (&scr_fov, NULL);
-	Cvar_RegisterVariable (&scr_viewsize, NULL);
-	Cvar_RegisterVariable (&scr_conspeed, NULL);
-	Cvar_RegisterVariable (&scr_showturtle, NULL);
-	Cvar_RegisterVariable (&scr_showpause, NULL);
-	Cvar_RegisterVariable (&scr_centertime, NULL);
-	Cvar_RegisterVariable (&scr_printspeed, NULL);
+	Cvar_RegisterVariable (&scr_fov);
+	Cvar_RegisterVariable (&scr_viewsize);
+	Cvar_RegisterVariable (&scr_conspeed);
+	Cvar_RegisterVariable (&scr_showturtle);
+	Cvar_RegisterVariable (&scr_showpause);
+	Cvar_RegisterVariable (&scr_centertime);
+	Cvar_RegisterVariable (&scr_printspeed);
 
 //
 // register our commands
@@ -833,8 +833,17 @@ Displays a text string in the center of the screen and waits for a Y or N
 keypress.  
 ==================
 */
+#define MODAL_TIMEOUT 0.0f
+
 int SCR_ModalMessage (char *text)
 {
+	return SCR_ModalMessageTimeout(text, MODAL_TIMEOUT);
+}
+
+int SCR_ModalMessageTimeout (char *text, float timeout) //johnfitz -- timeout
+{
+	double time1, time2; //johnfitz -- timeout
+
 	if (cls.state == ca_dedicated)
 		return true;
 
@@ -848,14 +857,27 @@ int SCR_ModalMessage (char *text)
 	
 	S_ClearBuffer ();		// so dma doesn't loop current sound
 
+	time1 = Sys_DoubleTime () + timeout; //johnfitz -- timeout
+	time2 = 0.0f; //johnfitz -- timeout
+
 	do
 	{
 		key_count = -1;		// wait for a key down and up
 		IN_ProcessEvents ();
-	} while (key_lastpress != 'y' && key_lastpress != 'n' && key_lastpress != K_ESCAPE);
+		if (timeout)
+			time2 = Sys_DoubleTime (); //johnfitz -- zero timeout means wait forever.
+	} while (key_lastpress != 'y' &&
+		key_lastpress != 'n' &&
+		key_lastpress != K_ESCAPE &&
+		time2 <= time1);
 
 	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
+
+	//johnfitz -- timeout
+	if (time2 > time1)
+		return false;
+	//johnfitz
 
 	return key_lastpress == 'y';
 }
