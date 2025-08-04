@@ -43,7 +43,7 @@ Memory is cleared / released when a server or client begins, not when they end.
 
 void Host_WriteConfiguration (char *configname);
 
-quakeparms_t host_parms;
+quakeparms_t *host_parms;
 
 qboolean	host_initialized;		// true if into command execution
 
@@ -249,31 +249,31 @@ void Host_InitLocal (void)
 
 	Cmd_AddCommand ("saveconfig", Host_SaveConfig_f);
 
-	Cvar_RegisterVariable (&host_framerate, NULL);
-	Cvar_RegisterVariable (&host_timescale, NULL);
-	Cvar_RegisterVariable (&host_speeds, NULL);
-	Cvar_RegisterVariable (&host_maxfps, NULL);
+	Cvar_RegisterVariable (&host_framerate);
+	Cvar_RegisterVariable (&host_timescale);
+	Cvar_RegisterVariable (&host_speeds);
+	Cvar_RegisterVariable (&host_maxfps);
 
-	Cvar_RegisterVariable (&sys_ticrate, NULL);
-	Cvar_RegisterVariable (&serverprofile, NULL);
+	Cvar_RegisterVariable (&sys_ticrate);
+	Cvar_RegisterVariable (&serverprofile);
 
-	Cvar_RegisterVariable (&fraglimit, NULL);
-	Cvar_RegisterVariable (&timelimit, NULL);
-	Cvar_RegisterVariable (&teamplay, NULL);
-	Cvar_RegisterVariable (&samelevel, NULL);
-	Cvar_RegisterVariable (&noexit, NULL);
-	Cvar_RegisterVariable (&skill, NULL);
-	Cvar_RegisterVariable (&deathmatch, NULL);
-	Cvar_RegisterVariable (&randomclass, NULL);
-	Cvar_RegisterVariable (&coop, NULL);
+	Cvar_RegisterVariable (&fraglimit);
+	Cvar_RegisterVariable (&timelimit);
+	Cvar_RegisterVariable (&teamplay);
+	Cvar_RegisterVariable (&samelevel);
+	Cvar_RegisterVariable (&noexit);
+	Cvar_RegisterVariable (&skill);
+	Cvar_RegisterVariable (&deathmatch);
+	Cvar_RegisterVariable (&randomclass);
+	Cvar_RegisterVariable (&coop);
 
-	Cvar_RegisterVariable (&pausable, NULL);
+	Cvar_RegisterVariable (&pausable);
 
-	Cvar_RegisterVariable (&developer, NULL);
+	Cvar_RegisterVariable (&developer);
 	if (COM_CheckParm("-developer"))
 		Cvar_SetValue ("developer", 1);
 
-	Cvar_RegisterVariable (&temp1, NULL);
+	Cvar_RegisterVariable (&temp1);
 
 	Host_FindMaxClients ();
 	
@@ -514,7 +514,7 @@ void Host_ShutdownServer (qboolean crash)
 	buf.cursize = 0;
 
 	MSG_WriteByte(&buf, svc_disconnect);
-	count = NET_SendToAll(&buf, 5);
+	count = NET_SendToAll(&buf, 5, false);
 	if (count)
 		Con_Printf("Host_ShutdownServer: NET_SendToAll failed for %u clients\n", count);
 
@@ -837,7 +837,7 @@ void Host_Frame (double time)
 Host_Init
 ====================
 */
-void Host_Init (quakeparms_t *parms)
+void Host_Init (void)
 {
 	if (!portals)
 		minimum_memory = MINIMUM_MEMORY;
@@ -845,17 +845,17 @@ void Host_Init (quakeparms_t *parms)
 		minimum_memory = MINIMUM_MEMORY_LEVELPAK;
 
 	if (COM_CheckParm ("-minmemory"))
-		parms->memsize = minimum_memory;
+		host_parms->memsize = minimum_memory;
 
-	host_parms = *parms;
+//	host_parms = *parms;
 
-	if (parms->memsize < minimum_memory)
-		Sys_Error ("Only %4.1f megs of memory available, can't execute game", parms->memsize / (float)0x100000);
+	if (host_parms->memsize < minimum_memory)
+		Sys_Error ("Only %4.1f megs of memory available, can't execute game", host_parms->memsize / (float)0x100000);
 
-	com_argc = parms->argc;
-	com_argv = parms->argv;
+	com_argc = host_parms->argc;
+	com_argv = host_parms->argv;
 
-	Memory_Init (parms->membase, parms->memsize);
+	Memory_Init (host_parms->membase, host_parms->memsize);
 	Cbuf_Init ();
 	Cmd_Init ();
 	Cvar_Init ();
@@ -870,7 +870,7 @@ void Host_Init (quakeparms_t *parms)
 	Con_Init ();
 
 	Con_Printf ("Compiled: "__TIME__" "__DATE__"\n");
-	Con_Printf ("%4.1f megabyte heap\n", parms->memsize / (1024*1024.0));
+	Con_Printf ("%4.1f megabyte heap\n", host_parms->memsize / (1024*1024.0));
 
 	M_Init ();
 	PR_Init ();
@@ -879,7 +879,8 @@ void Host_Init (quakeparms_t *parms)
 	SV_Init ();
 
 	R_InitTextures ();		// needed even for dedicated servers
-	R_LoadPalette ();
+//	R_LoadPalette ();
+	Host_LoadPalettes ();
  
 	if (cls.state != ca_dedicated)
 	{
@@ -941,7 +942,7 @@ void Host_Shutdown(void)
 	scr_disabled_for_loading = true;
 
 	Host_WriteConfiguration ("config.cfg"); 
-	History_Close ();
+	History_Shutdown ();
 	NET_Shutdown ();
 
 	if (cls.state != ca_dedicated)

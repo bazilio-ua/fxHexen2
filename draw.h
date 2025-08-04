@@ -32,4 +32,4 @@ qpic_t *Draw_CachePicNoTrans (char *path);
 qpic_t *Draw_CachePicResize (char *path, int targetWidth, int targetHeight);
 
 void D_ShowLoadingSize (void);
-
+int M_DrawBigCharacter (int x, int y, int num, int numnext);

@@ -60,9 +60,9 @@ Mod_Init
 */
 void Mod_Init (void)
 {
-	Cvar_RegisterVariable (&external_lit, NULL);
-	Cvar_RegisterVariable (&external_vis, NULL);
-	Cvar_RegisterVariable (&external_ent, NULL);
+	Cvar_RegisterVariable (&external_lit);
+	Cvar_RegisterVariable (&external_vis);
+	Cvar_RegisterVariable (&external_ent);
 
 	memset (mod_novis, 0xff, sizeof(mod_novis));
 }
@@ -383,7 +383,7 @@ void Mod_LoadTextures (lump_t *l)
 	dmiptexlump_t *m;
 	char		texturename[64];
 	int			nummiptex;
-	unsigned	offset;
+	uintptr_t	offset;
 	int			mark;
 	char		texname[16 + 1];
 
@@ -426,8 +426,9 @@ void Mod_LoadTextures (lump_t *l)
 		memcpy ( tx+1, mt+1, pixels);
 
 		tx->update_warp = false;
-		tx->warpimage = NULL;
-		tx->fullbright = NULL;
+		tx->warpbase = NULL;
+		tx->warpglow = NULL;
+		tx->glow = NULL;
 
 		if (cls.state != ca_dedicated) // no texture uploading for dedicated server
 		{
@@ -441,34 +442,34 @@ void Mod_LoadTextures (lump_t *l)
 				mark = Hunk_LowMark();
 
 				sprintf (texturename, "%s:%s", loadmodel->name, tx->name);
-				offset = (unsigned)(mt+1) - (unsigned)mod_base;
-				tx->gltexture = GL_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_NONE);
+				offset = (uintptr_t)(mt+1) - (uintptr_t)mod_base;
+				tx->base = TexMgr_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_NONE);
 
 				// now create the warpimage, using dummy data to create the initial image
 //				dummy = malloc (gl_warpimage_size*gl_warpimage_size*4);
 				//now create the warpimage, using dummy data from the hunk to create the initial image
-				Hunk_Alloc (gl_warpimage_size*gl_warpimage_size*4); //make sure hunk is big enough so we don't reach an illegal address
+				Hunk_Alloc (warpimage_size*warpimage_size*4); //make sure hunk is big enough so we don't reach an illegal address
 				Hunk_FreeToLowMark (mark);
 				sprintf (texturename, "%s_warp", texturename);
 //				tx->warpimage = GL_LoadTexture (loadmodel, texturename, gl_warpimage_size, gl_warpimage_size, SRC_RGBA /* SRC_INDEXED */, dummy, "", (unsigned)dummy, TEXPREF_NOPICMIP | TEXPREF_WARPIMAGE);
-				tx->warpimage = GL_LoadTexture (loadmodel, texturename, gl_warpimage_size, gl_warpimage_size, SRC_RGBA /* SRC_INDEXED */, hunk_base, "", (unsigned)hunk_base, TEXPREF_NOPICMIP | TEXPREF_WARPIMAGE);
+				tx->warpbase = TexMgr_LoadTexture (loadmodel, texturename, warpimage_size, warpimage_size, SRC_RGBA /* SRC_INDEXED */, hunk_base, "", (uintptr_t)hunk_base, TEXPREF_NOPICMIP | TEXPREF_WARPIMAGE);
 				tx->update_warp = true;
 //				free (dummy);
 			}
 			else // regular texture
 			{
-				offset = (unsigned)(mt+1) - (unsigned)mod_base;
+				offset = (uintptr_t)(mt+1) - (uintptr_t)mod_base;
 				if (IsFullbright ((byte *)(tx+1), pixels))
 				{
 					sprintf (texturename, "%s:%s", loadmodel->name, tx->name);
-					tx->gltexture = GL_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP | TEXPREF_NOBRIGHT);
+					tx->base = TexMgr_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP | TEXPREF_NOBRIGHT);
 					sprintf (texturename, "%s:%s_glow", loadmodel->name, tx->name);
-					tx->fullbright = GL_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP | TEXPREF_FULLBRIGHT);
+					tx->glow = TexMgr_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP | TEXPREF_FULLBRIGHT);
 				}
 				else
 				{
 					sprintf (texturename, "%s:%s", loadmodel->name, tx->name);
-					tx->gltexture = GL_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP);
+					tx->base = TexMgr_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP);
 				}
 			}
 		}
@@ -1120,8 +1121,8 @@ void Mod_LoadNodes (lump_t *l)
 	{
 		for (j=0 ; j<3 ; j++)
 		{
-			out->minmaxs[j] = LittleShort (in->mins[j]);
-			out->minmaxs[3+j] = LittleShort (in->maxs[j]);
+			out->mins[j] = LittleShort (in->mins[j]);
+			out->maxs[j] = LittleShort (in->maxs[j]);
 		}
 	
 		p = LittleLong(in->planenum);
@@ -1178,8 +1179,8 @@ void Mod_LoadLeafs (lump_t *l)
 	{
 		for (j=0 ; j<3 ; j++)
 		{
-			out->minmaxs[j] = LittleShort (in->mins[j]);
-			out->minmaxs[3+j] = LittleShort (in->maxs[j]);
+			out->mins[j] = LittleShort (in->mins[j]);
+			out->maxs[j] = LittleShort (in->maxs[j]);
 		}
 
 		p = LittleLong(in->contents);
@@ -1692,7 +1693,7 @@ do { \
 	else if (pos[off] != 255) fdc = pos[off]; \
 } while (0)
 
-void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight )
+void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight, char *name )
 {
 	byte				fillcolor = *skin; // assume this is the pixel to fill
 	floodfill_t			fifo[FLOODFILL_FIFO_SIZE];
@@ -1763,7 +1764,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype, int mdl_flags
 	char	skinname[64];
 	byte	*skin;
 	unsigned		texture_mode;
-	unsigned				offset; //johnfitz
+	uintptr_t				offset; //johnfitz
 	
 	skin = (byte *)(pskintype + 1);
 
@@ -1773,7 +1774,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype, int mdl_flags
 	size = pheader->skinwidth * pheader->skinheight;
 	for (i=0 ; i<numskins ; i++)
 	{
-		Mod_FloodFillSkin( skin, pheader->skinwidth, pheader->skinheight );
+		Mod_FloodFillSkin( skin, pheader->skinwidth, pheader->skinheight, loadmodel->name );
 
 		// save 8 bit texels for the player model to remap
 		if (!strcmp(loadmodel->name, "models/paladin.mdl"))
@@ -1817,20 +1818,33 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype, int mdl_flags
 		else
 			texture_mode = TEXPREF_NONE; // 0
 
-		offset = (unsigned)(pskintype+1) - (unsigned)mod_base;
+		offset = (uintptr_t)(pskintype+1) - (uintptr_t)mod_base;
 		if (IsFullbright ((byte *)(pskintype+1), size))
 		{
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
-			pheader->gltexture[i] = GL_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype+1), loadmodel->name, offset, TEXPREF_PAD | TEXPREF_NOBRIGHT | texture_mode);
+			pheader->base[i][0] =
+			pheader->base[i][1] =
+			pheader->base[i][2] =
+			pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype+1), loadmodel->name, offset, TEXPREF_PAD | TEXPREF_NOBRIGHT | texture_mode);
 
 			sprintf (skinname, "%s:frame%i_glow", loadmodel->name, i);
-			pheader->fullbright[i] = GL_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype+1), loadmodel->name, offset, TEXPREF_PAD | TEXPREF_FULLBRIGHT | texture_mode);
+			pheader->glow[i][0] =
+			pheader->glow[i][1] =
+			pheader->glow[i][2] =
+			pheader->glow[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype+1), loadmodel->name, offset, TEXPREF_PAD | TEXPREF_FULLBRIGHT | texture_mode);
 		}
 		else
 		{
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
-			pheader->gltexture[i] = GL_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype+1), loadmodel->name, offset, TEXPREF_PAD | texture_mode);
-			pheader->fullbright[i] = NULL;
+			pheader->base[i][0] =
+			pheader->base[i][1] =
+			pheader->base[i][2] =
+			pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype+1), loadmodel->name, offset, TEXPREF_PAD | texture_mode);
+			
+			pheader->glow[i][0] =
+			pheader->glow[i][1] =
+			pheader->glow[i][2] =
+			pheader->glow[i][3] = NULL;
 		}
 
 		pskintype = (daliasskintype_t *)((byte *)(pskintype+1) + size);
@@ -2234,7 +2248,7 @@ void *Mod_LoadSpriteFrame (void *pin, mspriteframe_t **ppframe, int framenum)
 	mspriteframe_t		*pspriteframe;
 	int					width, height, size, origin[2];
 	char				name[64];
-	unsigned			offset; //johnfitz
+	uintptr_t			offset; //johnfitz
 
 	pinframe = (dspriteframe_t *)pin;
 
@@ -2261,8 +2275,8 @@ void *Mod_LoadSpriteFrame (void *pin, mspriteframe_t **ppframe, int framenum)
 
 
 	sprintf (name, "%s:frame%i", loadmodel->name, framenum);
-	offset = (unsigned)(pinframe+1) - (unsigned)mod_base; //johnfitz
-	pspriteframe->gltexture = GL_LoadTexture (loadmodel, name, width, height, SRC_INDEXED, (byte *)(pinframe+1), loadmodel->name, offset, TEXPREF_PAD | TEXPREF_ALPHA | TEXPREF_NOPICMIP);
+	offset = (uintptr_t)(pinframe+1) - (uintptr_t)mod_base; //johnfitz
+	pspriteframe->gltexture = TexMgr_LoadTexture (loadmodel, name, width, height, SRC_INDEXED, (byte *)(pinframe+1), loadmodel->name, offset, TEXPREF_PAD | TEXPREF_ALPHA | TEXPREF_NOPICMIP);
 
 
 	return (void *)((byte *)pinframe + sizeof (dspriteframe_t) + size);

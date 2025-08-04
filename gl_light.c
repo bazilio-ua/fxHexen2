@@ -174,7 +174,7 @@ R_MarkLights
 rewritten to use LordHavoc's lighting speedup
 =============
 */
-void R_MarkLights (dlight_t *light, int bit, mnode_t *node)
+void R_MarkLights (dlight_t *light, int num, mnode_t *node)
 {
 	mplane_t	*splitplane;
 	msurface_t	*surf;
@@ -223,18 +223,19 @@ start:
 		{
 			if (surf->dlightframe != r_dlightframecount) // not dynamic until now
 			{
-				surf->dlightbits = bit;
+				memset (surf->dlightbits, 0, sizeof(surf->dlightbits));
+				surf->dlightbits[num >> 5] = 1U << (num & 31);
 				surf->dlightframe = r_dlightframecount;
 			}
 			else // already dynamic
-				surf->dlightbits |= bit;
+				surf->dlightbits[num >> 5] |= 1U << (num & 31);
 		}
 	}
 
 	if (node->children[0]->contents >= 0)
-		R_MarkLights (light, bit, node->children[0]);
+		R_MarkLights (light, num, node->children[0]);
 	if (node->children[1]->contents >= 0)
-		R_MarkLights (light, bit, node->children[1]);
+		R_MarkLights (light, num, node->children[1]);
 }
 
 
@@ -278,12 +279,12 @@ vec3_t			lightcolor; // lit support via lordhavoc
 
 /*
 =============
-RecursiveLightPoint
+R_RecursiveLightPoint
 
 replaced entire function for lit support via lordhavoc
 =============
 */
-int RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end)
+qboolean R_RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end)
 {
 	float		front, back, frac;
 	vec3_t		mid;
@@ -317,7 +318,7 @@ loc0:
 	mid[2] = start[2] + (end[2] - start[2])*frac;
 
 // go down front side
-	if (RecursiveLightPoint (color, node->children[front < 0], start, mid))
+	if (R_RecursiveLightPoint (color, node->children[front < 0], start, mid))
 		return true;	// hit something
 	else
 	{
@@ -374,7 +375,7 @@ loc0:
 		}
 
 	// go down back side
-		return RecursiveLightPoint (color, node->children[front >= 0], mid, end);
+		return R_RecursiveLightPoint (color, node->children[front >= 0], mid, end);
 	}
 }
 
@@ -385,21 +386,20 @@ R_LightPoint
 replaced entire function for lit support via lordhavoc
 =============
 */
-int R_LightPoint (vec3_t p)
+void R_LightPoint (vec3_t p, vec3_t color)
 {
 	vec3_t		end;
 
 	if (r_fullbright.value || !cl.worldmodel->lightdata)
 	{
-		lightcolor[0] = lightcolor[1] = lightcolor[2] = 255;
-		return 255;
+		color[0] = color[1] = color[2] = 255;
+		return;
 	}
 
 	end[0] = p[0];
 	end[1] = p[1];
 	end[2] = p[2] - 8192; // was 2048
 
-	lightcolor[0] = lightcolor[1] = lightcolor[2] = 0;
-	RecursiveLightPoint (lightcolor, cl.worldmodel->nodes, p, end);
-	return ((lightcolor[0] + lightcolor[1] + lightcolor[2]) * (1.0f / 3.0f));
+	color[0] = color[1] = color[2] = max(0, r_ambient.value);
+	R_RecursiveLightPoint (color, cl.worldmodel->nodes, p, end);
 }

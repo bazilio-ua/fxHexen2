@@ -1322,7 +1322,7 @@ void SCR_UpdateScreen (void)
 	if (loading_stage)
 		SCR_DrawLoading();
 
-	V_UpdatePalette ();
+	V_UpdateBlend ();
 
 	GL_EndRendering ();
 }
