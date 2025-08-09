@@ -38,7 +38,7 @@ void Sbar_DeathmatchOverlay(void);
 void Sbar_NormalOverlay(void);
 
 void Sbar_SmallDeathmatchOverlay(void);
-void M_DrawPic(int x, int y, qpic_t *pic);
+//void M_DrawPic(int x, int y, qpic_t *pic);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

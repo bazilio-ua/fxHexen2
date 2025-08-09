@@ -12,9 +12,6 @@
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
-enum {m_none, m_main, m_singleplayer, m_load, m_save, m_multiplayer, m_setup, m_net, m_options, m_video, 
-		m_keys, m_help, m_quit, m_serialconfig, m_modemconfig, m_lanconfig, m_gameoptions, m_search, m_slist, 
-		m_class, m_difficulty, m_mload, m_msave} m_state;
 
 void M_Menu_SinglePlayer_f (void);
 void M_Menu_Load_f (void);
