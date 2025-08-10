@@ -106,34 +106,34 @@ char *Sys_FindFirstFile (char *path, char *pattern)
 {
 	if (finddir)
 		Sys_Error ("Sys_FindFirst without FindClose");
-
+	
 	finddir = opendir (path);
 	if (!finddir)
 		return NULL;
-
+	
 	findpattern = Z_Strdup (pattern);
 	findpath = Z_Strdup (path);
-
+	
 	return Sys_FindNextFile();
 }
 
 char *Sys_FindNextFile (void)
 {
 	struct stat	test;
-
+	
 	if (!finddir)
 		return NULL;
-
+	
 	while ((finddata = readdir(finddir)) != NULL)
 	{
 		if (!fnmatch (findpattern, finddata->d_name, FNM_PATHNAME))
 		{
 			if ( (stat(va("%s/%s", findpath, finddata->d_name), &test) == 0)
-						&& S_ISREG(test.st_mode))
+				&& S_ISREG(test.st_mode))
 				return finddata->d_name;
 		}
 	}
-
+	
 	return NULL;
 }
 
