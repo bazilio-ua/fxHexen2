@@ -103,11 +103,14 @@ void CL_ClearState (void)
 
 void CL_RemoveGIPFiles (char *path)
 {
-	char	name[MAX_OSPATH],tempdir[MAX_OSPATH];
-	int i;
-	HANDLE handle;
-	WIN32_FIND_DATA filedata;
-	BOOL retval;
+	char	*name;
+	char	/*name[MAX_OSPATH],*/tempdir[MAX_OSPATH];
+//	int i;
+//	HANDLE handle;
+//	WIN32_FIND_DATA filedata;
+//	BOOL retval;
+	char	*p;
+	size_t	len;
 
 	if (path)
 	{
@@ -115,53 +118,95 @@ void CL_RemoveGIPFiles (char *path)
 	}
 	else
 	{
-		i = GetTempPath(sizeof(tempdir),tempdir);
-		if (!i) 
+//		i = GetTempPath(sizeof(tempdir),tempdir);
+//		if (!i) 
 		{
 			sprintf(tempdir,"%s\\",com_gamedir);
 		}
 	}
 
-	sprintf (name, "%s*.gip", tempdir);
+//	sprintf (name, "%s*.gip", tempdir);
+//
+//	handle = FindFirstFile(name,&filedata);
+//	retval = TRUE;
+//
+//	while (handle != INVALID_HANDLE_VALUE && retval)
+//	{
+//		sprintf(name,"%s%s", tempdir,filedata.cFileName);
+//		DeleteFile(name);
+//
+//		retval = FindNextFile(handle,&filedata);
+//	}
+//
+//	if (handle != INVALID_HANDLE_VALUE)
+//		FindClose(handle);
+	
+	len = strlen(tempdir);
+	p = tempdir + len;
+	len = sizeof(tempdir) - len;
 
-	handle = FindFirstFile(name,&filedata);
-	retval = TRUE;
-
-	while (handle != INVALID_HANDLE_VALUE && retval)
+	name = Sys_FindFirstFile (tempdir, "*.gip");
+	while (name)
 	{
-		sprintf(name,"%s%s", tempdir,filedata.cFileName);
-		DeleteFile(name);
-
-		retval = FindNextFile(handle,&filedata);
+		snprintf (p, len, "/%s", name);
+		Sys_unlink (tempdir);
+		*p = '\0';
+		name = Sys_FindNextFile();
 	}
 
-	if (handle != INVALID_HANDLE_VALUE)
-		FindClose(handle);
+	Sys_FindClose();
 }
 
 qboolean CL_CopyFiles(char *source, char *pat, char *dest)
 {
-	char	name[MAX_OSPATH],tempdir[MAX_OSPATH];
-	HANDLE handle;
-	WIN32_FIND_DATA filedata;
-	BOOL retval,error;
+	char	*name;
+//	char	/*name[MAX_OSPATH],*/tempdir[MAX_OSPATH];
+	char	tempdir[MAX_OSPATH], tempdir2[MAX_OSPATH];
 
-	handle = FindFirstFile(pat,&filedata);
-	retval = TRUE;
+//	HANDLE handle;
+//	WIN32_FIND_DATA filedata;
+//	BOOL retval,error;
+
+//	handle = FindFirstFile(pat,&filedata);
+//	retval = TRUE;
+//	error = false;
+//
+//	while (handle != INVALID_HANDLE_VALUE && retval)
+//	{
+//		sprintf(name,"%s%s", source, filedata.cFileName);
+//		sprintf(tempdir,"%s%s", dest, filedata.cFileName);
+//		if (!CopyFile(name,tempdir,FALSE))
+//			error = true;
+//
+//		retval = FindNextFile(handle,&filedata);
+//	}
+//
+//	if (handle != INVALID_HANDLE_VALUE)
+//		FindClose(handle);
+//
+//	return error;
+	
+	qboolean	error;
+
+	name = Sys_FindFirstFile(source, pat);
 	error = false;
 
-	while (handle != INVALID_HANDLE_VALUE && retval)
+	while (name)
 	{
-		sprintf(name,"%s%s", source, filedata.cFileName);
-		sprintf(tempdir,"%s%s", dest, filedata.cFileName);
-		if (!CopyFile(name,tempdir,FALSE))
-			error = true;
+		if (snprintf(tempdir, sizeof(tempdir),"%s/%s", source, name) >= (int)sizeof(tempdir) ||
+			snprintf(tempdir2, sizeof(tempdir2),"%s/%s", dest, name) >= (int)sizeof(tempdir2))
+		{
+			Sys_FindClose();
+			Host_Error("CL_CopyFiles: string buffer overflow!");
+			return true;
+		}
 
-		retval = FindNextFile(handle,&filedata);
+		COM_CopyFile (tempdir, tempdir2);
+
+		name = Sys_FindNextFile();
 	}
 
-	if (handle != INVALID_HANDLE_VALUE)
-		FindClose(handle);
+	Sys_FindClose();
 
 	return error;
 }
@@ -873,30 +918,30 @@ void CL_Init (void)
 //
 // register our commands
 //
-	Cvar_RegisterVariable (&cl_name, NULL);
-	Cvar_RegisterVariable (&cl_color, NULL);
-	Cvar_RegisterVariable (&cl_playerclass, NULL);
-	Cvar_RegisterVariable (&cl_upspeed, NULL);
-	Cvar_RegisterVariable (&cl_forwardspeed, NULL);
-	Cvar_RegisterVariable (&cl_backspeed, NULL);
-	Cvar_RegisterVariable (&cl_sidespeed, NULL);
-	Cvar_RegisterVariable (&cl_movespeedkey, NULL);
-	Cvar_RegisterVariable (&cl_yawspeed, NULL);
-	Cvar_RegisterVariable (&cl_pitchspeed, NULL);
-	Cvar_RegisterVariable (&cl_maxpitch, NULL); // variable pitch clamping
-	Cvar_RegisterVariable (&cl_minpitch, NULL); // variable pitch clamping
-	Cvar_RegisterVariable (&cl_anglespeedkey, NULL);
-	Cvar_RegisterVariable (&cl_shownet, NULL);
-	Cvar_RegisterVariable (&cl_nolerp, NULL);
-	Cvar_RegisterVariable (&lookspring, NULL);
-	Cvar_RegisterVariable (&lookstrafe, NULL);
-	Cvar_RegisterVariable (&sensitivity, NULL);
+	Cvar_RegisterVariable (&cl_name);
+	Cvar_RegisterVariable (&cl_color);
+	Cvar_RegisterVariable (&cl_playerclass);
+	Cvar_RegisterVariable (&cl_upspeed);
+	Cvar_RegisterVariable (&cl_forwardspeed);
+//	Cvar_RegisterVariable (&cl_backspeed);
+	Cvar_RegisterVariable (&cl_sidespeed);
+	Cvar_RegisterVariable (&cl_movespeedkey);
+	Cvar_RegisterVariable (&cl_yawspeed);
+	Cvar_RegisterVariable (&cl_pitchspeed);
+	Cvar_RegisterVariable (&cl_maxpitch); // variable pitch clamping
+	Cvar_RegisterVariable (&cl_minpitch); // variable pitch clamping
+	Cvar_RegisterVariable (&cl_anglespeedkey);
+	Cvar_RegisterVariable (&cl_shownet);
+	Cvar_RegisterVariable (&cl_nolerp);
+	Cvar_RegisterVariable (&lookspring);
+	Cvar_RegisterVariable (&lookstrafe);
+	Cvar_RegisterVariable (&sensitivity);
 
-	Cvar_RegisterVariable (&m_pitch, NULL);
-	Cvar_RegisterVariable (&m_yaw, NULL);
-	Cvar_RegisterVariable (&m_forward, NULL);
-	Cvar_RegisterVariable (&m_side, NULL);
-	Cvar_RegisterVariable (&cl_prettylights, NULL);
+	Cvar_RegisterVariable (&m_pitch);
+	Cvar_RegisterVariable (&m_yaw);
+	Cvar_RegisterVariable (&m_forward);
+	Cvar_RegisterVariable (&m_side);
+	Cvar_RegisterVariable (&cl_prettylights);
 
 //	Cvar_RegisterVariable (&cl_autofire);
 	

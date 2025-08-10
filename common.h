@@ -277,6 +277,7 @@ byte *COM_LoadHunkFile (char *path, unsigned int *path_id);
 void COM_LoadCacheFile (char *path, struct cache_user_s *cu, unsigned int *path_id);
 
 void COM_CreatePath (char *path);
+void COM_CopyFile (char *netpath, char *cachepath);
 
 extern	struct cvar_s	registered;
 extern	struct cvar_s	oem;

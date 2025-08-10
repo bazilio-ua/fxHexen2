@@ -27,6 +27,10 @@ void Sys_rmdir (char *path);
 void Sys_unlink (char *path);
 void Sys_rename (char *oldp, char *newp);
 
+char *Sys_FindFirstFile (char *path, char *pattern);
+char *Sys_FindNextFile (void);
+void Sys_FindClose (void);
+
 void Sys_ScanDirList (char *path, filelist_t **list);
 void Sys_ScanDirFileList(char *path, char *subdir, char *ext, qboolean stripext, filelist_t **list);
 

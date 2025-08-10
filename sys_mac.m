@@ -89,6 +89,74 @@ void Sys_rename (char *oldp, char *newp)
 	}
 }
 
+
+/*
+=================================================
+simplified findfirst/findnext implementation:
+Sys_FindFirstFile and Sys_FindNextFile return
+filenames only, not a dirent struct. this is
+what we presently need in this engine.
+=================================================
+*/
+DIR		*finddir;
+struct dirent	*finddata;
+char	*findpath, *findpattern;
+
+char *Sys_FindFirstFile (char *path, char *pattern)
+{
+	if (finddir)
+		Sys_Error ("Sys_FindFirst without FindClose");
+
+	finddir = opendir (path);
+	if (!finddir)
+		return NULL;
+
+	findpattern = Z_Strdup (pattern);
+	findpath = Z_Strdup (path);
+
+	return Sys_FindNextFile();
+}
+
+char *Sys_FindNextFile (void)
+{
+	struct stat	test;
+
+	if (!finddir)
+		return NULL;
+
+	while ((finddata = readdir(finddir)) != NULL)
+	{
+		if (!fnmatch (findpattern, finddata->d_name, FNM_PATHNAME))
+		{
+			if ( (stat(va("%s/%s", findpath, finddata->d_name), &test) == 0)
+						&& S_ISREG(test.st_mode))
+				return finddata->d_name;
+		}
+	}
+
+	return NULL;
+}
+
+void Sys_FindClose (void)
+{
+	if (finddir != NULL)
+	{
+		closedir(finddir);
+		finddir = NULL;
+	}
+	if (findpath != NULL)
+	{
+		Z_Free (findpath);
+		findpath = NULL;
+	}
+	if (findpattern != NULL)
+	{
+		Z_Free (findpattern);
+		findpattern = NULL;
+	}
+}
+
+
 /*
 ================
 Sys_ScanDirList
