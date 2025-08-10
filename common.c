@@ -1136,35 +1136,35 @@ int     com_filesize;
 // in memory
 //
 
-typedef struct
-{
-	char    name[MAX_QPATH];
-	int             filepos, filelen;
-} packfile_t;
+//typedef struct
+//{
+//	char    name[MAX_QPATH];
+//	int             filepos, filelen;
+//} packfile_t;
 
-typedef struct pack_s
-{
-	char    filename[MAX_OSPATH];
-	int             handle;
-	int             numfiles;
-	packfile_t      *files;
-} pack_t;
+//typedef struct pack_s
+//{
+//	char    filename[MAX_OSPATH];
+//	int             handle;
+//	int             numfiles;
+//	packfile_t      *files;
+//} pack_t;
 
 //
 // on disk
 //
-typedef struct
-{
-	char    name[56];
-	int             filepos, filelen;
-} dpackfile_t;
+//typedef struct
+//{
+//	char    name[56];
+//	int             filepos, filelen;
+//} dpackfile_t;
 
-typedef struct
-{
-	char    id[4];
-	int             dirofs;
-	int             dirlen;
-} dpackheader_t;
+//typedef struct
+//{
+//	char    id[4];
+//	int             dirofs;
+//	int             dirlen;
+//} dpackheader_t;
 
 #define MAX_FILES_IN_PACK       2048
 
@@ -1174,15 +1174,15 @@ char    com_savedir[MAX_OSPATH];
 char    com_basedir[MAX_OSPATH];
 char    *home;
 
-typedef struct searchpath_s
-{
-	unsigned int path_id;	// identifier assigned to the game directory
-							// Note that <install_dir>/game1 and
-							// <userdir>/game1 have the same id.
-	char    filename[MAX_OSPATH];
-	pack_t  *pack;          // only one of filename / pack will be used
-	struct searchpath_s *next;
-} searchpath_t;
+//typedef struct searchpath_s
+//{
+//	unsigned int path_id;	// identifier assigned to the game directory
+//							// Note that <install_dir>/game1 and
+//							// <userdir>/game1 have the same id.
+//	char    filename[MAX_OSPATH];
+//	pack_t  *pack;          // only one of filename / pack will be used
+//	struct searchpath_s *next;
+//} searchpath_t;
 
 searchpath_t    *com_searchpaths;
 
@@ -1611,7 +1611,7 @@ pack_t *COM_LoadPackFile (char *packfile)
 		return NULL;
 	}
 	if (Sys_FileRead (packhandle, (void *)&header, sizeof(header)) != sizeof(header) ||
-	    header.id[0] != 'P' || header.id[1] != 'A' || header.id[2] != 'C' || header.id[3] != 'K')
+	    header.ident[0] != 'P' || header.ident[1] != 'A' || header.ident[2] != 'C' || header.ident[3] != 'K')
 		Sys_Error ("COM_LoadPackFile: can't read header in packfile %s", packfile);
 
 	header.dirofs = LittleLong (header.dirofs);
@@ -1744,7 +1744,7 @@ void COM_InitFilesystem (void)
 	if (i && i < com_argc-1)
 		strcpy (com_basedir, com_argv[i+1]);
 	else
-		strcpy (com_basedir, host_parms.basedir);
+		strcpy (com_basedir, host_parms->basedir);
 
 	j = strlen (com_basedir);
 	if (j > 0)
@@ -1766,8 +1766,8 @@ void COM_InitFilesystem (void)
 		else
 			strcpy (com_cachedir, com_argv[i+1]);
 	}
-	else if (host_parms.cachedir)
-		strcpy (com_cachedir, host_parms.cachedir);
+	else if (host_parms->cachedir)
+		strcpy (com_cachedir, host_parms->cachedir);
 	else
 		com_cachedir[0] = 0;
 
