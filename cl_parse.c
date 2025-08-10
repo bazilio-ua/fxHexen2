@@ -287,7 +287,7 @@ void CL_ParseServerInfo (void)
 	strncpy (cl.levelname, str, sizeof(cl.levelname)-1);
 
 // seperate the printfs so the server message can have a color
-	Con_SafePrintf ("\n\n%s\n", Con_Quakebar(40));
+	Con_SafePrintf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
 	Con_SafePrintf ("%c%s\n", 2, str);
 
 //
@@ -1106,8 +1106,8 @@ void CL_ParseServerMessage (void)
 	}
 	if (cl_shownet.value == 1)
 	{
-		Con_Printf ("Time: %2.2f Pck: %i ", host_time - lasttime, net_message->message->cursize);
-		lasttime = host_time;
+		Con_Printf ("Time: %2.2f Pck: %i ", realtime - lasttime, net_message->message->cursize);
+		lasttime = realtime;
 	}
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");

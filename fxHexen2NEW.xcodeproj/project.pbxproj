@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		420318832E493FC9006BA902 /* midi_null.c in Sources */ = {isa = PBXBuildFile; fileRef = 420318822E493FC9006BA902 /* midi_null.c */; };
 		4215AFEB1FC76F8800064F60 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4215AFEA1FC76F8800064F60 /* AudioToolbox.framework */; };
 		425AC4542E0D8BA4004726CB /* cl_effect.c in Sources */ = {isa = PBXBuildFile; fileRef = 425AC4532E0D8BA4004726CB /* cl_effect.c */; };
 		425AC4572E0D8C21004726CB /* sv_effect.c in Sources */ = {isa = PBXBuildFile; fileRef = 425AC4562E0D8C21004726CB /* sv_effect.c */; };
@@ -79,6 +80,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		420318822E493FC9006BA902 /* midi_null.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = midi_null.c; sourceTree = "<group>"; };
+		420318842E493FE0006BA902 /* midi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = midi.h; sourceTree = "<group>"; };
 		4215AFEA1FC76F8800064F60 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		4215AFED1FC7736D00064F60 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		425AC4532E0D8BA4004726CB /* cl_effect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = cl_effect.c; sourceTree = "<group>"; };
@@ -321,6 +324,8 @@
 				4273FADC1DFF2EDA005DC9A7 /* mathlib.h */,
 				4273FADD1DFF2EDA005DC9A7 /* menu.c */,
 				4273FADE1DFF2EDA005DC9A7 /* menu.h */,
+				420318822E493FC9006BA902 /* midi_null.c */,
+				420318842E493FE0006BA902 /* midi.h */,
 				4273FADF1DFF2EDA005DC9A7 /* model.h */,
 				4273FAE01DFF2EDA005DC9A7 /* modelgen.h */,
 				4273FAE11DFF2EDA005DC9A7 /* net_bsd.c */,
@@ -498,6 +503,7 @@
 				42B7184D1EA2C0F700BD51E1 /* gl_screen.c in Sources */,
 				42B7184E1EA2C0F700BD51E1 /* gl_surf.c in Sources */,
 				42B7184F1EA2C0F700BD51E1 /* host_cmd.c in Sources */,
+				420318832E493FC9006BA902 /* midi_null.c in Sources */,
 				42B718501EA2C0F700BD51E1 /* host.c in Sources */,
 				42B718511EA2C0F700BD51E1 /* in_mac.m in Sources */,
 				425AC4572E0D8C21004726CB /* sv_effect.c in Sources */,

@@ -359,7 +359,7 @@ void CL_PlayDemo_f (void)
 	 * plain crap, because it reserves an ordinary
 	 * name for a special purpose...
 	 */
-		if(!stricmp(name,"t9"))
+		if(!strcasecmp(name,"t9"))
 		{
 			intro_playing = true;
 //			skip_start = true;

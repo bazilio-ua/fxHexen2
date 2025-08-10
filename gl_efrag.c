@@ -21,8 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-mnode_t	*r_pefragtopnode;
-
 
 //===========================================================================
 
@@ -31,131 +29,103 @@ mnode_t	*r_pefragtopnode;
 
 					ENTITY FRAGMENT FUNCTIONS
 
+ericw -- GLQuake only uses efrags for static entities, and they're never
+removed, so I trimmed out unused functionality and fields in efrag_t.
+
+Now, efrags are just a linked list for each leaf of the static
+entities that touch that leaf. The efrags are hunk-allocated so there is no
+fixed limit.
+
+This is inspired by MH's tutorial, and code from RMQEngine.
+http://forums.insideqc.com/viewtopic.php?t=1930
+
 ===============================================================================
 */
 
-efrag_t		**lastlink;
-
-vec3_t		r_emins, r_emaxs;
-
-entity_t	*r_addent;
-
-
-/*
-================
-R_RemoveEfrags
-
-Call when removing an object from the world or moving it to another position
-================
-*/
-void R_RemoveEfrags (entity_t *ent)
+// let's get rid of some more globals...
+typedef struct r_efragdef_s
 {
-	efrag_t		*ef, *old, *walk, **prev;
+    vec3_t		mins, maxs;
+    entity_t	*addent;
+} r_efragdef_t;
+
+#define EXTRA_EFRAGS	128
+
+// based on RMQEngine
+static efrag_t *R_GetEfrag (void)
+{
+	// we could just Hunk_Alloc a single efrag_t and return it, but since
+	// the struct is so small (2 pointers) allocate groups of them
+	// to avoid wasting too much space on the hunk allocation headers.
 	
-	ef = ent->efrag;
-	
-	while (ef)
+	if (cl.free_efrags)
 	{
-		prev = &ef->leaf->efrags;
-		while (1)
-		{
-			walk = *prev;
-			if (!walk)
-				break;
-			if (walk == ef)
-			{	// remove this fragment
-				*prev = ef->leafnext;
-				break;
-			}
-			else
-				prev = &walk->leafnext;
-		}
-				
-		old = ef;
-		ef = ef->entnext;
+		efrag_t *ef = cl.free_efrags;
+		cl.free_efrags = ef->leafnext;
+		ef->leafnext = NULL;
 		
-	// put it on the free list
-		old->entnext = cl.free_efrags;
-		cl.free_efrags = old;
+		return ef;
 	}
-	
-	ent->efrag = NULL; 
+	else
+	{
+		int i;
+		
+		cl.free_efrags = (efrag_t *) Hunk_AllocName (EXTRA_EFRAGS * sizeof (efrag_t), "efrags");
+		
+		for (i = 0; i < EXTRA_EFRAGS - 1; i++)
+			cl.free_efrags[i].leafnext = &cl.free_efrags[i + 1];
+		
+		cl.free_efrags[i].leafnext = NULL;
+		
+		// call recursively to get a newly allocated free efrag
+		return R_GetEfrag ();
+	}
 }
+
 
 /*
 ===================
 R_SplitEntityOnNode
 ===================
 */
-void R_SplitEntityOnNode (mnode_t *node)
+void R_SplitEntityOnNode (mnode_t *node, r_efragdef_t *ed)
 {
 	efrag_t		*ef;
 	mplane_t	*splitplane;
 	mleaf_t		*leaf;
 	int			sides;
-	static float	lastmsg = 0;
 	
 	if (node->contents == CONTENTS_SOLID)
-	{
 		return;
-	}
 	
 // add an efrag if the node is a leaf
-
-	if ( node->contents < 0)
+	if (node->contents < 0)
 	{
-		if (!r_pefragtopnode)
-			r_pefragtopnode = node;
-
 		leaf = (mleaf_t *)node;
-
+        
 // grab an efrag off the free list
-		ef = cl.free_efrags;
-		if (!ef)
-		{
-			if (IsTimeout (&lastmsg, 2))
-				Con_Printf ("Too many efrags! (max = %d)\n", MAX_EFRAGS);
-
-			return;		// no free fragments...
-		}
-		cl.free_efrags = cl.free_efrags->entnext;
-
-		ef->entity = r_addent;
-		
-// add the entity link	
-		*lastlink = ef;
-		lastlink = &ef->entnext;
-		ef->entnext = NULL;
-		
+		ef = R_GetEfrag();
+		ef->entity = ed->addent;
+        
 // set the leaf links
-		ef->leaf = leaf;
 		ef->leafnext = leaf->efrags;
 		leaf->efrags = ef;
-			
+        
 		return;
 	}
 	
 // NODE_MIXED
 
+// split on this plane
 	splitplane = node->plane;
-	sides = BOX_ON_PLANE_SIDE(r_emins, r_emaxs, splitplane);
-	
-	if (sides == 3)
-	{
-	// split on this plane
-	// if this is the first splitter of this bmodel, remember it
-		if (!r_pefragtopnode)
-			r_pefragtopnode = node;
-	}
-	
+	sides = BOX_ON_PLANE_SIDE(ed->mins, ed->maxs, splitplane);
+
 // recurse down the contacted sides
 	if (sides & 1)
-		R_SplitEntityOnNode (node->children[0]);
-		
+		R_SplitEntityOnNode (node->children[0], ed);
 	if (sides & 2)
-		R_SplitEntityOnNode (node->children[1]);
+		R_SplitEntityOnNode (node->children[1], ed);
 }
-
 
 
 /*
@@ -165,28 +135,33 @@ R_AddEfrags
 */
 void R_AddEfrags (entity_t *ent)
 {
+    r_efragdef_t ed;
 	model_t		*entmodel;
 	int			i;
 		
+	// entities with no model won't get drawn
 	if (!ent->model)
 		return;
 
-	r_addent = ent;
+    // never add the world
+	if (ent == &cl_entities[0]) 
+        return;
+
+	// init the efrag definition struct so that we can avoid more ugly globals
+	ed.addent = ent;
 			
-	lastlink = &ent->efrag;
-	r_pefragtopnode = NULL;
-	
 	entmodel = ent->model;
 
 	for (i=0 ; i<3 ; i++)
 	{
-		r_emins[i] = ent->origin[i] + entmodel->mins[i];
-		r_emaxs[i] = ent->origin[i] + entmodel->maxs[i];
+		ed.mins[i] = ent->origin[i] + entmodel->mins[i];
+		ed.maxs[i] = ent->origin[i] + entmodel->maxs[i];
 	}
 
-	R_SplitEntityOnNode (cl.worldmodel->nodes);
+	if (!cl.worldmodel)
+		Host_Error ("R_AddEfrags: NULL worldmodel");
 
-	ent->topnode = r_pefragtopnode;
+	R_SplitEntityOnNode (cl.worldmodel->nodes, &ed);
 }
 
 
@@ -194,46 +169,36 @@ void R_AddEfrags (entity_t *ent)
 ================
 R_StoreEfrags
 
-// FIXME: a lot of this goes away with edge-based
+johnfitz -- pointless switch statement removed.
 ================
 */
 void R_StoreEfrags (efrag_t **ppefrag)
 {
 	entity_t	*pent;
-	model_t		*clmodel;
 	efrag_t		*pefrag;
 
-	while ((pefrag = *ppefrag) != NULL)
+    while ((pefrag = *ppefrag) != NULL)
 	{
 		pent = pefrag->entity;
+        
+        if (!pent)
+            Host_Error ("R_StoreEfrags: pent is NULL");
 
-		if (!pent)
-			Sys_Error ("R_StoreEfrags: pent is NULL");
-
-		clmodel = pent->model;
-
-		switch (clmodel->type)
+        // some progs might try to send static ents with no model through here...
+		if (!pent->model) 
+            continue;
+        
+		// prevent adding twice in this render frame (or if an entity is in more than one leaf)
+		if ((pent->visframe != r_framecount) && (cl_numvisedicts < MAX_VISEDICTS))
 		{
-			case mod_alias:
-			case mod_brush:
-			case mod_sprite:
-				pent = pefrag->entity;
-	
-				if ((pent->visframe != r_framecount) && (cl_numvisedicts < MAX_VISEDICTS))
-				{
-					cl_visedicts[cl_numvisedicts++] = pent;
-	
-				// mark that we've recorded this entity for this frame
-					pent->visframe = r_framecount;
-				}
-	
-				ppefrag = &pefrag->leafnext;
-				break;
-	
-			default:	
-				Sys_Error ("R_StoreEfrags: Bad entity type %d", clmodel->type);
+			// add it to the visible edicts list
+			cl_visedicts[cl_numvisedicts++] = pent;
+            
+            // mark that we've recorded this entity for this frame
+			pent->visframe = r_framecount;
 		}
+        
+		ppefrag = &pefrag->leafnext;
 	}
 }
-
 

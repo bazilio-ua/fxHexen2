@@ -4,8 +4,6 @@
  */
 
 #include "quakedef.h"
-#include "menu.h"
-//#include <windows.h>
 
 #define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
 
