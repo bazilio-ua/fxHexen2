@@ -1162,13 +1162,13 @@ void R_DrawEntities (qboolean alphapass)
 		currententity = cl_visedicts[i];
 
 //DBG
-		Con_Printf("[2]R_DrawTransEntities: model: %s, e->origin[0]: %f, e->origin[1]: %f, e->origin[2]: %f\n---*---\n", currententity->model->name, 
-			currententity->origin[0], currententity->origin[1], currententity->origin[2]);
-
-		Con_Printf("ent: %s mins: mins[0]: %f, mins[1]: %f, mins[2]: %f\n", currententity->model->name, 
-			currententity->model->mins[0], currententity->model->mins[1], currententity->model->mins[2]);
-		Con_Printf("ent: %s maxs: maxs[0]: %f, maxs[1]: %f, maxs[2]: %f\n---*---\n", currententity->model->name, 
-			currententity->model->maxs[0], currententity->model->maxs[1], currententity->model->maxs[2]);
+//		Con_Printf("[2]R_DrawTransEntities: model: %s, e->origin[0]: %f, e->origin[1]: %f, e->origin[2]: %f\n---*---\n", currententity->model->name, 
+//			currententity->origin[0], currententity->origin[1], currententity->origin[2]);
+//
+//		Con_Printf("ent: %s mins: mins[0]: %f, mins[1]: %f, mins[2]: %f\n", currententity->model->name, 
+//			currententity->model->mins[0], currententity->model->mins[1], currententity->model->mins[2]);
+//		Con_Printf("ent: %s maxs: maxs[0]: %f, maxs[1]: %f, maxs[2]: %f\n---*---\n", currententity->model->name, 
+//			currententity->model->maxs[0], currententity->model->maxs[1], currententity->model->maxs[2]);
 //DBG			
 		
 		// if alphapass is true, draw only alpha entites this time
