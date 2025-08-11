@@ -26,9 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 //need for midi
-#ifdef _WIN32
-#include "winquake.h"
-#endif
+//#ifdef _WIN32
+//#include "winquake.h"
+//#endif
 
 /*
 
@@ -62,6 +62,7 @@ client_t	*host_client;			// current client
 jmp_buf 	host_abortserver;
 
 byte		*host_basepal = NULL; // set to null
+byte        *host_colormap = NULL;  // set to null
 
 cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
 cvar_t	host_timescale = {"host_timescale","0"};	// more sensitivity slow motion
@@ -69,6 +70,7 @@ cvar_t	host_speeds = {"host_speeds","0"};			// set for running times
 cvar_t	host_maxfps = {"host_maxfps", "72"};
 
 cvar_t	sys_ticrate = {"sys_ticrate","0.05"};
+cvar_t	sys_throttle = {"sys_throttle","0.02", CVAR_ARCHIVE};
 cvar_t	serverprofile = {"serverprofile","0"};
 
 cvar_t	fraglimit = {"fraglimit","0",false,true};
@@ -255,6 +257,7 @@ void Host_InitLocal (void)
 	Cvar_RegisterVariable (&host_maxfps);
 
 	Cvar_RegisterVariable (&sys_ticrate);
+	Cvar_RegisterVariable (&sys_throttle);
 	Cvar_RegisterVariable (&serverprofile);
 
 	Cvar_RegisterVariable (&fraglimit);
@@ -959,3 +962,20 @@ void Host_Shutdown(void)
 	LOG_Close ();
 }
 
+/*
+===============
+Host_LoadPalettes
+===============
+*/
+void Host_LoadPalettes (void)
+{
+	//johnfitz -- dynamic gamedir loading
+	//johnfitz -- modified to use malloc
+	//TODO: use cache_alloc
+	host_basepal = COM_LoadMallocFile ("gfx/palette.lmp", host_basepal, NULL);
+	if (!host_basepal)
+		Sys_Error ("Host_LoadPalettes: couldn't load gfx/palette.lmp");
+	host_colormap = COM_LoadMallocFile ("gfx/colormap.lmp", host_colormap, NULL);
+	if (!host_colormap)
+		Sys_Error ("Host_LoadPalettes: couldn't load gfx/colormap.lmp");
+}

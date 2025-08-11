@@ -80,6 +80,7 @@ float		scr_conlines;		// lines of console to display
 
 float		oldscreensize, oldfov, oldsbar, oldoverdrawsbar, oldweaponsize, oldweaponfov;
 cvar_t		scr_viewsize = {"viewsize","100", true};
+cvar_t		scr_weaponsize = {"weaponsize","100", CVAR_ARCHIVE};
 cvar_t		scr_fov = {"fov","90"};	// 10 - 170
 cvar_t		scr_conspeed = {"scr_conspeed","300"};
 cvar_t		scr_centertime = {"scr_centertime","4"};
@@ -341,6 +342,12 @@ static void SCR_CalcRefdef (void)
 	if (scr_viewsize.value > 120)
 		Cvar_Set ("viewsize","120");
 
+// bound weaponsize
+	if (scr_weaponsize.value < 60)
+		Cvar_SetNoCallback ("weaponsize","60");
+	if (scr_weaponsize.value > 100)
+		Cvar_SetNoCallback ("weaponsize","100");
+
 // bound field of view
 	if (scr_fov.value < 10)
 		Cvar_Set ("fov","10");
@@ -440,6 +447,7 @@ void SCR_Init (void)
 {
 	Cvar_RegisterVariable (&scr_fov);
 	Cvar_RegisterVariable (&scr_viewsize);
+	Cvar_RegisterVariable (&scr_weaponsize);
 	Cvar_RegisterVariable (&scr_conspeed);
 	Cvar_RegisterVariable (&scr_showturtle);
 	Cvar_RegisterVariable (&scr_showpause);

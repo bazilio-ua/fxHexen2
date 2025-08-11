@@ -83,6 +83,7 @@ cvar_t	r_drawworld = {"r_drawworld","1"};
 cvar_t	r_drawviewmodel = {"r_drawviewmodel","1"};
 cvar_t	r_speeds = {"r_speeds","0"};
 cvar_t	r_fullbright = {"r_fullbright","0"};
+cvar_t	r_ambient = { "r_ambient","0", CVAR_NONE};
 cvar_t	r_wateralpha = {"r_wateralpha","1", true};
 cvar_t	r_lockalpha = {"r_lockalpha","0", true};
 cvar_t	r_lavafog = {"r_lavafog","0.5", true};
@@ -100,6 +101,7 @@ cvar_t	r_clearcolor = {"r_clearcolor", "2", true}; // Closest to the original
 cvar_t	gl_finish = {"gl_finish","0"};
 cvar_t	gl_clear = {"gl_clear","0"};
 cvar_t	gl_cull = {"gl_cull","1"};
+cvar_t	gl_farclip = {"gl_farclip","16384", CVAR_ARCHIVE};
 cvar_t	gl_texsort = {"gl_texsort","1"};
 cvar_t	gl_smoothmodels = {"gl_smoothmodels","1"};
 cvar_t	gl_affinemodels = {"gl_affinemodels","0"};
@@ -118,6 +120,80 @@ static qboolean AlwaysDrawModel;
 
 static void R_RotateForEntity2(entity_t *e);
 void R_RotateForEntity (entity_t *e);
+
+/*
+==================
+BoxOnPlaneSide
+
+Returns 1, 2, or 1 + 2
+==================
+*/
+int BoxOnPlaneSide (vec3_t emins, vec3_t emaxs, mplane_t *p)
+{
+	float	dist1, dist2;
+	int		sides;
+	
+	// this is done by the BOX_ON_PLANE_SIDE macro before calling this function
+/*
+	// fast axial cases
+	if (p->type < 3)
+	{
+		if (p->dist <= emins[p->type])
+			return 1;
+		if (p->dist >= emaxs[p->type])
+			return 2;
+		return 3;
+	}
+*/
+	// general case
+	switch (p->signbits)
+	{
+		case 0:
+			dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
+			dist2 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
+			break;
+		case 1:
+			dist1 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
+			dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
+			break;
+		case 2:
+			dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
+			dist2 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
+			break;
+		case 3:
+			dist1 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
+			dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
+			break;
+		case 4:
+			dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
+			dist2 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
+			break;
+		case 5:
+			dist1 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emins[2];
+			dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emaxs[2];
+			break;
+		case 6:
+			dist1 = p->normal[0]*emaxs[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
+			dist2 = p->normal[0]*emins[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
+			break;
+		case 7:
+			dist1 = p->normal[0]*emins[0] + p->normal[1]*emins[1] + p->normal[2]*emins[2];
+			dist2 = p->normal[0]*emaxs[0] + p->normal[1]*emaxs[1] + p->normal[2]*emaxs[2];
+			break;
+		default:
+			dist1 = dist2 = 0;		// make compiler happy
+			Host_Error ("BoxOnPlaneSide: Bad signbits");
+			break;
+	}
+	
+	sides = 0;
+	if (dist1 >= p->dist)
+		sides = 1;
+	if (dist2 < p->dist)
+		sides |= 2;
+	
+	return sides;
+}
 
 
 /*
@@ -1418,6 +1494,7 @@ void R_SetupFrame (void)
 		Cvar_Set ("r_drawentities", "1");
 		Cvar_Set ("r_drawworld", "1");
 		Cvar_Set ("r_fullbright", "0");
+		Cvar_Set ("r_ambient", "0");
 	}
 
 	R_PushDlights ();

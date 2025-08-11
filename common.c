@@ -1862,3 +1862,121 @@ void COM_InitFilesystem (void)
 		strcpy(com_savedir, com_gamedir);
 }
 
+/*
+==============================================================================
+
+	FILELIST
+
+==============================================================================
+*/
+
+/*
+==================
+COM_FileListAdd
+==================
+*/
+void COM_FileListAdd (char *name, filelist_t **list)
+{
+	filelist_t	*item, *cursor, *prev;
+
+	// ignore duplicate
+	for (item = *list; item; item = item->next)
+	{
+		if (!strcmp (name, item->name))
+			return;
+	}
+
+	item = Z_Malloc (sizeof(filelist_t));
+	strcpy (item->name, name);
+
+	// insert each entry in alphabetical order
+	if (*list == NULL ||
+		strcasecmp(item->name, (*list)->name) < 0) //insert at front
+	{
+		item->next = *list;
+		*list = item;
+	}
+	else //insert later
+	{
+		prev = *list;
+		cursor = (*list)->next;
+		while (cursor && (strcasecmp(item->name, cursor->name) > 0))
+		{
+			prev = cursor;
+			cursor = cursor->next;
+		}
+		item->next = prev->next;
+		prev->next = item;
+	}
+}
+
+/*
+==================
+COM_FileListClear
+==================
+*/
+void COM_FileListClear (filelist_t **list)
+{
+	filelist_t *item;
+	
+	while (*list)
+	{
+		item = (*list)->next;
+		Z_Free (*list);
+		*list = item;
+	}
+}
+
+/*
+==================
+COM_ScanDirList
+==================
+*/
+void COM_ScanDirList(char *path, filelist_t **list)
+{
+	Sys_ScanDirList(path, list);
+}
+
+/*
+==================
+COM_ScanDirFileList
+==================
+*/
+void COM_ScanDirFileList(char *path, char *subdir, char *ext, qboolean stripext, filelist_t **list)
+{
+	Sys_ScanDirFileList(path, subdir, ext, stripext, list);
+}
+
+/*
+==================
+COM_ScanPakFileList
+==================
+*/
+void COM_ScanPakFileList(pack_t *pack, char *subdir, char *ext, qboolean stripext, filelist_t **list)
+{
+	int			i;
+	pack_t		*pak;
+	char		*path;
+	char		filename[MAX_QPATH];
+	
+	for (i=0, pak = pack ; i<pak->numfiles ; i++)
+	{
+		if (strchr(pak->files[i].name, '/') && !subdir[0])
+			continue;
+		
+		if (subdir[0] && !strstr(pak->files[i].name, subdir))
+			continue;
+		
+		if (!strcasecmp(COM_FileExtension(pak->files[i].name), ext))
+		{
+			path = COM_SkipPath(pak->files[i].name);
+			if (stripext)
+				COM_StripExtension(path, filename);
+			else
+				strcpy(filename, path);
+			
+			COM_FileListAdd (filename, list);
+		}
+	}
+}
+

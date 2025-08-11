@@ -4,11 +4,12 @@
 
 #include "quakedef.h"
 
-#ifdef _WIN32
-#include "winquake.h"
-#endif
+//#ifdef _WIN32
+//#include "winquake.h"
+//#endif
 
 
+void (*vid_menucmdfn)(void); //johnfitz
 void (*vid_menudrawfn)(void);
 void (*vid_menukeyfn)(int key);
 
@@ -2152,11 +2153,15 @@ void M_Keys_Key (int k)
 //=============================================================================
 /* VIDEO MENU */
 
+//void M_Menu_Video_f (void)
+//{
+//	key_dest = key_menu;
+//	m_state = m_video;
+//	m_entersound = true;
+//}
 void M_Menu_Video_f (void)
 {
-	key_dest = key_menu;
-	m_state = m_video;
-	m_entersound = true;
+	(*vid_menucmdfn) (); //johnfitz
 }
 
 

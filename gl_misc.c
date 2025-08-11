@@ -190,6 +190,18 @@ void R_FullBright (void)
 
 /*
 ====================
+R_Ambient
+====================
+*/
+void R_Ambient (void)
+{
+	// Refresh lightmaps
+//	R_RebuildAllLightmaps ();
+	R_BuildLightmaps ();
+}
+
+/*
+====================
 R_ClearColor
 ====================
 */
@@ -201,6 +213,8 @@ void R_ClearColor (void)
 //	rgb = (byte *)(d_8to24table + ((int)r_clearcolor.value & 0xFF));
 //	glClearColor (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0, 0);
 }
+
+float globalwateralpha = 0.0;
 
 /*
 ===============
@@ -221,6 +235,7 @@ void R_Init (void)
 
 	Cvar_RegisterVariable (&r_norefresh);
 	Cvar_RegisterVariableCallback (&r_fullbright, R_FullBright);
+	Cvar_RegisterVariableCallback (&r_ambient, R_Ambient);
 	Cvar_RegisterVariable (&r_drawentities);
 	Cvar_RegisterVariable (&r_drawworld);
 	Cvar_RegisterVariable (&r_drawviewmodel);
@@ -249,6 +264,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&gl_clear);
 
 	Cvar_RegisterVariable (&gl_cull);
+	Cvar_RegisterVariable (&gl_farclip);
 	Cvar_RegisterVariable (&gl_smoothmodels);
 	Cvar_RegisterVariable (&gl_affinemodels);
 	Cvar_RegisterVariable (&gl_polyblend);
