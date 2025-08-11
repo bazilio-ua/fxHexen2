@@ -64,7 +64,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-basedir /Users/bazilio/Quake"
+            argument = "-basedir /Users/bazilio/Hexen2"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
@@ -229,7 +229,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-protocol 999"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-protocol 15"
@@ -277,7 +277,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 512"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 2000"
