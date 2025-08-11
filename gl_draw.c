@@ -49,43 +49,43 @@ gltexture_t			*char_smalltexture;
 gltexture_t			*char_menufonttexture;
 
 
-int		indexed_bytes = 1;
-int		rgba_bytes = 4;
-int		bgra_bytes = 4;
+//int		indexed_bytes = 1;
+//int		rgba_bytes = 4;
+//int		bgra_bytes = 4;
 
-int		gl_lightmap_format = 4;
-int		gl_solid_format = GL_RGB; // was 3
-int		gl_alpha_format = GL_RGBA; // was 4
+//int		gl_lightmap_format = 4;
+//int		gl_solid_format = GL_RGB; // was 3
+//int		gl_alpha_format = GL_RGBA; // was 4
 
-#define MAXGLMODES 6
+//#define MAXGLMODES 6
 
-typedef struct
-{
-	int magfilter;
-	int minfilter;
-	char *name;
-} glmode_t;
+//typedef struct
+//{
+//	int magfilter;
+//	int minfilter;
+//	char *name;
+//} glmode_t;
 
-glmode_t modes[MAXGLMODES] = {
-	{GL_NEAREST, GL_NEAREST,				"GL_NEAREST"},
-	{GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST,	"GL_NEAREST_MIPMAP_NEAREST"},
-	{GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR,	"GL_NEAREST_MIPMAP_LINEAR"},
-	{GL_LINEAR,  GL_LINEAR,					"GL_LINEAR"},
-	{GL_LINEAR,  GL_LINEAR_MIPMAP_NEAREST,	"GL_LINEAR_MIPMAP_NEAREST"},
-	{GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
-};
+//glmode_t modes[MAXGLMODES] = {
+//	{GL_NEAREST, GL_NEAREST,				"GL_NEAREST"},
+//	{GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST,	"GL_NEAREST_MIPMAP_NEAREST"},
+//	{GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR,	"GL_NEAREST_MIPMAP_LINEAR"},
+//	{GL_LINEAR,  GL_LINEAR,					"GL_LINEAR"},
+//	{GL_LINEAR,  GL_LINEAR_MIPMAP_NEAREST,	"GL_LINEAR_MIPMAP_NEAREST"},
+//	{GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
+//};
 
-int		gl_texturemode = 3; // linear
-int		gl_filter_min = GL_LINEAR; // was GL_NEAREST
-int		gl_filter_mag = GL_LINEAR;
+//int		gl_texturemode = 3; // linear
+//int		gl_filter_min = GL_LINEAR; // was GL_NEAREST
+//int		gl_filter_mag = GL_LINEAR;
 
-float	gl_hardware_max_anisotropy = 1; // just in case
-float 	gl_texture_anisotropy = 1;
+//float	gl_hardware_max_anisotropy = 1; // just in case
+//float 	gl_texture_anisotropy = 1;
 
-int		gl_hardware_max_size = 1024; // just in case
-int		gl_texture_max_size = 1024;
+//int		gl_hardware_max_size = 1024; // just in case
+//int		gl_texture_max_size = 1024;
 
-int		warpimage_size = 256; // fitzquake has 512, for water warp
+//int		warpimage_size = 256; // fitzquake has 512, for water warp
 
 #define MAX_GLTEXTURES	4096 // orig was 2048
 gltexture_t	*active_gltextures, *free_gltextures;
