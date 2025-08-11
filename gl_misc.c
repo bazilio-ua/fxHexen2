@@ -66,116 +66,116 @@ unsigned ColorPercent[16] =
 R_LoadPalette
 ===============
 */
-void R_LoadPalette (void)
-{
-//	byte	*pal;
-	int		r,g,b,v;
-	int		i,c,p;
-	unsigned	*table;
-
-	byte mask[] = {255,255,255,0};
-	byte black[] = {0,0,0,255};
-	byte *pal, *src, *dst;
-//	int i;
-
-	host_basepal = (byte *)COM_LoadHunkFile ("gfx/palette.lmp", NULL);
-	if (!host_basepal)
-		Sys_Error ("Couldn't load gfx/palette.lmp");
-
-
-	pal = host_basepal;
-
-	//standard palette, 255 is transparent
-	dst = (byte *)d_8to24table;
-	src = pal;
-	for (i=0; i<256; i++)
-	{
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = 255;
-	}
-	d_8to24table[255] &= *mask; // fix gcc warnings
-
-	//fullbright palette, 0-237 are black (for additive blending)
-	src = pal + 238*3;
-	dst = (byte *)(d_8to24table_fbright) + 238*4;
-	for (i=238; i<256; i++)
-	{
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = 255;
-	}
-	for (i=0; i<238; i++)
-		d_8to24table_fbright[i] = *black; // fix gcc warnings
-
-	//nobright palette, 238-255 are black (for additive blending)
-	dst = (byte *)d_8to24table_nobright;
-	src = pal;
-	for (i=0; i<256; i++)
-	{
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = 255;
-	}
-	for (i=238; i<256; i++)
-		d_8to24table_nobright[i] = *black; // fix gcc warnings
-
-	//conchars palette, 0 and 255 are transparent
-	memcpy(d_8to24table_conchars, d_8to24table, 256*4);
-	d_8to24table_conchars[0] &= *mask; // fix gcc warnings
-
-
-
-
+//void R_LoadPalette (void)
+//{
+////	byte	*pal;
+//	int		r,g,b,v;
+//	int		i,c,p;
+//	unsigned	*table;
 //
-// 8 8 8 encoding
+//	byte mask[] = {255,255,255,0};
+//	byte black[] = {0,0,0,255};
+//	byte *pal, *src, *dst;
+////	int i;
 //
-/*	pal = host_basepal;
-	table = d_8to24table;
-	
-	for (i=0 ; i<256 ; i++)
-	{
-		r = pal[0];
-		g = pal[1];
-		b = pal[2];
-		pal += 3;
-		
-		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
-		*table++ = v;
-	}
-
-	d_8to24table[255] &= 0xffffff;	// 255 is transparent
-*/
-
-	//h2 part d_8to24TranslucentTable, used for rain effect in castle4 and eidolon map 
-	//fixme: tint(ottenok) is not used yet
-	pal = host_basepal;
-	table = d_8to24TranslucentTable;
+//	host_basepal = (byte *)COM_LoadHunkFile ("gfx/palette.lmp", NULL);
+//	if (!host_basepal)
+//		Sys_Error ("Couldn't load gfx/palette.lmp");
 //
-	for (i=0; i<16;i++)
-	{
-		c = ColorIndex[i]*3;
-
-		r = pal[c];
-		g = pal[c+1];
-		b = pal[c+2];
-
-		for(p=0;p<16;p++)
-		{
-			v = (ColorPercent[15-p]<<24) + (r<<0) + (g<<8) + (b<<16);
-			*table++ = v;
-
-			// tint part, FIXME not used?
-			RTint[i*16+p] = ((float)r) / ((float)ColorPercent[15-p]) ;
-			GTint[i*16+p] = ((float)g) / ((float)ColorPercent[15-p]);
-			BTint[i*16+p] = ((float)b) / ((float)ColorPercent[15-p]);
-		}
-	}
 //
-}
+//	pal = host_basepal;
+//
+//	//standard palette, 255 is transparent
+//	dst = (byte *)d_8to24table;
+//	src = pal;
+//	for (i=0; i<256; i++)
+//	{
+//		*dst++ = *src++;
+//		*dst++ = *src++;
+//		*dst++ = *src++;
+//		*dst++ = 255;
+//	}
+//	d_8to24table[255] &= *mask; // fix gcc warnings
+//
+//	//fullbright palette, 0-237 are black (for additive blending)
+//	src = pal + 238*3;
+//	dst = (byte *)(d_8to24table_fbright) + 238*4;
+//	for (i=238; i<256; i++)
+//	{
+//		*dst++ = *src++;
+//		*dst++ = *src++;
+//		*dst++ = *src++;
+//		*dst++ = 255;
+//	}
+//	for (i=0; i<238; i++)
+//		d_8to24table_fbright[i] = *black; // fix gcc warnings
+//
+//	//nobright palette, 238-255 are black (for additive blending)
+//	dst = (byte *)d_8to24table_nobright;
+//	src = pal;
+//	for (i=0; i<256; i++)
+//	{
+//		*dst++ = *src++;
+//		*dst++ = *src++;
+//		*dst++ = *src++;
+//		*dst++ = 255;
+//	}
+//	for (i=238; i<256; i++)
+//		d_8to24table_nobright[i] = *black; // fix gcc warnings
+//
+//	//conchars palette, 0 and 255 are transparent
+//	memcpy(d_8to24table_conchars, d_8to24table, 256*4);
+//	d_8to24table_conchars[0] &= *mask; // fix gcc warnings
+//
+//
+//
+//
+////
+//// 8 8 8 encoding
+////
+///*	pal = host_basepal;
+//	table = d_8to24table;
+//	
+//	for (i=0 ; i<256 ; i++)
+//	{
+//		r = pal[0];
+//		g = pal[1];
+//		b = pal[2];
+//		pal += 3;
+//		
+//		v = (255<<24) + (r<<0) + (g<<8) + (b<<16);
+//		*table++ = v;
+//	}
+//
+//	d_8to24table[255] &= 0xffffff;	// 255 is transparent
+//*/
+//
+//	//h2 part d_8to24TranslucentTable, used for rain effect in castle4 and eidolon map 
+//	//fixme: tint(ottenok) is not used yet
+//	pal = host_basepal;
+//	table = d_8to24TranslucentTable;
+////
+//	for (i=0; i<16;i++)
+//	{
+//		c = ColorIndex[i]*3;
+//
+//		r = pal[c];
+//		g = pal[c+1];
+//		b = pal[c+2];
+//
+//		for(p=0;p<16;p++)
+//		{
+//			v = (ColorPercent[15-p]<<24) + (r<<0) + (g<<8) + (b<<16);
+//			*table++ = v;
+//
+//			// tint part, FIXME not used?
+//			RTint[i*16+p] = ((float)r) / ((float)ColorPercent[15-p]) ;
+//			GTint[i*16+p] = ((float)g) / ((float)ColorPercent[15-p]);
+//			BTint[i*16+p] = ((float)b) / ((float)ColorPercent[15-p]);
+//		}
+//	}
+////
+//}
 
 /*
 ====================
@@ -279,7 +279,7 @@ void R_Init (void)
 
 	R_InitParticles ();
 
-	R_InitTranslatePlayerTextures ();
+//	R_InitTranslatePlayerTextures ();
 
 
 	playerTranslation = (byte *)COM_LoadHunkFile ("gfx/player.lmp", NULL);
@@ -287,7 +287,7 @@ void R_Init (void)
 		Sys_Error ("Couldn't load gfx/player.lmp");
 
 
-	R_InitMapGlobals ();
+//	R_InitMapGlobals ();
 
 	R_InitBloomTextures();
 }
@@ -302,20 +302,20 @@ static int oldtop[MAX_SCOREBOARD];
 static int oldbottom[MAX_SCOREBOARD];
 static int oldskinnum[MAX_SCOREBOARD];
 static int oldplayerclass[MAX_SCOREBOARD];
-void R_InitTranslatePlayerTextures (void)
-{
-	int i;
-
-	for (i = 0; i < MAX_SCOREBOARD; i++)
-	{
-		oldtop[i] = -1;
-		oldbottom[i] = -1;
-		oldskinnum[i] = -1;
-		oldplayerclass[i] = -1;
-
-		playertextures[i] = NULL; //clear playertexture pointers
-	}
-}
+//void R_InitTranslatePlayerTextures (void)
+//{
+//	int i;
+//
+//	for (i = 0; i < MAX_SCOREBOARD; i++)
+//	{
+//		oldtop[i] = -1;
+//		oldbottom[i] = -1;
+//		oldskinnum[i] = -1;
+//		oldplayerclass[i] = -1;
+//
+//		playertextures[i] = NULL; //clear playertexture pointers
+//	}
+//}
 
 
 /*
@@ -327,6 +327,7 @@ Translates a skin texture by the per-player color lookup
 */
 void R_TranslatePlayerSkin (int playernum)
 {
+	extern	byte		player_texels[MAX_PLAYER_CLASS][620*245];
 
 	int		top, bottom;
 	byte	translate[256];
@@ -434,7 +435,7 @@ skip:
 //	GL_Upload8 (name, original, paliashdr->skinwidth, paliashdr->skinheight, false, false, 0); 
 
 	//upload new image
-	playertextures[playernum] = GL_LoadTexture (currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight, SRC_INDEXED, original, "", (unsigned)original, TEXPREF_PAD | TEXPREF_OVERWRITE);
+	playertextures[playernum] = TexMgr_LoadTexture (currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight, SRC_INDEXED, original, "", (uintptr_t)original, TEXPREF_PAD | TEXPREF_OVERWRITE);
 
 
 	// free allocated memory
@@ -469,7 +470,7 @@ void R_NewMap (void)
 
 	R_BuildLightmaps ();
 
-	R_ParseWorldspawnNewMap ();
+//	R_ParseWorldspawnNewMap ();
 }
 
 
