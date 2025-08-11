@@ -341,7 +341,8 @@ void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void R_DrawGLPoly34 (glpoly_t *p);
 void R_DrawGLPoly56 (glpoly_t *p);
-void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t *ent);
+//void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t *ent);
+void R_DrawSequentialPoly (msurface_t *s);
 void R_BuildLightmaps (void);
 void R_UploadLightmaps (void);
 void R_RebuildAllLightmaps (void);
@@ -450,6 +451,7 @@ void R_DrawAlpha (void);
 
 extern	entity_t	r_worldentity;
 extern	vec3_t		modelorg, r_entorigin;
+extern	entity_t	*currententity; //temp
 extern	int			r_visframecount;	// ??? what difs?
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];

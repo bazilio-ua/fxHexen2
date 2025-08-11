@@ -336,8 +336,8 @@ void R_DrawSpriteModel (entity_t *e)
 			return;
 	}
 
-	GL_DisableMultitexture (); // selects TEXTURE0
-	GL_Bind (frame->gltexture);
+	GL_SelectTMU0 (); // selects TEXTURE0
+	GL_BindTexture (frame->gltexture);
 
 	// offset decals
 	if (psprite->type == SPR_ORIENTED)
@@ -672,6 +672,7 @@ void R_DrawAliasModel (entity_t *e)
 	model_t		*clmodel;
 //	vec3_t		mins, maxs;
 	aliashdr_t	*paliashdr;
+	int			anim;
 	float		an;
 	static float	tmatrix[3][4];
 	float entScale;
@@ -684,7 +685,7 @@ void R_DrawAliasModel (entity_t *e)
 	vec3_t		adjust_origin;
 	qboolean	isclient = false;
 	int			skinnum, client_no;
-	gltexture_t	*tx, *fb;
+	gltexture_t	*base, *glow;
 	static float	lastmsg = 0;
 	lerpdata_t	lerpdata;
 	float		scale;
@@ -904,8 +905,9 @@ void R_DrawAliasModel (entity_t *e)
 	//
 //	GL_DisableMultitexture (); // selects TEXTURE0
 
-	tx = paliashdr->gltexture[skinnum];
-	fb = paliashdr->fullbright[skinnum];
+	anim = (int)(cl.time*10) & 3;
+	base = paliashdr->base[skinnum][anim];
+	glow = paliashdr->glow[skinnum][anim];
 
 	if (e->skinnum >= 100)
 	{
@@ -922,7 +924,7 @@ void R_DrawAliasModel (entity_t *e)
 			gl_extra_textures[e->skinnum-100] = gl->gltexture;
 		}
 
-		tx = gl_extra_textures[e->skinnum-100];
+		base = gl_extra_textures[e->skinnum-100];
 	}
 	else
 	{
@@ -939,7 +941,7 @@ void R_DrawAliasModel (entity_t *e)
 			    e->model == player_models[4])
 			{
 				if (isclient)
-					tx = playertextures[client_no - 1];
+					base = playertextures[client_no - 1];
 			}
 		}
 	}
@@ -947,97 +949,97 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// draw it
 	//
-	if (gl_mtexable && gl_texture_env_combine && gl_texture_env_add && fb) // case 1: everything in one pass
+//	if (gl_mtexable && gl_texture_env_combine && gl_texture_env_add && glow) // case 1: everything in one pass
 	{
 		// Binds normal skin to texture env 0
-		GL_DisableMultitexture (); // selects TEXTURE0
-		GL_Bind (tx);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-		glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+		GL_SelectTMU0 (); // selects TEXTURE0
+		GL_BindTexture (base);
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+		glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PRIMARY_COLOR_ARB);
+		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2.0f);
 
 		// Binds fullbright skin to texture env 1
-		GL_EnableMultitexture (); // selects TEXTURE1
-		GL_Bind (fb);
+		GL_SelectTMU2 (); // selects TEXTURE2
+		GL_BindTexture (glow);
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD);
 		glEnable (GL_BLEND);
 		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
 		glDisable (GL_BLEND);
-		GL_DisableMultitexture (); // selects TEXTURE0
+		GL_SelectTMU0 (); // selects TEXTURE0
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	}
-	else if (gl_texture_env_combine) // case 2: overbright in one pass, then fullbright pass
-	{
-		// first pass
-		GL_Bind (tx);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-		glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
-		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-
-		// second pass
-		if (fb)
-		{
-			GL_Bind (fb);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glEnable (GL_BLEND);
-			glBlendFunc (GL_ONE, GL_ONE);
-			glDepthMask (GL_FALSE);
-			shading = false;
-			glColor3f (entalpha, entalpha, entalpha);
-			R_FogStartAdditive ();
-			GL_DrawAliasFrame (paliashdr, lerpdata); // FX
-			R_FogStopAdditive ();
-			glDepthMask (GL_TRUE);
-			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable (GL_BLEND);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		}
-	}
-	else // case 3: overbright in two passes, then fullbright pass
-	{
-		// first pass
-		GL_Bind (tx);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
-
-		// second pass -- additive with black fog, to double the object colors but not the fog color
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_ONE, GL_ONE);
-		glDepthMask (GL_FALSE);
-		R_FogStartAdditive ();
-		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
-		R_FogStopAdditive ();
-		glDepthMask (GL_TRUE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable (GL_BLEND);
-
-		// third pass
-		if (fb)
-		{
-			GL_Bind (fb);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glEnable (GL_BLEND);
-			glBlendFunc (GL_ONE, GL_ONE);
-			glDepthMask (GL_FALSE);
-			shading = false;
-			glColor3f (entalpha, entalpha, entalpha);
-			R_FogStartAdditive ();
-			GL_DrawAliasFrame (paliashdr, lerpdata); // FX
-			R_FogStopAdditive ();
-			glDepthMask (GL_TRUE);
-			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable (GL_BLEND);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		}
-	}
+//	else if (gl_texture_env_combine) // case 2: overbright in one pass, then fullbright pass
+//	{
+//		// first pass
+//		GL_Bind (base);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+//		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
+//		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//
+//		// second pass
+//		if (glow)
+//		{
+//			GL_Bind (glow);
+//			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//			glEnable (GL_BLEND);
+//			glBlendFunc (GL_ONE, GL_ONE);
+//			glDepthMask (GL_FALSE);
+//			shading = false;
+//			glColor3f (entalpha, entalpha, entalpha);
+//			R_FogStartAdditive ();
+//			GL_DrawAliasFrame (paliashdr, lerpdata); // FX
+//			R_FogStopAdditive ();
+//			glDepthMask (GL_TRUE);
+//			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//			glDisable (GL_BLEND);
+//			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//		}
+//	}
+//	else // case 3: overbright in two passes, then fullbright pass
+//	{
+//		// first pass
+//		GL_Bind (base);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
+//
+//		// second pass -- additive with black fog, to double the object colors but not the fog color
+//		glEnable (GL_BLEND);
+//		glBlendFunc (GL_ONE, GL_ONE);
+//		glDepthMask (GL_FALSE);
+//		R_FogStartAdditive ();
+//		GL_DrawAliasFrame (paliashdr, lerpdata); // FX
+//		R_FogStopAdditive ();
+//		glDepthMask (GL_TRUE);
+//		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//		glDisable (GL_BLEND);
+//
+//		// third pass
+//		if (glow)
+//		{
+//			GL_Bind (glow);
+//			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//			glEnable (GL_BLEND);
+//			glBlendFunc (GL_ONE, GL_ONE);
+//			glDepthMask (GL_FALSE);
+//			shading = false;
+//			glColor3f (entalpha, entalpha, entalpha);
+//			R_FogStartAdditive ();
+//			GL_DrawAliasFrame (paliashdr, lerpdata); // FX
+//			R_FogStopAdditive ();
+//			glDepthMask (GL_TRUE);
+//			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//			glDisable (GL_BLEND);
+//			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//		}
+//	}
 
 cleanup:
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
@@ -1110,7 +1112,7 @@ void R_DrawEntities (qboolean alphapass)
 				break;
 
 			case mod_brush:
-				R_DrawBrushModel (currententity, false);
+				R_DrawBrushModel (currententity);
 				break;
 
 			default:
@@ -1148,7 +1150,7 @@ void R_DrawWaterEntities (qboolean alphapass)
 		switch (currententity->model->type)
 		{
 			case mod_brush:
-				R_DrawBrushModel (currententity, true);
+				R_DrawBrushModel (currententity);
 				break;
 
 			default:
@@ -1247,7 +1249,7 @@ void R_DrawTransEntitiesOnList ( qboolean inwater )
 				depthMaskWrite = 1;
 				glDepthMask(1);
 			}
-			R_DrawBrushModel (currententity,true);
+			R_DrawBrushModel (currententity);
 			break;
 		case mod_sprite:
 			if (depthMaskWrite) 
@@ -1315,7 +1317,7 @@ void R_PolyBlend (void)
 	if (!v_blend[3])
 		return;
 
-	GL_DisableMultitexture (); // selects TEXTURE0
+	GL_SelectTMU0 (); // selects TEXTURE0
 
 //	glDisable (GL_ALPHA_TEST);
 	glDisable (GL_TEXTURE_2D);
@@ -1345,6 +1347,28 @@ void R_PolyBlend (void)
 //	glEnable (GL_ALPHA_TEST);
 }
 
+
+//==================================================================================
+
+/*
+===============
+SignbitsForPlane
+===============
+*/
+int SignbitsForPlane (mplane_t *out)
+{
+	int	bits, j;
+
+	// for fast box on planeside test - identify which corner(s) of the box to text against the plane
+
+	bits = 0;
+	for (j=0 ; j<3 ; j++)
+	{
+		if (out->normal[j] < 0)
+			bits |= 1<<j;
+	}
+	return bits;
+}
 
 /*
 ===============
@@ -1424,8 +1448,8 @@ void R_SetupFrame (void)
 	}
 
 	R_SetFrustum (r_fovx, r_fovy); // use r_fov* vars
-	R_MarkSurfaces ();	// create texture chains from PVS (done here so we know if we're in water)
-	R_CullSurfaces ();	// do after R_SetFrustum and R_MarkSurfaces
+//	R_MarkSurfaces ();	// create texture chains from PVS (done here so we know if we're in water)
+//	R_CullSurfaces ();	// do after R_SetFrustum and R_MarkSurfaces
 	R_UpdateWarpTextures ();	// do this before R_Clear
 	R_Clear ();
 }
@@ -1541,12 +1565,12 @@ void R_RenderView (void)
 	R_DrawWorld (); // adds static entities to the list
 	R_DrawEntities (false); // false means this is the pass for nonalpha entities
 	R_DrawWaterEntities (false); // special case to draw water nonalpha entities
-	R_DrawTextureChainsWater (); // drawn here since they might have transparency
+//	R_DrawTextureChainsWater (); // drawn here since they might have transparency
 	R_DrawEntities (true); // true means this is the pass for alpha entities
 	R_DrawWaterEntities (true); // special case to draw water alpha entities
-	R_RenderDlights ();
+//	R_RenderDlights ();
 	R_DrawSprites ();
-	R_DrawParticles ();
+//	R_DrawParticles ();
 	R_FogDisableGFog ();
 	R_DrawViewModel ();
 	R_PolyBlend ();
@@ -1733,15 +1757,15 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, lerpdata_t lerpdata)
 			u = ((float *)commands)[0];
 			v = ((float *)commands)[1];
 
-			if (mtexenabled)
+//			if (mtexenabled)
 			{
-				qglMultiTexCoord2f (TEXTURE0, u, v);
-				qglMultiTexCoord2f (TEXTURE1, u, v);
+				qglMultiTexCoord2f (GL_TEXTURE0_ARB, u, v);
+				qglMultiTexCoord2f (GL_TEXTURE2_ARB, u, v);
 			}
-			else
-			{
-				glTexCoord2f (u, v);
-			}
+//			else
+//			{
+//				glTexCoord2f (u, v);
+//			}
 
 			commands += 2;
 

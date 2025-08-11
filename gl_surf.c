@@ -83,7 +83,7 @@ void R_AddDynamicLights (msurface_t *surf)
 
 	for (lnum=0 ; lnum<MAX_DLIGHTS ; lnum++)
 	{
-		if ( !(surf->dlightbits & (1<<lnum) ) )
+		if ( !(surf->dlightbits[lnum >> 5] & (1U << (lnum & 31))) )
 			continue;		// not lit by this light
 
 		rad = cl_dlights[lnum].radius;
@@ -403,7 +403,7 @@ void R_DrawSequentialPoly (msurface_t *s)
 			glColor4f(1, 1, 1, entalpha);
 		}
 
-		GL_Bind (t->gltexture);
+		GL_BindTexture (t->base);
 		R_DrawGLPoly34 (p);
 		rs_c_brush_passes++; // r_speeds
 
@@ -433,83 +433,83 @@ void R_DrawSequentialPoly (msurface_t *s)
 		else
 			glColor3f (1, 1, 1);
 
-		if (gl_mtexable && gl_texture_env_combine) // case 1: texture and lightmap in one pass, overbright using texture combiners
+//		if (gl_mtexable && gl_texture_env_combine) // case 1: texture and lightmap in one pass, overbright using texture combiners
 		{
 			// Binds world to texture env 0
-			GL_DisableMultitexture (); // selects TEXTURE0
-			GL_Bind (t->gltexture);
+			GL_SelectTMU0 (); // selects TEXTURE0
+			GL_BindTexture (t->base);
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 			// Binds lightmap to texture env 1
-			GL_EnableMultitexture (); // selects TEXTURE1
-			GL_Bind (lightmap_textures[s->lightmaptexture]);
+			GL_SelectTMU1 (); // selects TEXTURE1
+			GL_BindTexture (lightmap_textures[s->lightmaptexture]);
 			R_RenderDynamicLightmaps (s);
 			R_UploadLightmap (s->lightmaptexture);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-			glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-			glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_PREVIOUS_EXT);
-			glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_TEXTURE);
-			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
+			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+			glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+			glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
+			glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
+			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2.0f);
 
 			glBegin(GL_POLYGON);
 			v = p->verts[0];
 			for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 			{
-				qglMultiTexCoord2f (TEXTURE0, v[3], v[4]);
-				qglMultiTexCoord2f (TEXTURE1, v[5], v[6]);
+				qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+				qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
 				glVertex3fv (v);
 			}
 			glEnd ();
 			rs_c_brush_passes++; // r_speeds
 
-			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+			glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1.0f);
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			GL_DisableMultitexture (); // selects TEXTURE0
+			GL_SelectTMU0 (); // selects TEXTURE0
 			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);//FX
 		} 
-		else if (entalpha < 1.0) // case 2: can't do multipass if entity has alpha, so just draw the texture
-		{
-			GL_Bind (t->gltexture);
-			R_DrawGLPoly34 (p);
-			rs_c_brush_passes++; // r_speeds
-		}
-		else // case 3: texture in one pass, lightmap in second pass using 2x modulation blend func, fog in third pass
-		{
-			// first pass -- texture with no fog
-			R_FogDisableGFog ();
-			GL_Bind (t->gltexture);
-			R_DrawGLPoly34 (p);
-			rs_c_brush_passes++; // r_speeds
-			R_FogEnableGFog ();
-
-			// second pass -- lightmap with black fog, modulate blended
-			GL_Bind (lightmap_textures[s->lightmaptexture]);
-			R_RenderDynamicLightmaps (s);
-			R_UploadLightmap (s->lightmaptexture);
-			glDepthMask (GL_FALSE); // don't bother writing Z
-			glEnable (GL_BLEND);
-			glBlendFunc (GL_DST_COLOR, GL_SRC_COLOR); // 2x modulate
-			R_FogStartAdditive ();
-			R_DrawGLPoly56 (p);
-			rs_c_brush_passes++; // r_speeds
-			R_FogStopAdditive ();
-
-			// third pass -- black geo with normal fog, additive blended
-			if (R_FogGetDensity() > 0)
-			{
-				glBlendFunc(GL_ONE, GL_ONE); //add
-				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				glColor3f(0,0,0);
-				R_DrawGLPoly34 (p);
-				rs_c_brush_passes++; // r_speeds
-				glColor3f(1,1,1);
-				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-			}
-
-			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable (GL_BLEND);
-			glDepthMask (GL_TRUE); // back to normal Z buffering
-		}
+//		else if (entalpha < 1.0) // case 2: can't do multipass if entity has alpha, so just draw the texture
+//		{
+//			GL_Bind (t->gltexture);
+//			R_DrawGLPoly34 (p);
+//			rs_c_brush_passes++; // r_speeds
+//		}
+//		else // case 3: texture in one pass, lightmap in second pass using 2x modulation blend func, fog in third pass
+//		{
+//			// first pass -- texture with no fog
+//			R_FogDisableGFog ();
+//			GL_Bind (t->gltexture);
+//			R_DrawGLPoly34 (p);
+//			rs_c_brush_passes++; // r_speeds
+//			R_FogEnableGFog ();
+//
+//			// second pass -- lightmap with black fog, modulate blended
+//			GL_Bind (lightmap_textures[s->lightmaptexture]);
+//			R_RenderDynamicLightmaps (s);
+//			R_UploadLightmap (s->lightmaptexture);
+//			glDepthMask (GL_FALSE); // don't bother writing Z
+//			glEnable (GL_BLEND);
+//			glBlendFunc (GL_DST_COLOR, GL_SRC_COLOR); // 2x modulate
+//			R_FogStartAdditive ();
+//			R_DrawGLPoly56 (p);
+//			rs_c_brush_passes++; // r_speeds
+//			R_FogStopAdditive ();
+//
+//			// third pass -- black geo with normal fog, additive blended
+//			if (R_FogGetDensity() > 0)
+//			{
+//				glBlendFunc(GL_ONE, GL_ONE); //add
+//				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//				glColor3f(0,0,0);
+//				R_DrawGLPoly34 (p);
+//				rs_c_brush_passes++; // r_speeds
+//				glColor3f(1,1,1);
+//				glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//			}
+//
+//			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//			glDisable (GL_BLEND);
+//			glDepthMask (GL_TRUE); // back to normal Z buffering
+//		}
 
 		if (entalpha < 1.0)
 		{
@@ -519,24 +519,24 @@ void R_DrawSequentialPoly (msurface_t *s)
 			glColor3f(1, 1, 1);
 		}
 
-		if (t->fullbright)
-		{
-			GL_Bind (t->fullbright);
-			glDepthMask (GL_FALSE); // don't bother writing Z
-			glEnable (GL_BLEND);
-			glBlendFunc (GL_ONE, GL_ONE);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glColor3f (entalpha, entalpha, entalpha);
-			R_FogStartAdditive ();
-			R_DrawGLPoly34 (p);
-			rs_c_brush_passes++; // r_speeds
-			R_FogStopAdditive ();
-			glColor3f (1, 1, 1);
-			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glDisable (GL_BLEND);
-			glDepthMask (GL_TRUE); // back to normal Z buffering
-		}
+//		if (t->fullbright)
+//		{
+//			GL_Bind (t->fullbright);
+//			glDepthMask (GL_FALSE); // don't bother writing Z
+//			glEnable (GL_BLEND);
+//			glBlendFunc (GL_ONE, GL_ONE);
+//			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//			glColor3f (entalpha, entalpha, entalpha);
+//			R_FogStartAdditive ();
+//			R_DrawGLPoly34 (p);
+//			rs_c_brush_passes++; // r_speeds
+//			R_FogStopAdditive ();
+//			glColor3f (1, 1, 1);
+//			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//			glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//			glDisable (GL_BLEND);
+//			glDepthMask (GL_TRUE); // back to normal Z buffering
+//		}
 	}
 }
 
@@ -592,7 +592,7 @@ void R_DrawSequentialWaterPoly (msurface_t *s)
 			glColor4f(1, 1, 1, entalpha);
 		}
 
-		GL_Bind (s->texinfo->texture->warpimage);
+		GL_BindTexture (s->texinfo->texture->warpbase);
 		s->texinfo->texture->update_warp = true; // FIXME: one frame too late!
 
 		if ( !(s->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME)) )
@@ -607,10 +607,10 @@ void R_DrawSequentialWaterPoly (msurface_t *s)
 			rs_c_brush_passes++; // r_speeds
 			R_FogEnableGFog ();
 
-			if (s->flags & SURF_DRAWLAVA)
-				entfog = CLAMP(0.0, r_lavafog.value, 1.0);
-			if (s->flags & SURF_DRAWSLIME)
-				entfog = CLAMP(0.0, r_slimefog.value, 1.0);
+//			if (s->flags & SURF_DRAWLAVA)
+//				entfog = CLAMP(0.0, r_lavafog.value, 1.0);
+//			if (s->flags & SURF_DRAWSLIME)
+//				entfog = CLAMP(0.0, r_slimefog.value, 1.0);
 
 			if (R_FogGetDensity() > 0 && entfog > 0)
 			{
@@ -681,7 +681,8 @@ void R_DrawGLPoly56 (glpoly_t *p)
 R_DrawBrushModel
 =================
 */
-void R_DrawBrushModel (entity_t *e, qboolean water)
+//void R_DrawBrushModel (entity_t *e, qboolean water)
+void R_DrawBrushModel (entity_t *e)
 {
 	int			k, i;
 	msurface_t	*psurf;
@@ -731,11 +732,11 @@ void R_DrawBrushModel (entity_t *e, qboolean water)
 	so offset factors will have different effects at different depths, 
 	and (b) the OpenGL spec allows polygon offset to be implementation-dependent, 
 	so the same offset factor may have different effects on different hardware. */
-	if (gl_zfix.value) // z-fighting fix
-	{
-		glPolygonOffset (DIST_EPSILON, 0);
-		glEnable (GL_POLYGON_OFFSET_FILL);
-	}
+//	if (gl_zfix.value) // z-fighting fix
+//	{
+//		glPolygonOffset (DIST_EPSILON, 0);
+//		glEnable (GL_POLYGON_OFFSET_FILL);
+//	}
 
 	glPushMatrix ();
 
@@ -757,23 +758,23 @@ void R_DrawBrushModel (entity_t *e, qboolean water)
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON)))
 		{
-			if (water)
-				R_DrawSequentialWaterPoly (psurf); // draw water entities
-			else
+//			if (water)
+//				R_DrawSequentialWaterPoly (psurf); // draw water entities
+//			else
 				R_DrawSequentialPoly (psurf); // draw entities
 			rs_c_brush_polys++; // r_speeds
 		}
 	}
 
-	GL_DisableMultitexture (); // selects TEXTURE0
+//	GL_DisableMultitexture (); // selects TEXTURE0
 
 	glPopMatrix ();
 
-	if (gl_zfix.value) // z-fighting fix
-	{
-		glPolygonOffset (0, 0);
-		glDisable (GL_POLYGON_OFFSET_FILL);
-	}
+//	if (gl_zfix.value) // z-fighting fix
+//	{
+//		glPolygonOffset (0, 0);
+//		glDisable (GL_POLYGON_OFFSET_FILL);
+//	}
 }
 
 /*
@@ -792,34 +793,32 @@ R_DrawTextureChainsNoTexture
 draws surfs whose textures were missing from the BSP
 ================
 */
-void R_DrawTextureChainsNoTexture (void)
+//void R_DrawTextureChainsNoTexture (void)
+void R_DrawTextureChains_NoTexture (model_t *model, entity_t *ent, texchain_t chain)
 {
 	int			i;
 	msurface_t	*s;
 	texture_t	*t;
-	qboolean	texbound;
-
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+	qboolean	bound;
+	
+	for (i=0 ; i<model->numtextures ; i++)
 	{
-		t = cl.worldmodel->textures[i];
-
-		if (!t || !t->texturechain || !(t->texturechain->flags & SURF_NOTEXTURE))
+		t = model->textures[i];
+		if (!t || !t->texturechains[chain] || t->texturechains[chain]->alpha < 1.0 || !(t->texturechains[chain]->flags & SURF_NOTEXTURE))
 			continue;
-
-		texbound = false;
-
-		for (s = t->texturechain; s; s = s->texturechain)
-			if (!s->culled)
+		
+		bound = false;
+		
+		for (s = t->texturechains[chain]; s; s = s->texturechain)
+		{
+			if (!bound) //only bind once we are sure we need this texture
 			{
-				if (!texbound) // only bind once we are sure we need this texture
-				{
-					GL_Bind (t->gltexture);
-					texbound = true;
-				}
-
-				R_DrawGLPoly34 (s->polys);
-				rs_c_brush_passes++; // r_speeds
+				GL_BindTexture (t->base);
+				bound = true;
 			}
+			R_DrawGLPoly34 (s->polys);
+			rs_c_brush_passes++;
+		}
 	}
 }
 
@@ -828,66 +827,66 @@ void R_DrawTextureChainsNoTexture (void)
 R_DrawTextureChainsTextureOnly
 ================
 */
-void R_DrawTextureChainsTextureOnly (void)
-{
-	int			i;
-	msurface_t	*s;
-	texture_t	*t;
-	qboolean	texbound;
-
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
-	{
-		t = cl.worldmodel->textures[i];
-
-		if (!t || !t->texturechain || t->texturechain->flags & (SURF_DRAWTURB | SURF_DRAWSKY))
-			continue;
-
-		texbound = false;
-
-		for (s = t->texturechain; s; s = s->texturechain)
-			if (!s->culled)
-			{
-				if (!texbound) // only bind once we are sure we need this texture
-				{
-					GL_Bind ((R_TextureAnimation(t,0))->gltexture);
-					texbound = true;
-				}
-
-				R_RenderDynamicLightmaps (s); // adds to lightmap chain
-				R_DrawGLPoly34 (s->polys);
-				rs_c_brush_passes++; // r_speeds
-			}
-	}
-}
+//void R_DrawTextureChainsTextureOnly (void)
+//{
+//	int			i;
+//	msurface_t	*s;
+//	texture_t	*t;
+//	qboolean	texbound;
+//
+//	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+//	{
+//		t = cl.worldmodel->textures[i];
+//
+//		if (!t || !t->texturechain || t->texturechain->flags & (SURF_DRAWTURB | SURF_DRAWSKY))
+//			continue;
+//
+//		texbound = false;
+//
+//		for (s = t->texturechain; s; s = s->texturechain)
+//			if (!s->culled)
+//			{
+//				if (!texbound) // only bind once we are sure we need this texture
+//				{
+//					GL_Bind ((R_TextureAnimation(t,0))->gltexture);
+//					texbound = true;
+//				}
+//
+//				R_RenderDynamicLightmaps (s); // adds to lightmap chain
+//				R_DrawGLPoly34 (s->polys);
+//				rs_c_brush_passes++; // r_speeds
+//			}
+//	}
+//}
 
 /*
 ================
 R_DrawTextureChainsWater
 ================
 */
-void R_DrawTextureChainsWater (void)
+//void R_DrawTextureChainsWater (void)
+void R_DrawTextureChains_Water (model_t *model, entity_t *ent, texchain_t chain)
 {
 	int			i;
 	msurface_t	*s;
 	texture_t	*t;
-	qboolean	texbound;
+	qboolean	bound;
 	float	wateralpha = 1.0f; // keep compiler happy
 	float	lavafog = 0; // keep compiler happy
 
 	if (!r_drawworld.value)
 		return;
 
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+	for (i=0 ; i<model->numtextures ; i++)
 	{
-		t = cl.worldmodel->textures[i];
-
-		if (!t || !t->texturechain || !(t->texturechain->flags & SURF_DRAWTURB))
+		t = model->textures[i];
+		if (!t || !t->texturechains[chain] || t->texturechains[chain]->alpha < 1.0 || !(t->texturechains[chain]->flags & SURF_DRAWTURB))
 			continue;
 
-		texbound = false;
+		bound = false;
 
-		for (s = t->texturechain; s; s = s->texturechain)
-			if (!s->culled)
+		for (s = t->texturechains[chain]; s; s = s->texturechain)
+//			if (!s->culled)
 			{
 				if (!r_lockalpha.value) // override water alpha for certain surface types
 				{
@@ -917,10 +916,10 @@ void R_DrawTextureChainsWater (void)
 					glColor4f (1, 1, 1, wateralpha);
 				}
 
-				if (!texbound) // only bind once we are sure we need this texture
+				if (!bound) // only bind once we are sure we need this texture
 				{
-					GL_Bind (t->warpimage);
-					texbound = true;
+					GL_BindTexture (t->warpbase);
+					bound = true;
 				}
 
 				if ( !(s->flags & (SURF_DRAWLAVA | SURF_DRAWSLIME)) )
@@ -935,10 +934,10 @@ void R_DrawTextureChainsWater (void)
 					rs_c_brush_passes++; // r_speeds
 					R_FogEnableGFog ();
 
-					if (s->flags & SURF_DRAWLAVA)
-						lavafog = CLAMP(0.0, r_lavafog.value, 1.0);
-					if (s->flags & SURF_DRAWSLIME)
-						lavafog = CLAMP(0.0, r_slimefog.value, 1.0);
+//					if (s->flags & SURF_DRAWLAVA)
+//						lavafog = CLAMP(0.0, r_lavafog.value, 1.0);
+//					if (s->flags & SURF_DRAWSLIME)
+//						lavafog = CLAMP(0.0, r_slimefog.value, 1.0);
 
 					if (R_FogGetDensity() > 0 && lavafog > 0)
 					{
@@ -971,62 +970,62 @@ R_DrawLightmapChains
 stripped down to almost nothing
 ================
 */
-void R_DrawLightmapChains (void)
-{
-	int			i;
-	glpoly_t	*p;
-
-	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
-	{
-		if (!lightmap_polys[i])
-			continue;
-
-		GL_Bind (lightmap_textures[i]);
-		R_UploadLightmap(i);
-		for (p = lightmap_polys[i]; p; p=p->chain)
-		{
-			R_DrawGLPoly56 (p);
-			rs_c_brush_passes++; // r_speeds
-		}
-	}
-}
+//void R_DrawLightmapChains (void)
+//{
+//	int			i;
+//	glpoly_t	*p;
+//
+//	for (i=0 ; i<MAX_LIGHTMAPS ; i++)
+//	{
+//		if (!lightmap_polys[i])
+//			continue;
+//
+//		GL_Bind (lightmap_textures[i]);
+//		R_UploadLightmap(i);
+//		for (p = lightmap_polys[i]; p; p=p->chain)
+//		{
+//			R_DrawGLPoly56 (p);
+//			rs_c_brush_passes++; // r_speeds
+//		}
+//	}
+//}
 
 /*
 ================
 R_DrawTextureChainsGlow
 ================
 */
-void R_DrawTextureChainsGlow (void)
-{
-	int			i;
-	msurface_t	*s;
-	texture_t	*t;
-	gltexture_t	*glt;
-	qboolean	texbound;
-
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
-	{
-		t = cl.worldmodel->textures[i];
-
-		if (!t || !t->texturechain || !(glt = R_TextureAnimation(t,0)->fullbright))
-			continue;
-
-		texbound = false;
-
-		for (s = t->texturechain; s; s = s->texturechain)
-			if (!s->culled)
-			{
-				if (!texbound) // only bind once we are sure we need this texture
-				{
-					GL_Bind (glt);
-					texbound = true;
-				}
-
-				R_DrawGLPoly34 (s->polys);
-				rs_c_brush_passes++; // r_speeds
-			}
-	}
-}
+//void R_DrawTextureChainsGlow (void)
+//{
+//	int			i;
+//	msurface_t	*s;
+//	texture_t	*t;
+//	gltexture_t	*glt;
+//	qboolean	texbound;
+//
+//	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+//	{
+//		t = cl.worldmodel->textures[i];
+//
+//		if (!t || !t->texturechain || !(glt = R_TextureAnimation(t,0)->fullbright))
+//			continue;
+//
+//		texbound = false;
+//
+//		for (s = t->texturechain; s; s = s->texturechain)
+//			if (!s->culled)
+//			{
+//				if (!texbound) // only bind once we are sure we need this texture
+//				{
+//					GL_Bind (glt);
+//					texbound = true;
+//				}
+//
+//				R_DrawGLPoly34 (s->polys);
+//				rs_c_brush_passes++; // r_speeds
+//			}
+//	}
+//}
 
 
 /*
@@ -1034,34 +1033,36 @@ void R_DrawTextureChainsGlow (void)
 R_DrawTextureChainsMultitexture
 ================
 */
-void R_DrawTextureChainsMultitexture (void)
+//void R_DrawTextureChainsMultitexture (void)
+void R_DrawTextureChains_Multitexture (model_t *model, entity_t *ent, texchain_t chain)
 {
 	int			i, j;
 	msurface_t	*s;
 	texture_t	*t;
 	float		*v;
-	qboolean	texbound;
+	qboolean	bound;
 
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+	for (i=0 ; i<model->numtextures ; i++)
 	{
-		t = cl.worldmodel->textures[i];
+		t = model->textures[i];
 
-		if (!t || !t->texturechain || t->texturechain->flags & (SURF_DRAWTILED | SURF_NOTEXTURE))
+		if (!t || !t->texturechains[chain] || t->texturechains[chain]->alpha < 1.0 || t->texturechains[chain]->flags & (SURF_DRAWTURB | SURF_DRAWTILED | SURF_NOTEXTURE))
 			continue;
 
-		texbound = false;
+		bound = false;
 
-		for (s = t->texturechain; s; s = s->texturechain)
-			if (!s->culled)
+		for (s = t->texturechains[chain]; s; s = s->texturechain)
+//			if (!s->culled)
 			{
-				if (!texbound) // only bind once we are sure we need this texture
+				if (!bound) // only bind once we are sure we need this texture
 				{
-					GL_Bind ((R_TextureAnimation(t,0))->gltexture);
-					GL_EnableMultitexture(); // selects TEXTURE1
-					texbound = true;
+//					GL_SelectTMU0 ();
+					GL_BindTexture ((R_TextureAnimation(t,0))->base);
+					bound = true;
 				}
 
-				GL_Bind (lightmap_textures[s->lightmaptexture]);
+				GL_SelectTMU1(); // selects TEXTURE1
+				GL_BindTexture (lightmap_textures[s->lightmaptexture]);
 				R_RenderDynamicLightmaps (s);
 				R_UploadLightmap(s->lightmaptexture);
 
@@ -1069,15 +1070,15 @@ void R_DrawTextureChainsMultitexture (void)
 				v = s->polys->verts[0];
 				for (j=0 ; j<s->polys->numverts ; j++, v+= VERTEXSIZE)
 				{
-					qglMultiTexCoord2f (TEXTURE0, v[3], v[4]);
-					qglMultiTexCoord2f (TEXTURE1, v[5], v[6]);
+					qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
+					qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
 					glVertex3fv (v);
 				}
 				glEnd ();
 				rs_c_brush_passes++; // r_speeds
 			}
 
-		GL_DisableMultitexture(); // selects TEXTURE0
+		GL_SelectTMU0 (); // selects TEXTURE0
 	}
 }
 
@@ -1092,62 +1093,64 @@ void R_DrawWorld (void)
 	if (!r_drawworld.value)
 		return;
 
-	R_DrawTextureChainsNoTexture (); 
+//	R_DrawTextureChainsNoTexture (); 
+//	R_DrawTextureChains(cl.worldmodel, NULL, chain_world);
 
-	if (gl_texture_env_combine && gl_mtexable)
+//	if (gl_texture_env_combine && gl_mtexable)
 	{
-		GL_EnableMultitexture ();
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_PREVIOUS_EXT);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_TEXTURE);
-		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 2.0f);
-		GL_DisableMultitexture ();
-		R_DrawTextureChainsMultitexture ();
-		GL_EnableMultitexture ();
-		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, 1.0f);
+		GL_SelectTMU1 ();
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
+		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2.0f);
+		GL_SelectTMU0 ();
+//		R_DrawTextureChainsMultitexture ();
+		R_DrawTextureChains_Multitexture (cl.worldmodel, NULL, chain_world);
+		GL_SelectTMU1 ();
+		glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1.0f);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		GL_DisableMultitexture ();
+		GL_SelectTMU0 ();
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	}
-	else
-	{
-		//to make fog work with multipass lightmapping, need to do one pass
-		//with no fog, one modulate pass with black fog, and one additive
-		//pass with black geometry and normal fog
-		R_FogDisableGFog ();
-		R_DrawTextureChainsTextureOnly ();
-		R_FogEnableGFog ();
-		glDepthMask (GL_FALSE);
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_DST_COLOR, GL_SRC_COLOR); //2x modulate
-		R_FogStartAdditive ();
-		R_DrawLightmapChains ();
-		R_FogStopAdditive ();
-		if (R_FogGetDensity() > 0)
-		{
-			glBlendFunc(GL_ONE, GL_ONE); //add
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glColor3f(0,0,0);
-			R_DrawTextureChainsTextureOnly ();
-			glColor3f(1,1,1);
-			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		}
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable (GL_BLEND);
-		glDepthMask (GL_TRUE);
-	}
+//	else
+//	{
+//		//to make fog work with multipass lightmapping, need to do one pass
+//		//with no fog, one modulate pass with black fog, and one additive
+//		//pass with black geometry and normal fog
+//		R_FogDisableGFog ();
+//		R_DrawTextureChainsTextureOnly ();
+//		R_FogEnableGFog ();
+//		glDepthMask (GL_FALSE);
+//		glEnable (GL_BLEND);
+//		glBlendFunc (GL_DST_COLOR, GL_SRC_COLOR); //2x modulate
+//		R_FogStartAdditive ();
+//		R_DrawLightmapChains ();
+//		R_FogStopAdditive ();
+//		if (R_FogGetDensity() > 0)
+//		{
+//			glBlendFunc(GL_ONE, GL_ONE); //add
+//			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+//			glColor3f(0,0,0);
+//			R_DrawTextureChainsTextureOnly ();
+//			glColor3f(1,1,1);
+//			glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+//		}
+//		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//		glDisable (GL_BLEND);
+//		glDepthMask (GL_TRUE);
+//	}
 
 	// fullbrights
-	glDepthMask (GL_FALSE);
-	glEnable (GL_BLEND);
-	glBlendFunc (GL_ONE, GL_ONE);
-	R_FogStartAdditive ();
-	R_DrawTextureChainsGlow ();
-	R_FogStopAdditive ();
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
-	glDepthMask (GL_TRUE);
+//	glDepthMask (GL_FALSE);
+//	glEnable (GL_BLEND);
+//	glBlendFunc (GL_ONE, GL_ONE);
+//	R_FogStartAdditive ();
+//	R_DrawTextureChainsGlow ();
+//	R_FogStopAdditive ();
+//	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//	glDisable (GL_BLEND);
+//	glDepthMask (GL_TRUE);
 }
 
 
@@ -1158,93 +1161,93 @@ R_MarkSurfaces
 mark surfaces based on PVS and rebuild texture chains
 ===============
 */
-void R_MarkSurfaces (void)
-{
-	byte	*vis;
-	mleaf_t		*leaf;
-	mnode_t	*node;
-	msurface_t	*surf, **mark;
-	int			i, j;
-	byte		solid[MAX_MAP_LEAFS / 2];
-	qboolean	nearwaterportal;
-
-	// clear lightmap chains
-	memset (lightmap_polys, 0, sizeof(lightmap_polys));
-
-	// Check if near water to avoid HOMs when crossing the surface
-	// TODO: loop through all water surfs and use distance to leaf cullbox
-	nearwaterportal = false;
-	for (i=0, mark = r_viewleaf->firstmarksurface; i < r_viewleaf->nummarksurfaces; i++, mark++)
-	{
-		if ((*mark)->flags & SURF_DRAWTURB)
-		{
-			nearwaterportal = true;
-//			Con_SafePrintf ("R_MarkSurfaces: nearwaterportal, surfs=%d\n", r_viewleaf->nummarksurfaces);
-			break;
-		}
-	}
-
-	// choose vis data
-	if (r_novis.value || r_viewleaf->contents == CONTENTS_SOLID || r_viewleaf->contents == CONTENTS_SKY)
-	{
-		vis = solid;
-		memset (solid, 0xff, (cl.worldmodel->numleafs+7)>>3);
-	}
-	else if (nearwaterportal)
-		vis = SV_FatPVS (r_origin, cl.worldmodel);
-	else
-		vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
-
-	// if surface chains don't need regenerating, just add static entities and return
-	if (r_oldviewleaf == r_viewleaf && !r_novis.value && !nearwaterportal)
-	{
-		leaf = &cl.worldmodel->leafs[1];
-		for (i=0 ; i<cl.worldmodel->numleafs ; i++, leaf++)
-			if (vis[i>>3] & (1<<(i&7)))
-				if (leaf->efrags)
-					R_StoreEfrags (&leaf->efrags);
-		return;
-	}
-
-	r_visframecount++;
-	r_oldviewleaf = r_viewleaf;
-
-	// iterate through leaves, marking surfaces
-	leaf = &cl.worldmodel->leafs[1];
-	for (i=0 ; i<cl.worldmodel->numleafs ; i++, leaf++)
-	{
-		if (vis[i>>3] & (1<<(i&7)))
-		{
-			if (r_novis.value || leaf->contents != CONTENTS_SKY)
-				for (j=0, mark = leaf->firstmarksurface; j<leaf->nummarksurfaces; j++, mark++)
-					(*mark)->visframe = r_visframecount;
-
-			// add static models
-			if (leaf->efrags)
-				R_StoreEfrags (&leaf->efrags);
-		}
-	}
-
-	// set all chains to null
-	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
-		if (cl.worldmodel->textures[i])
-			cl.worldmodel->textures[i]->texturechain = NULL;
-
-	// rebuild chains
-
-	//iterate through surfaces one node at a time to rebuild chains
-	//need to do it this way if we want to work with tyrann's skip removal tool
-	//because his tool doesn't actually remove the surfaces from the bsp surfaces lump
-	//nor does it remove references to them in each leaf's marksurfaces list
-	for (i=0, node = cl.worldmodel->nodes ; i<cl.worldmodel->numnodes ; i++, node++)
-		for (j=0, surf=&cl.worldmodel->surfaces[node->firstsurface] ; j<node->numsurfaces ; j++, surf++)
-			if (surf->visframe == r_visframecount)
-			{
-				surf->texturechain = surf->texinfo->texture->texturechain;
-				surf->texinfo->texture->texturechain = surf;
-			}
-
-}
+//void R_MarkSurfaces (void)
+//{
+//	byte	*vis;
+//	mleaf_t		*leaf;
+//	mnode_t	*node;
+//	msurface_t	*surf, **mark;
+//	int			i, j;
+//	byte		solid[MAX_MAP_LEAFS / 2];
+//	qboolean	nearwaterportal;
+//
+//	// clear lightmap chains
+//	memset (lightmap_polys, 0, sizeof(lightmap_polys));
+//
+//	// Check if near water to avoid HOMs when crossing the surface
+//	// TODO: loop through all water surfs and use distance to leaf cullbox
+//	nearwaterportal = false;
+//	for (i=0, mark = r_viewleaf->firstmarksurface; i < r_viewleaf->nummarksurfaces; i++, mark++)
+//	{
+//		if ((*mark)->flags & SURF_DRAWTURB)
+//		{
+//			nearwaterportal = true;
+////			Con_SafePrintf ("R_MarkSurfaces: nearwaterportal, surfs=%d\n", r_viewleaf->nummarksurfaces);
+//			break;
+//		}
+//	}
+//
+//	// choose vis data
+//	if (r_novis.value || r_viewleaf->contents == CONTENTS_SOLID || r_viewleaf->contents == CONTENTS_SKY)
+//	{
+//		vis = solid;
+//		memset (solid, 0xff, (cl.worldmodel->numleafs+7)>>3);
+//	}
+//	else if (nearwaterportal)
+//		vis = SV_FatPVS (r_origin, cl.worldmodel);
+//	else
+//		vis = Mod_LeafPVS (r_viewleaf, cl.worldmodel);
+//
+//	// if surface chains don't need regenerating, just add static entities and return
+//	if (r_oldviewleaf == r_viewleaf && !r_novis.value && !nearwaterportal)
+//	{
+//		leaf = &cl.worldmodel->leafs[1];
+//		for (i=0 ; i<cl.worldmodel->numleafs ; i++, leaf++)
+//			if (vis[i>>3] & (1<<(i&7)))
+//				if (leaf->efrags)
+//					R_StoreEfrags (&leaf->efrags);
+//		return;
+//	}
+//
+//	r_visframecount++;
+//	r_oldviewleaf = r_viewleaf;
+//
+//	// iterate through leaves, marking surfaces
+//	leaf = &cl.worldmodel->leafs[1];
+//	for (i=0 ; i<cl.worldmodel->numleafs ; i++, leaf++)
+//	{
+//		if (vis[i>>3] & (1<<(i&7)))
+//		{
+//			if (r_novis.value || leaf->contents != CONTENTS_SKY)
+//				for (j=0, mark = leaf->firstmarksurface; j<leaf->nummarksurfaces; j++, mark++)
+//					(*mark)->visframe = r_visframecount;
+//
+//			// add static models
+//			if (leaf->efrags)
+//				R_StoreEfrags (&leaf->efrags);
+//		}
+//	}
+//
+//	// set all chains to null
+//	for (i=0 ; i<cl.worldmodel->numtextures ; i++)
+//		if (cl.worldmodel->textures[i])
+//			cl.worldmodel->textures[i]->texturechain = NULL;
+//
+//	// rebuild chains
+//
+//	//iterate through surfaces one node at a time to rebuild chains
+//	//need to do it this way if we want to work with tyrann's skip removal tool
+//	//because his tool doesn't actually remove the surfaces from the bsp surfaces lump
+//	//nor does it remove references to them in each leaf's marksurfaces list
+//	for (i=0, node = cl.worldmodel->nodes ; i<cl.worldmodel->numnodes ; i++, node++)
+//		for (j=0, surf=&cl.worldmodel->surfaces[node->firstsurface] ; j<node->numsurfaces ; j++, surf++)
+//			if (surf->visframe == r_visframecount)
+//			{
+//				surf->texturechain = surf->texinfo->texture->texturechain;
+//				surf->texinfo->texture->texturechain = surf;
+//			}
+//
+//}
 
 /*
 ================
@@ -1253,62 +1256,62 @@ R_BackFaceCull
 returns true if the surface is facing away from vieworg
 ================
 */
-qboolean R_BackFaceCull (msurface_t *surf)
-{
-	double dot;
-
-	switch (surf->plane->type)
-	{
-		case PLANE_X:
-			dot = r_refdef.vieworg[0] - surf->plane->dist;
-			break;
-		case PLANE_Y:
-			dot = r_refdef.vieworg[1] - surf->plane->dist;
-			break;
-		case PLANE_Z:
-			dot = r_refdef.vieworg[2] - surf->plane->dist;
-			break;
-		default:
-			dot = DotProduct (r_refdef.vieworg, surf->plane->normal) - surf->plane->dist;
-			break;
-	}
-
-	if ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK))
-		return true;
-
-	return false;
-}
+//qboolean R_BackFaceCull (msurface_t *surf)
+//{
+//	double dot;
+//
+//	switch (surf->plane->type)
+//	{
+//		case PLANE_X:
+//			dot = r_refdef.vieworg[0] - surf->plane->dist;
+//			break;
+//		case PLANE_Y:
+//			dot = r_refdef.vieworg[1] - surf->plane->dist;
+//			break;
+//		case PLANE_Z:
+//			dot = r_refdef.vieworg[2] - surf->plane->dist;
+//			break;
+//		default:
+//			dot = DotProduct (r_refdef.vieworg, surf->plane->normal) - surf->plane->dist;
+//			break;
+//	}
+//
+//	if ((dot < 0) ^ !!(surf->flags & SURF_PLANEBACK))
+//		return true;
+//
+//	return false;
+//}
 
 /*
 ================
 R_CullSurfaces
 ================
 */
-void R_CullSurfaces (void)
-{
-	msurface_t *s;
-	int i;
-
-	if (!r_drawworld.value)
-		return;
-
-	s = &cl.worldmodel->surfaces[cl.worldmodel->firstmodelsurface];
-	for (i=0 ; i<cl.worldmodel->nummodelsurfaces ; i++, s++)
-	{
-		if (s->visframe == r_visframecount)
-		{
-			if (R_CullBox(s->mins, s->maxs) || R_BackFaceCull (s))
-				s->culled = true;
-			else
-			{
-				s->culled = false;
-				rs_c_brush_polys++; // r_speeds (count wpolys here)
-				if (s->texinfo->texture->warpimage)
-					s->texinfo->texture->update_warp = true;
-			}
-		}
-	}
-}
+//void R_CullSurfaces (void)
+//{
+//	msurface_t *s;
+//	int i;
+//
+//	if (!r_drawworld.value)
+//		return;
+//
+//	s = &cl.worldmodel->surfaces[cl.worldmodel->firstmodelsurface];
+//	for (i=0 ; i<cl.worldmodel->nummodelsurfaces ; i++, s++)
+//	{
+//		if (s->visframe == r_visframecount)
+//		{
+//			if (R_CullBox(s->mins, s->maxs) || R_BackFaceCull (s))
+//				s->culled = true;
+//			else
+//			{
+//				s->culled = false;
+//				rs_c_brush_polys++; // r_speeds (count wpolys here)
+//				if (s->texinfo->texture->warpimage)
+//					s->texinfo->texture->update_warp = true;
+//			}
+//		}
+//	}
+//}
 
 
 /*
@@ -1388,7 +1391,7 @@ void R_BuildSurfaceDisplayList (msurface_t *fa)
 	//
 	poly = Hunk_AllocName (sizeof(glpoly_t) + (lnumverts-4) * VERTEXSIZE * sizeof(float), "poly");
 	poly->next = fa->polys;
-	poly->flags = fa->flags;
+//	poly->flags = fa->flags;
 	fa->polys = poly;
 	poly->numverts = lnumverts;
 
@@ -1531,7 +1534,7 @@ void R_BuildLightmaps (void)
 
 		sprintf(name, "lightmap%03i",i);
 		data = lightmaps+i*BLOCK_WIDTH*BLOCK_HEIGHT*lightmap_bytes;
-		lightmap_textures[i] = GL_LoadTexture (cl.worldmodel, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_LIGHTMAP, data, "", (unsigned)data, TEXPREF_LINEAR | TEXPREF_NOPICMIP);
+		lightmap_textures[i] = TexMgr_LoadTexture (cl.worldmodel, name, BLOCK_WIDTH, BLOCK_HEIGHT, SRC_LIGHTMAP, data, "", (uintptr_t)data, TEXPREF_LINEAR | TEXPREF_NOPICMIP);
 	}
 
 	if (i > 64)
