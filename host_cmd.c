@@ -46,6 +46,271 @@ void Host_Quit_f (void)
 	Sys_Quit (0);
 }
 
+/*
+===============================================================================
+
+	FILELIST MANAGEMENT
+
+===============================================================================
+*/
+
+/*
+==============================================================================
+	johnfitz -- game list management
+==============================================================================
+*/
+filelist_t	*gamelist;
+
+void Host_GameListInit (void)
+{
+	COM_ScanDirList(com_basedir, &gamelist);
+}
+
+void Host_GameListClear (void)
+{
+	COM_FileListClear(&gamelist);
+}
+
+void Host_GameListRebuild (void) // for new game
+{
+	Host_GameListClear ();
+	Host_GameListInit ();
+}
+
+/*
+==================
+Host_Games_f
+==================
+*/
+void Host_Games_f (void)
+{
+	int i;
+	filelist_t	*game;
+	
+	for (game = gamelist, i = 0; game; game = game->next, i++)
+		Con_SafePrintf ("   %s\n", game->name);
+
+	if (i)
+		Con_SafePrintf ("%i game(s)\n", i);
+	else
+		Con_SafePrintf ("no games found\n");
+
+}
+
+/*
+==============================================================================
+	johnfitz -- map list management
+==============================================================================
+*/
+filelist_t	*maplist;
+
+void Host_MapListInit (void)
+{
+	char	*ext = "bsp";
+	char 	*subdir = "maps/";
+	searchpath_t	*search;
+	
+	for (search = com_searchpaths ; search ; search = search->next)
+	{
+		if (search->pack) //pakfile
+			COM_ScanPakFileList(search->pack, subdir, ext, true, &maplist);
+		else //directory
+			COM_ScanDirFileList(search->filename, subdir, ext, true, &maplist);
+	}
+}
+
+void Host_MapListClear (void)
+{
+	COM_FileListClear(&maplist);
+}
+
+void Host_MapListRebuild (void) // for new game
+{
+	Host_MapListClear ();
+	Host_MapListInit ();
+}
+
+/*
+==================
+Host_Maps_f
+==================
+*/
+void Host_Maps_f (void)
+{
+	int i;
+	filelist_t	*level;
+
+	for (level = maplist, i = 0; level; level = level->next, i++)
+		Con_SafePrintf ("   %s\n", level->name);
+
+	if (i)
+		Con_SafePrintf ("%i map(s)\n", i);
+	else
+		Con_SafePrintf ("no maps found\n");
+}
+
+/*
+==============================================================================
+	ericw -- demo list management
+==============================================================================
+*/
+filelist_t	*demolist;
+
+void Host_DemoListInit (void)
+{
+	char 	*ext = "dem";
+	char 	*subdir = "";
+	searchpath_t	*search;
+	
+	for (search = com_searchpaths ; search ; search = search->next)
+	{
+		if (search->pack) //pakfile
+			COM_ScanPakFileList(search->pack, subdir, ext, true, &demolist);
+		else //directory
+			COM_ScanDirFileList(search->filename, subdir, ext, true, &demolist);
+	}
+}
+
+void Host_DemoListClear (void)
+{
+	COM_FileListClear (&demolist);
+}
+
+void Host_DemoListRebuild (void) // for new game
+{
+	Host_DemoListClear ();
+	Host_DemoListInit ();
+}
+
+/*
+==================
+Host_Demonames_f
+==================
+*/
+void Host_Demonames_f (void)
+{
+	int i;
+	filelist_t	*demo;
+
+	for (demo = demolist, i = 0; demo; demo = demo->next, i++)
+		Con_SafePrintf ("   %s\n", demo->name);
+
+	if (i)
+		Con_SafePrintf ("%i demo(s)\n", i);
+	else
+		Con_SafePrintf ("no demos found\n");
+}
+
+/*
+==============================================================================
+	EER1 -- save list management
+==============================================================================
+*/
+filelist_t	*savelist;
+
+void Host_SaveListInit (void)
+{
+	char 	*ext = "sav";
+	char 	*subdir = "";
+	searchpath_t	*search;
+	
+	for (search = com_searchpaths ; search ; search = search->next)
+	{
+		if (search->pack) //pakfile
+			COM_ScanPakFileList(search->pack, subdir, ext, true, &savelist);
+		else //directory
+			COM_ScanDirFileList(search->filename, subdir, ext, true, &savelist);
+	}
+}
+
+void Host_SaveListClear (void)
+{
+	COM_FileListClear (&savelist);
+}
+
+void Host_SaveListRebuild (void) // for new game
+{
+	Host_SaveListClear ();
+	Host_SaveListInit ();
+}
+
+/*
+==================
+Host_Saves_f
+==================
+*/
+void Host_Saves_f (void)
+{
+	int i;
+	filelist_t	*save;
+
+	for (save = savelist, i = 0; save; save = save->next, i++)
+		Con_SafePrintf ("   %s\n", save->name);
+
+	if (i)
+		Con_SafePrintf ("%i save(s)\n", i);
+	else
+		Con_SafePrintf ("no saves found\n");
+}
+
+/*
+==============================================================================
+	EER1 -- config list management
+==============================================================================
+*/
+filelist_t	*configlist;
+
+void Host_ConfigListInit (void)
+{
+	char 	*exts[] = {"cfg", "rc"};
+	char	*ext;
+	char 	*subdir = "";
+	int		j, c = sizeof(exts) / sizeof(exts[0]);
+	searchpath_t	*search;
+	
+	for (search = com_searchpaths ; search ; search = search->next)
+	{
+		for (j=0 ; j<c && exts[j] != NULL ; j++)
+		{
+			ext = exts[j];
+			if (search->pack) //pakfile
+				COM_ScanPakFileList(search->pack, subdir, ext, false, &configlist);
+			else //directory
+				COM_ScanDirFileList(search->filename, subdir, ext, false, &configlist);
+		}
+	}
+}
+
+void Host_ConfigListClear (void)
+{
+	COM_FileListClear (&configlist);
+}
+
+void Host_ConfigListRebuild (void) // for new game
+{
+	Host_ConfigListClear ();
+	Host_ConfigListInit ();
+}
+
+/*
+==================
+Host_Configs_f
+==================
+*/
+void Host_Configs_f (void)
+{
+	int i;
+	filelist_t	*config;
+
+	for (config = configlist, i = 0; config; config = config->next, i++)
+		Con_SafePrintf ("   %s\n", config->name);
+
+	if (i)
+		Con_SafePrintf ("%i config(s)\n", i);
+	else
+		Con_SafePrintf ("no configs found\n");
+}
+
 
 /*
 ==================
