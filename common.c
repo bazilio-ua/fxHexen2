@@ -29,17 +29,17 @@ static char     *argvdummy = " ";
 static char     *safeargvs[NUM_SAFE_ARGVS] =
 	{"-nolan", "-nosound", "-nocdaudio", "-nojoy", "-nomouse", "-nomidi"};
 
-cvar_t  registered = {"registered","0"};
-cvar_t  oem = {"oem","0"};
-cvar_t  cmdline = {"cmdline","0", false, true};
+cvar_t  registered = {"registered","0", CVAR_ROM};
+cvar_t  oem = {"oem","0", CVAR_ROM};
+cvar_t  cmdline = {"cmdline","0", CVAR_ROM};
 
 qboolean		com_modified;   // set true if using non-raven files
 qboolean		com_oem;
 
-int				static_registered = 1;  // only for startup check, then set
 
 void COM_InitFilesystem (void);
 void COM_Path_f (void);
+void COM_Game_f (void);
 
 // if a packfile directory differs from this, it is assumed to be hacked
 
@@ -178,7 +178,8 @@ void InsertLinkAfter (link_t *l, link_t *after)
 size_t Q_strnlen (const char *s, size_t maxlen)
 {
 	size_t i;
-	for (i = 0; i < maxlen && s[i]; i++);
+	for (i = 0; i < maxlen && s[i]; i++) {}
+    
 		return i;
 } 
 
@@ -489,12 +490,10 @@ char *MSG_ReadString (qmsg_t *msg)
 		if (len + 1 > msg->badread_string_size) 
 		{
 			if (msg->badread_string)
-				free (msg->badread_string);
-			msg->badread_string = malloc (len + 1);
+				Z_Free (msg->badread_string);
+			msg->badread_string = Z_Malloc (len + 1);
 			msg->badread_string_size = len + 1;
 		}
-		if (!msg->badread_string)
-			Sys_Error ("MSG_ReadString: out of memory");
 
 		strncpy (msg->badread_string, string, len);
 		msg->badread_string[len] = 0;
@@ -618,16 +617,16 @@ void SZ_Print (sizebuf_t *buf, char *data)
 COM_SkipPath
 ============
 */
-char *COM_SkipPath (char *pathname)
+char *COM_SkipPath (char *path)
 {
 	char    *last;
 	
-	last = pathname;
-	while (*pathname)
+	last = path;
+	while (*path)
 	{
-		if (*pathname=='/')
-			last = pathname+1;
-		pathname++;
+		if (*path == '/')
+			last = path+1;
+		path++;
 	}
 	return last;
 }
@@ -639,9 +638,14 @@ COM_StripExtension
 */
 void COM_StripExtension (char *in, char *out)
 {
-	while (*in && *in != '.')
-		*out++ = *in++;
-	*out = 0;
+	char	*ext;
+	
+	if (out != in)
+		strcpy (out, in);
+	
+	ext = strrchr(in, '.');
+	if (ext)
+		out[ext - in] = 0;
 }
 
 /*
@@ -651,18 +655,10 @@ COM_FileExtension
 */
 char *COM_FileExtension (char *in)
 {
-	static char exten[8];
-	int             i;
-
-	while (*in && *in != '.')
-		in++;
-	if (!*in)
-		return "";
-	in++;
-	for (i=0 ; i<7 && *in ; i++,in++)
-		exten[i] = *in;
-	exten[i] = 0;
-	return exten;
+	char	*ext;
+	
+	ext = strrchr(in, '.');
+	return ext ? ++ext : "";
 }
 
 /*
@@ -672,26 +668,22 @@ COM_FileBase
 */
 void COM_FileBase (char *in, char *out)
 {
-	char *s, *s2;
+	char	*base;
+	char	*ext;
+	size_t	len;
 	
-	s = in + strlen(in) - 1;
+	base = COM_SkipPath(in);
+	ext = strrchr(base, '.');
+	len = ext ? ext - base : strlen(base);
 	
-	while (s != in && *s != '.')
-		s--;
-	
-	for (s2 = s ; s2 != in && *s2 != '/' && *s2 != '\\'; s2--)
-	;
-	
-	if (s-s2 < 2)
+	if (len < 2)
 		strcpy (out,"?model?");
 	else
 	{
-		if (*s2 == '/' || *s2 == '\\')
-			++s2;
-		if (s - s2 >= 32)
-			s = s2 + 32 - 1;
-		strncpy (out,s2, s-s2);
-		out[s-s2] = 0;
+		if (len >= MAX_QPATH)
+			len = MAX_QPATH - 1;
+		strncpy (out,base, len);
+		out[len] = 0;
 	}
 }
 
@@ -699,25 +691,20 @@ void COM_FileBase (char *in, char *out)
 /*
 ==================
 COM_DefaultExtension
+
+if path doesn't have a .EXT, append extension
+(extension should include the .)
 ==================
 */
-void COM_DefaultExtension (char *path, char *extension)
+void COM_DefaultExtension (char *path, char *ext)
 {
-	char    *src;
-//
-// if path doesn't have a .EXT, append extension
-// (extension should include the .)
-//
-	src = path + strlen(path) - 1;
+	char	*ext2;
+	
+	ext2 = strrchr(path, '.');
+	if (ext2)
+		return;                 // it has an extension
 
-	while (*src != '/' && src != path)
-	{
-		if (*src == '.')
-			return;                 // it has an extension
-		src--;
-	}
-
-	strcat (path, extension);
+	strcat (path, ext);
 }
 
 
@@ -756,6 +743,16 @@ skipwhite:
 		goto skipwhite;
 	}
 	
+// skip /*..*/ comments
+	if (c=='/' && data[1] == '*')
+	{
+		data += 2;
+		while (*data && !(*data == '*' && data[1] == '/'))
+			data++;
+		if (*data)
+			data += 2;
+		goto skipwhite;
+	}
 
 // handle quoted strings specially
 	if (c == '\"')
@@ -763,7 +760,8 @@ skipwhite:
 		data++;
 		while (1)
 		{
-			c = *data++;
+			if ((c = *data) != 0)
+				++data;
 			if (c=='\"' || !c)
 			{
 				com_token[len] = 0;
@@ -839,13 +837,24 @@ void COM_CheckRegistered (void)
 	unsigned short		check[128];
 	int					i;
 
-	COM_OpenFile("gfx/pop.lmp", &h, NULL);
-	static_registered = 0;
+	for (i=0 ; com_cmdline[i] ; i++)
+		if (com_cmdline[i] != ' ')
+			break;
 
-//-basedir c:\h3\test -game data1 +exec rick.cfg
+	Cvar_SetROM ("cmdline", &com_cmdline[i]);
+
+	COM_OpenFile("gfx/pop.lmp", &h, NULL);
+
 	if (h == -1)
 	{
-		Con_Printf ("Playing demo version.\n");
+		Cvar_SetROM ("registered", "0");
+		if (com_oem)
+		{
+			Cvar_SetROM ("oem", "1");
+			Con_Printf ("Playing OEM version.\n");
+		}
+		else
+			Con_Printf ("Playing demo version.\n");
 
 		if (com_modified)
 			Sys_Error ("You must have the full version to use modified games");
@@ -859,13 +868,8 @@ void COM_CheckRegistered (void)
 		if (pop[i] != (unsigned short)BigShort (check[i]))
 			Sys_Error ("Corrupted data file.");
 
-	Cvar_Set ("cmdline", com_cmdline+1); // johnfitz: eliminate leading space
-	Cvar_Set ("registered", "1");
-	if (com_oem)
-		Cvar_Set ("oem", "1");
-
-	static_registered = 1;
-	Con_Printf ("Playing %s version.\n", com_oem ? "oem" : "retail");
+	Cvar_SetROM ("registered", "1");
+	Con_Printf ("Playing retail version.\n");
 }
 
 
@@ -925,7 +929,7 @@ void COM_InitArgv (int argc, char **argv)
 	largv[com_argc] = argvdummy;
 	com_argv = largv;
 
-	if (COM_CheckParm ("-portals") || COM_CheckParm ("-pop") || COM_CheckParm ("-missionpack") || COM_CheckParm ("-h2mp"))
+	if (COM_CheckParm ("-portals"))
 		portals = true;
 }
 
@@ -965,11 +969,90 @@ void COM_Init (void)
 	Cvar_RegisterVariable (&oem);
 	Cvar_RegisterVariable (&cmdline);
 	Cmd_AddCommand ("path", COM_Path_f);
+	Cmd_AddCommand ("game", COM_Game_f); //johnfitz
 
 	COM_InitFilesystem ();
 	COM_CheckRegistered ();
 }
 
+/*
+============
+sys_char_map
+
+The translation table between the graphical font and plain ASCII  --KB
+============
+*/
+const char sys_char_map2[256] = {
+	  0, '#', '#', '#', '#', '.', '#', '#',
+	'#',   9,  10, '#', ' ',  13, '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', '.', '<', '=', '>',
+	' ', '!', '"', '#', '$', '%', '&','\'',
+	'(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	'X', 'Y', 'Z', '[','\\', ']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	'x', 'y', 'z', '{', '|', '}', '~', '<',
+
+	'<', '=', '>', '#', '#', '.', '#', '#',
+	'#', '#', ' ', '#', ' ', '>', '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', '.', '<', '=', '>',
+	' ', '!', '"', '#', '$', '%', '&','\'',
+	'(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	'X', 'Y', 'Z', '[','\\', ']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	'x', 'y', 'z', '{', '|', '}', '~', '<'
+};
+
+const char sys_char_map[256] = {
+	'\0','.', '#', '#', '#', '.', '#', '#',
+	'#','\t','\n', '#', ' ','\r', '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', '.', '<', '-', '>',
+	' ', '!','\"', '#', '$', '%', '&','\'',
+	'(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	'X', 'Y', 'Z', '[','\\', ']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	'x', 'y', 'z', '{', '|', '}', '~', '<',
+
+	'(', '=', ')', '*', '#', '.', '#', '#',
+	'#','\t','\n', '#', ' ', '>', '.', '.',
+	'[', ']', '0', '1', '2', '3', '4', '5',
+	'6', '7', '8', '9', '.', '<', '-', '>',
+	' ', '!','\"', '#', '$', '%', '&','\'',
+	'(', ')', '*', '+', ',', '-', '.', '/',
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', ':', ';', '<', '=', '>', '?',
+	'@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+	'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+	'X', 'Y', 'Z', '[','\\', ']', '^', '_',
+	'`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
+	'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+	'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+	'x', 'y', 'z', '{', '|', '}', '~', '<'
+};
 
 /*
 ============
@@ -1132,59 +1215,14 @@ QUAKE FILESYSTEM
 
 int     com_filesize;
 
-//
-// in memory
-//
-
-//typedef struct
-//{
-//	char    name[MAX_QPATH];
-//	int             filepos, filelen;
-//} packfile_t;
-
-//typedef struct pack_s
-//{
-//	char    filename[MAX_OSPATH];
-//	int             handle;
-//	int             numfiles;
-//	packfile_t      *files;
-//} pack_t;
-
-//
-// on disk
-//
-//typedef struct
-//{
-//	char    name[56];
-//	int             filepos, filelen;
-//} dpackfile_t;
-
-//typedef struct
-//{
-//	char    id[4];
-//	int             dirofs;
-//	int             dirlen;
-//} dpackheader_t;
-
-#define MAX_FILES_IN_PACK       2048
-
 char    com_cachedir[MAX_OSPATH];
 char    com_gamedir[MAX_OSPATH];
 char    com_savedir[MAX_OSPATH];
 char    com_basedir[MAX_OSPATH];
-char    *home;
-
-//typedef struct searchpath_s
-//{
-//	unsigned int path_id;	// identifier assigned to the game directory
-//							// Note that <install_dir>/game1 and
-//							// <userdir>/game1 have the same id.
-//	char    filename[MAX_OSPATH];
-//	pack_t  *pack;          // only one of filename / pack will be used
-//	struct searchpath_s *next;
-//} searchpath_t;
+char    *homedir = NULL;
 
 searchpath_t    *com_searchpaths;
+searchpath_t	*com_base_searchpaths;
 
 /*
 ============
@@ -1353,7 +1391,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file, unsigned int *path_i
 		else
 		{               
 	// check a file in the directory tree
-			if (!static_registered)
+			if (!registered.value)
 			{       // if not a registered version, don't ever go beyond base
 				if ( strchr (filename, '/') || strchr (filename,'\\'))
 					continue;
@@ -1528,16 +1566,14 @@ byte *COM_LoadFile (char *path, int usehunk, unsigned int *path_id)
 		
 	((byte *)buf)[len] = 0;
 
-	if (!cls.demoplayback)
-		Draw_BeginDisc ();
+	Draw_BeginDisc ();
 
 	if (Sys_FileRead (h, buf, len) != len)
 		Sys_Error ("COM_LoadFile: error reading %s", path);
 
 	COM_CloseFile (h);
 
-	if (!cls.demoplayback)
-		Draw_EndDisc ();
+	Draw_EndDisc ();
 
 	return buf;
 }
@@ -1586,7 +1622,7 @@ byte *COM_LoadMallocFile (char *path, void *buffer, unsigned int *path_id)
 
 /*
 =================
-COM_LoadPackFile
+COM_LoadPackFile -- johnfitz -- modified based on topaz's tutorial
 
 Takes an explicit (not game tree related) path to a pak file.
 
@@ -1594,7 +1630,7 @@ Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files.
 =================
 */
-pack_t *COM_LoadPackFile (char *packfile)
+pack_t *COM_LoadPackFile (char *packfilename)
 {
 	dpackheader_t   header;
 	int             i;
@@ -1605,29 +1641,41 @@ pack_t *COM_LoadPackFile (char *packfile)
 	dpackfile_t             info[MAX_FILES_IN_PACK];
 	unsigned short          crc;
 
-	if (Sys_FileOpenRead (packfile, &packhandle) == -1)
+	if (Sys_FileOpenRead (packfilename, &packhandle) == -1)
 	{
-//		Con_SafePrintf ("COM_LoadPackFile: couldn't open %s\n", packfile);
+//		Con_SafePrintf ("COM_LoadPackFile: couldn't open %s\n", packfilename);
 		return NULL;
 	}
 	if (Sys_FileRead (packhandle, (void *)&header, sizeof(header)) != sizeof(header) ||
 	    header.ident[0] != 'P' || header.ident[1] != 'A' || header.ident[2] != 'C' || header.ident[3] != 'K')
-		Sys_Error ("COM_LoadPackFile: can't read header in packfile %s", packfile);
+		Sys_Error ("COM_LoadPackFile: %s is not a packfile, can't read header PACK id", packfilename);
 
 	header.dirofs = LittleLong (header.dirofs);
 	header.dirlen = LittleLong (header.dirlen);
 
+	if (header.dirlen < 0 || header.dirofs < 0)
+		Sys_Error ("COM_LoadPackFile: invalid packfile %s (dirlen: %i, dirofs: %i)", packfilename, header.dirlen, header.dirofs);
+	
 	numpackfiles = header.dirlen / sizeof(dpackfile_t);
 
-	if (numpackfiles > MAX_FILES_IN_PACK)
-		Sys_Error ("COM_LoadPackFile: packfile %s has too many files (%i, max = %i)", packfile, numpackfiles, MAX_FILES_IN_PACK);
+	if (!numpackfiles)
+	{
+		Sys_Printf ("WARNING: %s has no files\n", packfilename);
+//		Sys_Printf ("WARNING: %s has no files, ignored\n", packfilename);
+//		Sys_FileClose (packhandle);
+//		return NULL;
+	}
 
-	newfiles = Hunk_AllocName (numpackfiles * sizeof(packfile_t), "packfile");
-//	newfiles = Z_Malloc (numpackfiles * sizeof(packfile_t)); // dynamic loading
+	if (numpackfiles > MAX_FILES_IN_PACK)
+		Sys_Error ("COM_LoadPackFile: packfile %s has too many files (%i, max = %i)", packfilename, numpackfiles, MAX_FILES_IN_PACK);
+
+	//johnfitz -- dynamic gamedir loading
+	//johnfitz -- modified to use zone alloc
+	newfiles = (packfile_t *) Z_Malloc (numpackfiles * sizeof(packfile_t));
 
 	Sys_FileSeek (packhandle, header.dirofs);
 	if (Sys_FileRead (packhandle, (void *)info, header.dirlen) != header.dirlen)
-		Sys_Error ("COM_LoadPackFile: can't read directory in packfile %s", packfile);
+		Sys_Error ("COM_LoadPackFile: can't read directory in packfile %s", packfilename);
 
 // crc the directory to check for modifications
 	CRC_Init (&crc);
@@ -1654,36 +1702,35 @@ pack_t *COM_LoadPackFile (char *packfile)
 		newfiles[i].filelen = LittleLong(info[i].filelen);
 	}
 
-	pack = Hunk_AllocName (sizeof(pack_t), "pack");
-//	pack = Z_Malloc (sizeof (pack_t)); // dynamic loading
+	//johnfitz -- dynamic gamedir loading
+	//johnfitz -- modified to use zone alloc
+	pack = (pack_t *) Z_Malloc (sizeof (pack_t));
 
-	strcpy (pack->filename, packfile);
+	strcpy (pack->filename, packfilename);
 	pack->handle = packhandle;
 	pack->numfiles = numpackfiles;
 	pack->files = newfiles;
 
-	Con_Printf ("Added packfile %s (%i files)\n", packfile, numpackfiles);
+	Con_Printf ("Added packfile %s (%i files)\n", packfilename, numpackfiles);
 	return pack;
 }
 
 
 /*
 ================
-COM_AddGameDirectory
+COM_AddDirectory -- johnfitz -- modified based on topaz's tutorial
 
-Sets com_gamedir, adds the directory to the head of the path,
+adds the directory to the head of the path,
 then loads and adds pak1.pak pak2.pak ... 
 ================
 */
-void COM_AddGameDirectory (char *dir)
+void COM_AddDirectory (char *dir)
 {
 	int				i;
 	unsigned int    path_id;
 	searchpath_t    *search;
 	pack_t			*pak;
 	char			pakfile[MAX_OSPATH];
-
-	strcpy (com_gamedir, dir);
 
 //
 // assign a path_id to this game directory
@@ -1694,19 +1741,9 @@ void COM_AddGameDirectory (char *dir)
 		path_id = 1U;
 
 //
-// add the directory to the search path
-//
-	search = Hunk_AllocName (sizeof(searchpath_t), "searchpath");
-//	search = Z_Malloc (sizeof(searchpath_t)); // dynamic loading
-	search->path_id = path_id;
-	strcpy (search->filename, dir);
-	search->next = com_searchpaths;
-	com_searchpaths = search;
-
-//
 // add any pak files in the format pak0.pak pak1.pak, ...
 //
-	for (i=0 ; i<100 ; i++)
+	for (i=0 ; i < 10; i++)
 	{
 		sprintf (pakfile, "%s/pak%i.pak", dir, i);
 		pak = COM_LoadPackFile (pakfile);
@@ -1714,27 +1751,316 @@ void COM_AddGameDirectory (char *dir)
 			continue;
 		if (i == 2)
 			com_oem = true;
-		search = Hunk_AllocName (sizeof(searchpath_t), "searchpath");
-//		search = Z_Malloc (sizeof(searchpath_t)); // dynamic loading
+		//johnfitz -- dynamic gamedir loading
+		//johnfitz -- modified to use zone alloc
+		search = (searchpath_t *) Z_Malloc (sizeof(searchpath_t));
 		search->path_id = path_id;
 		search->pack = pak;
 		search->next = com_searchpaths;
 		com_searchpaths = search;               
 	}
+
+//
+// add the directory to the search path
+//
+	//johnfitz -- dynamic gamedir loading
+	//johnfitz -- modified to use zone alloc
+	search = (searchpath_t *) Z_Malloc (sizeof(searchpath_t));
+	search->path_id = path_id;
+	strcpy (search->filename, dir);
+	search->next = com_searchpaths;
+	com_searchpaths = search;
 }
+
+/*
+================
+COM_AddGameDirectory
+
+Sets com_gamedir, adds the directory to the head of the path,
+then loads and adds pak1.pak pak2.pak ...
+================
+*/
+void COM_AddGameDirectory (char *base, char *dir)
+{
+	strcpy (com_gamedir, va("%s/%s", base, dir));
+	
+	COM_AddDirectory(com_gamedir);
+}
+
+/*
+================
+COM_SetGamedirToHomeDirectory
+
+sets gamedir to home dir
+================
+*/
+void COM_SetGamedirToHomeDirectory (char *home, char *dir)
+{
+	if (!home)
+		return;
+
+#if defined __APPLE__ && defined __MACH__
+	strcpy (com_gamedir, va("%s/Library/Application Support/fxHexen2/%s", home, dir));
+#else
+	strcpy (com_gamedir, va("%s/.fxHexen2/%s", home, dir));
+#endif
+}
+
+/*
+================
+COM_AddUserDirectory
+
+Sets com_gamedir, adds the user directory to the head of the path,
+================
+*/
+void COM_AddUserDirectory (char *home, char *dir)
+{
+	if (!home)
+		return;
+
+	COM_SetGamedirToHomeDirectory (home, dir);
+
+	COM_AddDirectory(com_gamedir);
+	
+	// If home is available, create the user directory
+	COM_CreatePath (com_gamedir);
+	Sys_mkdir (com_gamedir);
+}
+
+
+/*
+============
+COM_Game_f
+
+johnfitz -- dynamic gamedir stuff
+modified by QuakeSpasm team.
+============
+*/
+void COM_Game_f (void)
+{
+	char *p = Cmd_Argv(1);
+	char *p2 = Cmd_Argv(2);
+	char *p3 = Cmd_Argv(3);
+	char *p4 = Cmd_Argv(4);
+	searchpath_t *search;
+
+	if (Cmd_Argc() > 1)
+	{
+		if (!registered.value) // disable demo/oem hexen2
+		{
+			Con_Printf ("You must have the full version to use modified games\n");
+			return;
+		}
+		
+		if (!*p || !strcmp(p, ".") || strstr(p, "..") || strstr(p, "/") || strstr(p, "\\") || strstr(p, ":"))
+		{
+			Con_Printf ("Relative pathnames are not allowed\n");
+			Con_Printf ("game directory should be a single directory name, not a path\n");
+			return;
+		}
+		
+		if (*p2)
+		{
+			if (strcmp(p2,"-data1") && strcmp(p2,"-portals") && strcmp(p2,"-fo4d")) {
+				Con_Printf ("Invalid mission pack argument to \"game\"\n");
+				return;
+			}
+			if (!strcasecmp(p, GAMENAME)) {
+				Con_Printf ("No mission pack arguments to %s game\n", GAMENAME);
+				return;
+			}
+		}
+		
+		if (*p3)
+		{
+			if (strcmp(p3, "-mod")) {
+				Con_Printf ("Invalid mod argument to \"game\"\n");
+				return;
+			}
+			if (!*p4 || !strcmp(p4, ".") || strstr(p4, "..") || strstr(p4, "/") || strstr(p4, "\\") || strstr(p4, ":"))
+			{
+				Con_Printf ("Relative pathnames are not allowed\n");
+				Con_Printf ("mod directory should be a single directory name, not a path\n");
+				return;
+			}
+			if (Sys_FileTime(va("%s/%s", com_basedir, p4)) == -1)
+			{
+				Con_Printf ("No such mod directory \"%s\"\n", p4);
+				return;
+			}
+		}
+		
+		if (Sys_FileTime(va("%s/%s", com_basedir, p)) == -1)
+		{
+			Con_Printf ("No such game directory \"%s\"\n", p);
+			return;
+		}
+		
+		if (!strcasecmp(p, COM_SkipPath(com_gamedir))) // no change
+		{
+			if (com_searchpaths->path_id > 1)
+			{
+				// current game not data1
+				if (*p2 && com_searchpaths->path_id == 2)
+				{
+					// QS: rely on treating '-game missionpack'
+					// as '-missionpack', otherwise would be a mess
+					if (!strcasecmp(p, &p2[1]))
+						goto _same;
+					Con_Printf ("reloading game \"%s\" with \"%s\" support\n", p, &p2[1]);
+				}
+				else if (!*p2 && com_searchpaths->path_id > 2)
+					Con_Printf ("reloading game \"%s\" without mission pack support\n", p);
+				else
+					goto _same;
+			}
+			else
+			{	_same:
+				Con_Printf ("\"game\" is already \"%s\"\n", COM_SkipPath(com_gamedir));
+				return;
+			}
+		}
+		
+		// Shutdown the server
+		CL_Disconnect ();
+		Host_ShutdownServer (true);
+		
+		// Write config file
+		Host_WriteConfiguration ("config.cfg");
+		
+		History_Shutdown ();
+		LOG_Close ();
+
+		// Close the extra game if it is loaded
+		while (com_searchpaths != com_base_searchpaths)
+		{
+			if (com_searchpaths->pack)
+			{
+				Sys_FileClose (com_searchpaths->pack->handle);
+				Z_Free (com_searchpaths->pack->files);
+				Z_Free (com_searchpaths->pack);
+			}
+			search = com_searchpaths->next;
+			Z_Free (com_searchpaths);
+			com_searchpaths = search;
+		}
+		
+		com_modified = true;
+		
+		portals = false;
+		
+		if (strcasecmp(p, GAMENAME)) // game is not "data1"
+		{
+			if (*p2)
+			{
+				if (strcmp(p2,"-data1")) {
+					COM_AddGameDirectory (com_basedir, &p2[1]);
+					COM_AddUserDirectory (homedir, &p2[1]);
+				}
+				
+				if (!strcmp(p2,"-portals"))
+				{
+					portals = true;
+				}
+				
+				// "-mod"
+				if (*p3)
+				{
+					if (strcasecmp(p4, &p2[1])) // don't load twice
+					{
+						COM_AddGameDirectory (com_basedir, p4);
+						COM_AddUserDirectory (homedir, p4);
+					}
+					
+					// QS: treat '-mod missionpack' as '-missionpack'
+					if (!strcasecmp(p4,"portals"))
+					{
+						portals = true;
+					}
+					
+					if (strcasecmp(p, p4) && strcasecmp(p, &p2[1])) // don't load twice
+					{
+						COM_AddGameDirectory (com_basedir, p);
+						COM_AddUserDirectory (homedir, p);
+					}
+				}
+				else
+				if (strcasecmp(p, &p2[1])) // don't load twice
+				{
+					COM_AddGameDirectory (com_basedir, p);
+					COM_AddUserDirectory (homedir, p);
+				}
+			}
+			else
+			{
+				COM_AddGameDirectory (com_basedir, p);
+				COM_AddUserDirectory (homedir, p);
+				// QS: treat '-game missionpack' as '-missionpack'
+				if (!strcasecmp(p,"portals"))
+				{
+					portals = true;
+				}
+			}
+		}
+		else // just update com_gamedir, game is "data1"
+		{
+			strcpy (com_gamedir, va("%s/%s", com_basedir, GAMENAME));
+			COM_SetGamedirToHomeDirectory (homedir, GAMENAME);
+		}
+
+		LOG_Init ();
+		History_Init ();
+
+		
+		// clear out and reload appropriate data
+		Cache_Flush ();
+		Mod_ResetAll ();
+		Sky_ClearAll();
+		
+		Host_LoadPalettes ();
+		
+		if (cls.state != ca_dedicated)
+		{
+			TexMgr_NewGame ();
+			Draw_NewGame ();
+			R_InitPlayerTextures ();
+			R_InitBloomTextures ();
+		}
+		
+		Host_MapListRebuild ();
+		Host_Resetdemos ();
+		Host_DemoListRebuild ();
+		Host_SaveListRebuild ();
+		Host_ConfigListRebuild ();
+		
+		Con_Printf("\"game\" changed to \"%s\"\n", COM_SkipPath(com_gamedir));
+		
+		Cbuf_AddText ("vid_lock\n");
+		Cbuf_AddText ("exec hexen.rc\n");
+		Cbuf_AddText ("vid_unlock\n");
+	}
+	else // Diplay the current gamedir
+		Con_Printf ("\"game\" is \"%s\"\n", COM_SkipPath(com_gamedir));
+}
+
 
 
 /*
 ================
 COM_InitFilesystem
+
+johnfitz -- modified based on topaz's tutorial
 ================
 */
 void COM_InitFilesystem (void)
 {
 	int             i, j;
+	char		*p;
 	searchpath_t    *search;
 
-	home = getenv("HOME");
+#ifdef DO_USERDIRS
+	homedir = getenv("HOME");
+#endif
 
 //
 // -basedir <path>
@@ -1747,11 +2073,9 @@ void COM_InitFilesystem (void)
 		strcpy (com_basedir, host_parms->basedir);
 
 	j = strlen (com_basedir);
-	if (j > 0)
-	{
+	if (j < 1) Sys_Error ("Bad argument to -basedir");
 		if ((com_basedir[j-1] == '\\') || (com_basedir[j-1] == '/'))
 			com_basedir[j-1] = 0;
-	}
 
 //
 // -cachedir <path>
@@ -1774,22 +2098,25 @@ void COM_InitFilesystem (void)
 //
 // start up with GAMENAME by default (data1)
 //
-	COM_AddGameDirectory (va("%s/"GAMENAME, com_basedir) );
-	if (home)
-		COM_AddGameDirectory (va("%s/.fxhexen2/"GAMENAME, home));
+	COM_AddGameDirectory (com_basedir, GAMENAME);
+	COM_AddUserDirectory (homedir, GAMENAME);
 
-	if (portals)
+	/* this is the end of our base searchpath:
+	 * any set gamedirs, such as those from -game command line
+	 * arguments or by the 'game' console command will be freed
+	 * up to here upon a new game command. */
+	com_base_searchpaths = com_searchpaths;
+
+	if (COM_CheckParm ("-portals"))
 	{
-		COM_AddGameDirectory (va("%s/portals", com_basedir) );
-		if (home)
-			COM_AddGameDirectory (va("%s/.fxhexen2/portals", home));
+		COM_AddGameDirectory (com_basedir, "portals");
+		COM_AddUserDirectory (homedir, "portals");
 	}
 
 	if (COM_CheckParm ("-fo4d"))
 	{
-		COM_AddGameDirectory (va("%s/fo4d", com_basedir) );
-		if (home)
-			COM_AddGameDirectory (va("%s/.fxhexen2/fo4d", home));
+		COM_AddGameDirectory (com_basedir, "fo4d");
+		COM_AddUserDirectory (homedir, "fo4d");
 	}
 
 //
@@ -1801,10 +2128,27 @@ void COM_InitFilesystem (void)
 	i = COM_CheckParm ("-mod");
 	if (i && i < com_argc-1)
 	{
+		p = com_argv[i + 1];
+		if (!*p || !strcmp(p, ".") || strstr(p, "..") || strstr(p, "/") || strstr(p, "\\") || strstr(p, ":"))
+			Sys_Error ("moddir should be a single directory name, not a path\n");
+
 		com_modified = true;
-		COM_AddGameDirectory (va("%s/%s", com_basedir, com_argv[i+1]));
-		if (home)
-			COM_AddGameDirectory (va("%s/.fxhexen2/%s", home, com_argv[i+1]));
+		
+		// don't load mission packs twice
+		if (p && COM_CheckParm ("-portals") && !strcasecmp(p, "portals")) p = NULL;
+		if (p && COM_CheckParm ("-fo4d") && !strcasecmp(p, "fo4d")) p = NULL;
+		
+		if (p != NULL)
+		{
+			COM_AddGameDirectory (com_basedir, com_argv[i+1]);
+			COM_AddUserDirectory (homedir, com_argv[i+1]);
+			
+			// QS: treat '-mod missionpack' as '-missionpack'
+			if (!strcasecmp(p,"portals"))
+			{
+				portals = true;
+			}
+		}
 	}
 
 //
@@ -1814,22 +2158,32 @@ void COM_InitFilesystem (void)
 	i = COM_CheckParm ("-game");
 	if (i && i < com_argc-1)
 	{
+		p = com_argv[i + 1];
+		if (!*p || !strcmp(p, ".") || strstr(p, "..") || strstr(p, "/") || strstr(p, "\\") || strstr(p, ":"))
+			Sys_Error ("gamedir should be a single directory name, not a path\n");
+		
 		com_modified = true;
-		COM_AddGameDirectory (va("%s/%s", com_basedir, com_argv[i+1]));
-		if (home)
-			COM_AddGameDirectory (va("%s/.fxhexen2/%s", home, com_argv[i+1]));
-	}
 
-	// If home is available, create the game directory
-	if (home)
-	{
-		COM_CreatePath (com_gamedir);
-		Sys_mkdir (com_gamedir);
+		// don't load mission packs twice
+		if (p && COM_CheckParm ("-portals") && !strcasecmp(p, "portals")) p = NULL;
+		if (p && COM_CheckParm ("-fo4d") && !strcasecmp(p, "fo4d")) p = NULL;
+		
+		if (p != NULL)
+		{
+			COM_AddGameDirectory (com_basedir, com_argv[i+1]);
+			COM_AddUserDirectory (homedir, com_argv[i+1]);
+			
+			// QS: treat '-game missionpack' as '-missionpack'
+			if (!strcasecmp(p,"portals"))
+			{
+				portals = true;
+			}
+		}
 	}
 
 //
 // -path <dir or packfile> [<dir or packfile>] ...
-// Fully specifies the exact serach path, overriding the generated one
+// Fully specifies the exact search path, overriding the generated one
 //
 	i = COM_CheckParm ("-path");
 	if (i)
@@ -1840,13 +2194,14 @@ void COM_InitFilesystem (void)
 		{
 			if (!com_argv[i] || com_argv[i][0] == '+' || com_argv[i][0] == '-')
 				break;
-			search = Hunk_AllocName (sizeof(searchpath_t), "searchpath");
-//			search = Z_Malloc(sizeof(searchpath_t)); // dynamic loading
-			if ( !strcmp(COM_FileExtension(com_argv[i]), "pak") )
+			//johnfitz -- dynamic gamedir loading
+			//johnfitz -- modified to use zone alloc
+			search = (searchpath_t *) Z_Malloc (sizeof(searchpath_t));
+			if ( !strcasecmp(COM_FileExtension(com_argv[i]), "pak") )
 			{
 				search->pack = COM_LoadPackFile (com_argv[i]);
 				if (!search->pack)
-					Sys_Error ("Couldn't load packfile: %s", com_argv[i]);
+					Sys_Error ("COM_InitFilesystem: couldn't load packfile: %s", com_argv[i]);
 			}
 			else
 				strcpy (search->filename, com_argv[i]);
