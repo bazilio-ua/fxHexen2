@@ -1743,6 +1743,9 @@ void COM_AddDirectory (char *dir)
 //
 // add any pak files in the format pak0.pak pak1.pak, ...
 //
+// unlike Quake, Hexen II can't stop at first unavailable pak:
+// the mission pack has only pak3, oem have pak0 and pak2, hw has only pak4.
+//
 	for (i=0 ; i < 10; i++)
 	{
 		sprintf (pakfile, "%s/pak%i.pak", dir, i);
@@ -1762,6 +1765,10 @@ void COM_AddDirectory (char *dir)
 
 //
 // add the directory to the search path
+//
+// unlike Quake, Hexen II does this after adding the pakfiles in this dir,
+// so that the dir will be placed above the pakfiles in the search order
+// which, in turn, will allow override files.
 //
 	//johnfitz -- dynamic gamedir loading
 	//johnfitz -- modified to use zone alloc
