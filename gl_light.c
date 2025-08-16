@@ -24,45 +24,58 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int	r_dlightframecount;
 
 
-//==========================================================================
-//
-// R_AnimateLight
-//
-//==========================================================================
+/*
+==================
+R_AnimateLight
 
-void R_AnimateLight(void)
+
+==================
+*/
+void R_AnimateLight (void)
 {
-	int i;
+	int j;
 	int v;
 	int c;
 	int defaultLocus;
 	int locusHz[3];
-
-	defaultLocus = locusHz[0] = (int)(cl.time*10);
-	locusHz[1] = (int)(cl.time*20);
-	locusHz[2] = (int)(cl.time*30);
-	for(i = 0; i < MAX_LIGHTSTYLES; i++)
+	
+	if (!r_dynamic.value) // EER1
 	{
-		if(!cl_lightstyle[i].length)
-		{ // No style def
-			d_lightstyle[i] = 256;
-			continue;
-		}
-		c = cl_lightstyle[i].map[0];
-		if(c == '1' || c == '2' || c == '3')
-		{ // Explicit anim rate
-			if(cl_lightstyle[i].length == 1)
-			{ // Bad style def
-				d_lightstyle[i] = 256;
+		// set everything to def light
+		for (j = 0 ; j < MAX_LIGHTSTYLES ; j++)
+			d_lightstyle[j] = 264;
+	}
+	else
+	{
+		// light animations
+		defaultLocus = locusHz[0] = (int)(cl.time*10);
+		locusHz[1] = (int)(cl.time*20);
+		locusHz[2] = (int)(cl.time*30);
+		
+		for (j = 0 ; j < MAX_LIGHTSTYLES ; j++)
+		{
+			if (!cl_lightstyle[j].length)
+			{	// No style def
+				d_lightstyle[j] = 264;
 				continue;
 			}
-			v = locusHz[c-'1']%(cl_lightstyle[i].length-1);
-			d_lightstyle[i] = (cl_lightstyle[i].map[v+1]-'a')*22;
-			continue;
+			c = cl_lightstyle[j].map[0];
+			if (c == '1' || c == '2' || c == '3')
+			{	// Explicit anim rate
+				if (cl_lightstyle[j].length == 1)
+				{	// Bad style def
+					d_lightstyle[j] = 264;
+					continue;
+				}
+				v = locusHz[c-'1']%(cl_lightstyle[j].length-1);
+				d_lightstyle[j] = (cl_lightstyle[j].map[v+1]-'a')*22;
+				continue;
+			}
+			
+			// Default anim rate (10 Hz)
+			v = defaultLocus%cl_lightstyle[j].length;
+			d_lightstyle[j] = (cl_lightstyle[j].map[v]-'a')*22;
 		}
-		// Default anim rate (10 Hz)
-		v = defaultLocus%cl_lightstyle[i].length;
-		d_lightstyle[i] = (cl_lightstyle[i].map[v]-'a')*22;
 	}
 }
 
