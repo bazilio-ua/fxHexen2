@@ -476,7 +476,7 @@ extern	mleaf_t		*r_viewleaf, *r_oldviewleaf;
 //
 // light style
 //
-extern	int		d_lightstylevalue[256];	// 8.8 fraction of base light value
+extern	int		d_lightstyle[256];	// 8.8 fraction of base light value
 
 //
 // texture stuff

@@ -65,7 +65,7 @@ refdef_t	r_refdef;
 
 mleaf_t		*r_viewleaf, *r_oldviewleaf;
 
-int		d_lightstylevalue[256];	// 8.8 fraction of base light value
+int		d_lightstyle[256];	// 8.8 fraction of base light value
 
 float r_fovx, r_fovy;
 

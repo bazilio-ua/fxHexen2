@@ -45,7 +45,7 @@ void R_AnimateLight(void)
 	{
 		if(!cl_lightstyle[i].length)
 		{ // No style def
-			d_lightstylevalue[i] = 256;
+			d_lightstyle[i] = 256;
 			continue;
 		}
 		c = cl_lightstyle[i].map[0];
@@ -53,16 +53,16 @@ void R_AnimateLight(void)
 		{ // Explicit anim rate
 			if(cl_lightstyle[i].length == 1)
 			{ // Bad style def
-				d_lightstylevalue[i] = 256;
+				d_lightstyle[i] = 256;
 				continue;
 			}
 			v = locusHz[c-'1']%(cl_lightstyle[i].length-1);
-			d_lightstylevalue[i] = (cl_lightstyle[i].map[v+1]-'a')*22;
+			d_lightstyle[i] = (cl_lightstyle[i].map[v+1]-'a')*22;
 			continue;
 		}
 		// Default anim rate (10 Hz)
 		v = defaultLocus%cl_lightstyle[i].length;
-		d_lightstylevalue[i] = (cl_lightstyle[i].map[v]-'a')*22;
+		d_lightstyle[i] = (cl_lightstyle[i].map[v]-'a')*22;
 	}
 }
 
@@ -359,7 +359,7 @@ loc0:
 
 				for (maps = 0;maps < MAXLIGHTMAPS && surf->styles[maps] != 255;maps++)
 				{
-					scale = (float) d_lightstylevalue[surf->styles[maps]] * 1.0 / 256.0;
+					scale = (float) d_lightstyle[surf->styles[maps]] * 1.0 / 256.0;
 					r00 += (float) lightmap[      0] * scale;g00 += (float) lightmap[      1] * scale;b00 += (float) lightmap[2] * scale;
 					r01 += (float) lightmap[      3] * scale;g01 += (float) lightmap[      4] * scale;b01 += (float) lightmap[5] * scale;
 					r10 += (float) lightmap[line3+0] * scale;g10 += (float) lightmap[line3+1] * scale;b10 += (float) lightmap[line3+2] * scale;

@@ -1610,7 +1610,7 @@ void PF_lightstyle (void)
 //
 //==========================================================================
 
-extern int d_lightstylevalue[256];
+extern int d_lightstyle[256];
 
 void PF_lightstylevalue(void)
 {
@@ -1623,7 +1623,7 @@ void PF_lightstylevalue(void)
 		return;
 	}
 
-	G_FLOAT(OFS_RETURN) = (int)((float)d_lightstylevalue[style]/22.0);
+	G_FLOAT(OFS_RETURN) = (int)((float)d_lightstyle[style]/22.0);
 }
 
 //==========================================================================

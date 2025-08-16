@@ -179,7 +179,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 	if (lightmap)
 		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
 		{
-			scale = d_lightstylevalue[surf->styles[maps]];
+			scale = d_lightstyle[surf->styles[maps]];
 			surf->cached_light[maps] = scale;	// 8.8 fraction
 				// lit support via lordhavoc
 				bl = blocklights;
@@ -287,7 +287,7 @@ void R_RenderDynamicLightmaps (msurface_t *fa)
 
 	// check for lightmap modification
 	for (maps = 0 ; maps < MAXLIGHTMAPS && fa->styles[maps] != 255 ; maps++)
-		if (d_lightstylevalue[fa->styles[maps]] != fa->cached_light[maps])
+		if (d_lightstyle[fa->styles[maps]] != fa->cached_light[maps])
 			goto dynamic;
 
 	if (fa->dlightframe == r_framecount	// dynamic this frame
