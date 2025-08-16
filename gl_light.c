@@ -28,7 +28,7 @@ int	r_dlightframecount;
 ==================
 R_AnimateLight
 
-
+TODO: add a lightstyle interpolation
 ==================
 */
 void R_AnimateLight (void)
@@ -87,7 +87,7 @@ DYNAMIC LIGHTS BLEND RENDERING
 =============================================================================
 */
 
-void AddLightBlend (float r, float g, float b, float a2)
+void V_AddLightBlend (float r, float g, float b, float a2)
 {
 	float	a;
 
@@ -95,51 +95,124 @@ void AddLightBlend (float r, float g, float b, float a2)
 
 	a2 = a2/a;
 
-	v_blend[0] = v_blend[1]*(1-a2) + r*a2;
+	v_blend[0] = v_blend[0]*(1-a2) + r*a2; // was [1]
 	v_blend[1] = v_blend[1]*(1-a2) + g*a2;
 	v_blend[2] = v_blend[2]*(1-a2) + b*a2;
 }
 
+// sin and cos tables from 0 to 1 in 0.0625 increments to speed up glow rendering
+float bubble_sintable[17] = 
+{
+		0.000000,
+		0.382684,
+		0.707107,
+		0.923880,
+		1.000000,
+		0.923879,
+		0.707105,
+		0.382680,
+		-0.000004,
+		-0.382687,
+		-0.707110,
+		-0.923882,
+		-1.000000,
+		-0.923877,
+		-0.707102,
+		-0.382677,
+		0.000008,
+};
+
+float bubble_costable[17] = 
+{
+		1.000000,
+		0.923879,
+		0.707106,
+		0.382682,
+		-0.000002,
+		-0.382686,
+		-0.707109,
+		-0.923881,
+		-1.000000,
+		-0.923878,
+		-0.707103,
+		-0.382678,
+		0.000006,
+		0.382689,
+		0.707112,
+		0.923882,
+		1.000000,
+};
+
+/*
+=============
+R_RenderDlight
+
+=============
+*/
 void R_RenderDlight (dlight_t *light)
 {
 	int		i, j;
-	float	a;
 	vec3_t	v;
+	vec3_t	color;
 	float	rad;
 
-	//rad = light->radius * 0.35;
-	rad = light->radius * 0.15; // reduce the corona size so that it coexists more peacefully with proper light
+	if (!gl_flashblend.value)
+		return;
+	
+	VectorCopy (light->color, color);
+	rad = light->radius * 0.1 * CLAMP(1.0, gl_flashblendscale.value, 16.0); // (orig. 0.35) reduce the bubble size so that it coexists more peacefully with proper light
 
 	VectorSubtract (light->origin, r_origin, v);
 	if (VectorLength (v) < rad)
 	{	// view is inside the dlight
-		AddLightBlend (1, 0.5, 0, light->radius * 0.0003);
+		if (gl_flashblendview.value)
+			V_AddLightBlend (color[0], color[1], color[2], light->radius * 0.0003);
 		return;
 	}
+	
+	glDepthMask (GL_FALSE); // don't bother writing Z	
+	glDisable (GL_TEXTURE_2D);
+	glShadeModel (GL_SMOOTH);
+	glEnable (GL_BLEND);
+	//glBlendFunc (GL_ONE, GL_ONE); // orig.
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE); // ver.2 attempt to make it more smooth
+	
+	R_FogDisableGFog ();
+	
 
 	glBegin (GL_TRIANGLE_FAN);
-	glColor3f (0.2,0.1,0.0);
+	VectorScale (color, 0.2, color);
+	glColor3fv (color);
 	for (i=0 ; i<3 ; i++)
 		v[i] = light->origin[i] - vpn[i]*rad;
 	glVertex3fv (v);
 	glColor3f (0,0,0);
 	for (i=16 ; i>=0 ; i--)
 	{
-		a = i/16.0 * M_PI*2;
 		for (j=0 ; j<3 ; j++)
-			v[j] = light->origin[j] + vright[j]*cos(a)*rad
-				+ vup[j]*sin(a)*rad;
+			v[j] = light->origin[j] + vright[j] * bubble_costable[i] * rad + vup[j] * bubble_sintable[i] * rad;
 		glVertex3fv (v);
 	}
 	glEnd ();
+	
+	
+	R_FogEnableGFog ();
+	
+	glColor3f (1,1,1);
+	glDisable (GL_BLEND);
+	glEnable (GL_TEXTURE_2D);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask (GL_TRUE); // back to normal Z buffering
 }
 
 /*
 =============
-R_RenderDlights
+R_SetupDlights
+
+flash blend dlights
 =============
 */
-void R_RenderDlights (void)
+void R_SetupDlights (void)
 {
 	int		i;
 	dlight_t	*l;
@@ -147,28 +220,18 @@ void R_RenderDlights (void)
 	if (!gl_flashblend.value)
 		return;
 
-	r_dlightframecount = r_framecount + 1;	// because the count hasn't
-											//  advanced yet for this frame
-	glDepthMask (GL_FALSE); // don't bother writing Z	
-	glDisable (GL_TEXTURE_2D);
-	glShadeModel (GL_SMOOTH);
-	glEnable (GL_BLEND);
-	//glBlendFunc (GL_ONE, GL_ONE);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE);
-
-	l = cl_dlights;
-	for (i=0 ; i<MAX_DLIGHTS ; i++, l++)
+	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
+	
+	for (i=0, l = cl_dlights ; i<MAX_DLIGHTS ; i++, l++)
 	{
 		if (l->die < cl.time || !l->radius)
 			continue;
-		R_RenderDlight (l);
+		
+		if (R_CullSphere (l->origin, l->radius))
+			continue;
+		
+		R_AddToAlpha (ALPHA_DLIGHTS, R_GetAlphaDist(l->origin), l, NULL, NULL, 0);
 	}
-
-	glColor3f (1,1,1);
-	glDisable (GL_BLEND);
-	glEnable (GL_TEXTURE_2D);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDepthMask (GL_TRUE); // back to normal Z buffering 	
 }
 
 
@@ -185,36 +248,47 @@ DYNAMIC LIGHTS
 R_MarkLights
 
 rewritten to use LordHavoc's lighting speedup
+recursive goes through the nodes marking the surfaces near the dynamic light as lit
 =============
 */
 void R_MarkLights (dlight_t *light, int num, mnode_t *node)
 {
-	mplane_t	*splitplane;
+	mplane_t	*plane;
 	msurface_t	*surf;
 	vec3_t		impact;
 	float		dist, l, maxdist;
 	int			i, j, s, t;
 
-start:
-
+restart:
 	if (node->contents < 0)
 		return;
 
-	splitplane = node->plane;
-	if (splitplane->type < 3)
-		dist = light->origin[splitplane->type] - splitplane->dist;
-	else
-		dist = DotProduct (light->origin, splitplane->normal) - splitplane->dist;
+// node is just a decision point, so go down the apropriate sides
+
+// find which side of the node we are on
+	plane = node->plane;
+
+	switch (plane->type)
+	{
+	case PLANE_X:
+	case PLANE_Y:
+	case PLANE_Z:
+		dist = light->origin[plane->type] - plane->dist;
+		break;
+	default:
+		dist = DotProduct (light->origin, plane->normal) - plane->dist;
+		break;
+	}
 
 	if (dist > light->radius)
 	{
 		node = node->children[0];
-		goto start;
+		goto restart;
 	}
 	if (dist < -light->radius)
 	{
 		node = node->children[1];
-		goto start;
+		goto restart;
 	}
 
 	maxdist = light->radius*light->radius;
@@ -222,15 +296,21 @@ start:
 	surf = cl.worldmodel->surfaces + node->firstsurface;
 	for (i=0 ; i<node->numsurfaces ; i++, surf++)
 	{
+		if (surf->flags & SURF_DRAWTILED) // no lights on these
+			continue;
+
 		for (j=0 ; j<3 ; j++)
 			impact[j] = light->origin[j] - surf->plane->normal[j]*dist;
+
 		// clamp center of light to corner and check brightness
 		l = DotProduct (impact, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3] - surf->texturemins[0];
-		s = l+0.5;if (s < 0) s = 0;else if (s > surf->extents[0]) s = surf->extents[0];
+		s = l + 0.5;if (s < 0) s = 0;else if (s > surf->extents[0]) s = surf->extents[0];
 		s = l - s;
+
 		l = DotProduct (impact, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3] - surf->texturemins[1];
-		t = l+0.5;if (t < 0) t = 0;else if (t > surf->extents[1]) t = surf->extents[1];
+		t = l + 0.5;if (t < 0) t = 0;else if (t > surf->extents[1]) t = surf->extents[1];
 		t = l - t;
+
 		// compare to minimum light
 		if ((s*s+t*t+dist*dist) < maxdist)
 		{
@@ -251,7 +331,6 @@ start:
 		R_MarkLights (light, num, node->children[1]);
 }
 
-
 /*
 =============
 R_PushDlights
@@ -262,18 +341,20 @@ void R_PushDlights (void)
 	int		i;
 	dlight_t	*l;
 
-	if (gl_flashblend.value)
+	if (!r_dynamic.value) // EER1
 		return;
 
-	r_dlightframecount = r_framecount + 1;	// because the count hasn't
-											//  advanced yet for this frame
-	l = cl_dlights;
+	r_dlightframecount = r_framecount + 1;	// because the count hasn't advanced yet for this frame
 
-	for (i=0 ; i<MAX_DLIGHTS ; i++, l++)
+	for (i=0, l = cl_dlights ; i<MAX_DLIGHTS ; i++, l++)
 	{
 		if (l->die < cl.time || !l->radius)
 			continue;
-		R_MarkLights ( l, 1<<i, cl.worldmodel->nodes );
+		
+		if (R_CullSphere (l->origin, l->radius))
+			continue;
+		
+		R_MarkLights (l, i, cl.worldmodel->nodes);
 	}
 }
 
@@ -299,30 +380,44 @@ replaced entire function for lit support via lordhavoc
 */
 qboolean R_RecursiveLightPoint (vec3_t color, mnode_t *node, vec3_t start, vec3_t end)
 {
+	mplane_t	*plane;
+	int			side;
 	float		front, back, frac;
 	vec3_t		mid;
 
-loc0:
+restart:
+	// check for a hit
 	if (node->contents < 0)
 		return false;		// didn't hit anything
 
 // calculate mid point
-	if (node->plane->type < 3)
+// node is just a decision point, so go down the apropriate sides
+
+// find which side of the node we are on
+	plane = node->plane;
+
+	switch (plane->type)
 	{
-		front = start[node->plane->type] - node->plane->dist;
-		back = end[node->plane->type] - node->plane->dist;
-	}
-	else
-	{
-		front = DotProduct(start, node->plane->normal) - node->plane->dist;
-		back = DotProduct(end, node->plane->normal) - node->plane->dist;
+	case PLANE_X:
+	case PLANE_Y:
+	case PLANE_Z:
+		front = start[plane->type] - plane->dist;
+		back = end[plane->type] - plane->dist;
+		break;
+	default:
+		front = DotProduct(start, plane->normal) - plane->dist;
+		back = DotProduct(end, plane->normal) - plane->dist;
+		break;
 	}
 
+	side = front < 0;
+
 	// LordHavoc: optimized recursion
-	if ((back < 0) == (front < 0))
+	// completely on one side - tail recursion optimization
+	if ((back < 0) == side)
 	{
-		node = node->children[front < 0];
-		goto loc0;
+		node = node->children[side];
+		goto restart;
 	}
 
 	frac = front / (front-back);
@@ -331,25 +426,29 @@ loc0:
 	mid[2] = start[2] + (end[2] - start[2])*frac;
 
 // go down front side
-	if (R_RecursiveLightPoint (color, node->children[front < 0], start, mid))
+	if (R_RecursiveLightPoint (color, node->children[side], start, mid))
 		return true;	// hit something
 	else
 	{
 		int i, ds, dt;
 		msurface_t *surf;
+		mtexinfo_t	*tex;
 
 	// check for impact on this node
 		VectorCopy (mid, lightspot);
 		lightplane = node->plane;
 
 		surf = cl.worldmodel->surfaces + node->firstsurface;
-		for (i = 0;i < node->numsurfaces;i++, surf++)
+		for (i=0 ; i<node->numsurfaces ; i++, surf++)
 		{
 			if (surf->flags & SURF_DRAWTILED)
 				continue;	// no lightmaps
 
-			ds = (int) ((float) DotProduct (mid, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3]);
-			dt = (int) ((float) DotProduct (mid, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3]);
+			tex = surf->texinfo;
+			
+			// add casts to double to force 64-bit precision on SSE builds.
+			ds = (int)((double)PreciseDotProduct (mid, tex->vecs[0]) + tex->vecs[0][3]);
+			dt = (int)((double)PreciseDotProduct (mid, tex->vecs[1]) + tex->vecs[1][3]);
 
 			if (ds < surf->texturemins[0] || dt < surf->texturemins[1])
 				continue;	// out of range
@@ -370,7 +469,7 @@ loc0:
 
 				lightmap = surf->samples + ((dt>>4) * ((surf->extents[0]>>4)+1) + (ds>>4))*3; // LordHavoc: *3 for color
 
-				for (maps = 0;maps < MAXLIGHTMAPS && surf->styles[maps] != 255;maps++)
+				for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
 				{
 					scale = (float) d_lightstyle[surf->styles[maps]] * 1.0 / 256.0;
 					r00 += (float) lightmap[      0] * scale;g00 += (float) lightmap[      1] * scale;b00 += (float) lightmap[2] * scale;
@@ -388,7 +487,7 @@ loc0:
 		}
 
 	// go down back side
-		return R_RecursiveLightPoint (color, node->children[front >= 0], mid, end);
+		return R_RecursiveLightPoint (color, node->children[!side], mid, end);
 	}
 }
 
@@ -409,6 +508,7 @@ void R_LightPoint (vec3_t p, vec3_t color)
 		return;
 	}
 
+	// set end point (back to 2048 for less BSP tree tracing)
 	end[0] = p[0];
 	end[1] = p[1];
 	end[2] = p[2] - 8192; // was 2048
