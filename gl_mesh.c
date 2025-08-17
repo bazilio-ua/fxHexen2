@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
-// gl_mesh.c: triangle model functions
+// gl_mesh.c -- triangle model functions
 
 #include "quakedef.h"
 
@@ -34,7 +34,7 @@ aliashdr_t	*paliashdr;
 
 #define MAX_CMDS 16384 // was 8192
 
-qboolean	used[MAX_CMDS];
+int		used[MAX_CMDS]; // qboolean
 
 // the command list holds counts and s/t values that are valid for
 // every frame
@@ -306,6 +306,8 @@ void BuildTris (void)
 		
 		for (j=0 ; j<bestlen+2 ; j++)
 		{
+			int		tmp;
+
 			// emit a vertex into the reorder buffer
 			k = bestverts[j];
 			vertexorder[numorder++] = k;
@@ -323,8 +325,14 @@ void BuildTris (void)
 			if (numcommands >= MAX_CMDS)
 				Host_Error ("BuildTris: too many commands (max = %d) in %s", MAX_CMDS, aliasmodel->name);
 
-			*(float *)&commands[numcommands++] = s;
-			*(float *)&commands[numcommands++] = t;
+		//	*(float *)&commands[numcommands++] = s;
+		//	*(float *)&commands[numcommands++] = t;
+			// NOTE: 4 == sizeof(int)
+			//	   == sizeof(float)
+			memcpy (&tmp, &s, 4);
+			commands[numcommands++] = tmp;
+			memcpy (&tmp, &t, 4);
+			commands[numcommands++] = tmp;
 		}
 	}
 
@@ -351,6 +359,14 @@ void R_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 	int		i, j;
 	int			*cmds;
 	trivertx_t	*verts;
+	float	hscale, vscale; //johnfitz -- padded skins
+	int		count; //johnfitz -- precompute texcoords for padded skins
+	int		*loadcmds; //johnfitz
+
+	//johnfitz -- padded skins
+	hscale = (float)hdr->skinwidth/(float)TexMgr_PadConditional(hdr->skinwidth);
+	vscale = (float)hdr->skinheight/(float)TexMgr_PadConditional(hdr->skinheight);
+	//johnfitz
 
 	aliasmodel = m;
 	paliashdr = hdr;	// (aliashdr_t *)Mod_Extradata (m);
@@ -366,7 +382,26 @@ void R_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr)
 
 	cmds = Hunk_AllocName (numcommands * 4, "cmds");
 	paliashdr->commands = (byte *)cmds - (byte *)paliashdr;
-	memcpy (cmds, commands, numcommands * 4);
+
+	//johnfitz -- precompute texcoords for padded skins
+	loadcmds = commands;
+	while(1)
+	{
+		*cmds++ = count = *loadcmds++;
+        
+		if (!count)
+			break;
+        
+		if (count < 0)
+			count = -count;
+        
+		do
+		{
+			*(float *)cmds++ = hscale * (*(float *)loadcmds++);
+			*(float *)cmds++ = vscale * (*(float *)loadcmds++);
+		} while (--count);
+	}
+	//johnfitz
 
 	verts = Hunk_AllocName (paliashdr->numposes * paliashdr->poseverts * sizeof(trivertx_t), "verts");
 	paliashdr->posedata = (byte *)verts - (byte *)paliashdr;
