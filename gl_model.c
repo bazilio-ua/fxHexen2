@@ -451,7 +451,6 @@ void Mod_LoadTextures (lump_t *l)
 				Hunk_Alloc (warpimage_size*warpimage_size*4); //make sure hunk is big enough so we don't reach an illegal address
 				Hunk_FreeToLowMark (mark);
 				sprintf (texturename, "%s_warp", texturename);
-//				tx->warpimage = GL_LoadTexture (loadmodel, texturename, gl_warpimage_size, gl_warpimage_size, SRC_RGBA /* SRC_INDEXED */, dummy, "", (unsigned)dummy, TEXPREF_NOPICMIP | TEXPREF_WARPIMAGE);
 				tx->warpbase = TexMgr_LoadTexture (loadmodel, texturename, warpimage_size, warpimage_size, SRC_RGBA /* SRC_INDEXED */, hunk_base, "", (uintptr_t)hunk_base, TEXPREF_NOPICMIP | TEXPREF_WARPIMAGE);
 				tx->update_warp = true;
 //				free (dummy);

@@ -41,10 +41,10 @@ gltexture_t			*gl_extra_textures[MAX_EXTRA_TEXTURES];   // generic textures for 
 
 //mplane_t	*mirror_plane;
 
-float		model_constant_alpha;
+//float		model_constant_alpha;
 
-float		r_time1;
-float		r_lasttime1 = 0;
+//float		r_time1;
+//float		r_lasttime1 = 0;
 
 //
 // view origin
