@@ -24,10 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 texture_t	*notexture_mip; // moved here from gl_main.c 
 texture_t	*notexture_mip2; // used for non-lightmapped surfs with a missing texture
 
-gltexture_t *particletexture;	// particle texture (little dot for particles)
-gltexture_t *particletexture1;	// circle
-gltexture_t *particletexture2;	// square
-
 byte *playerTranslation;
 
 /*
@@ -48,7 +44,6 @@ void	R_InitTextures (void)
 }
 
 
-
 /*
 ====================
 R_FullBright
@@ -57,7 +52,7 @@ R_FullBright
 void R_FullBright (void)
 {
 	// Refresh lightmaps
-	R_BuildLightmaps ();
+	R_RebuildAllLightmaps ();
 }
 
 /*
@@ -68,8 +63,7 @@ R_Ambient
 void R_Ambient (void)
 {
 	// Refresh lightmaps
-//	R_RebuildAllLightmaps ();
-	R_BuildLightmaps ();
+	R_RebuildAllLightmaps ();
 }
 
 /*
@@ -79,14 +73,69 @@ R_ClearColor
 */
 void R_ClearColor (void)
 {
-//	byte *rgb;
+	byte *rgb;
 
 	// Refresh clearcolor
-//	rgb = (byte *)(d_8to24table + ((int)r_clearcolor.value & 0xFF));
-//	glClearColor (rgb[0] / 255.0, rgb[1] / 255.0, rgb[2] / 255.0, 0);
+	rgb = (byte *)(d_8to24table + ((int)r_clearcolor.value & 0xFF));
+	glClearColor (rgb[0]/255.0, rgb[1]/255.0, rgb[2]/255.0, 0);
 }
 
-float globalwateralpha = 0.0;
+/*
+====================
+GL_Overbright
+====================
+*/
+void GL_Overbright (void)
+{
+	float m;
+	
+	d_overbright = CLAMP(0.0, gl_overbright.value, 2.0);
+	m = d_overbright > 0 ? d_overbright : 0.5f;
+	d_overbrightscale = OVERBRIGHT_SCALE * m;
+	
+	// Refresh lightmaps
+	R_RebuildAllLightmaps ();
+}
+
+/*
+====================
+R_WaterAlpha -- ericw
+====================
+*/
+void R_WaterAlpha (void)
+{
+	map_wateralpha = CLAMP(0.0, r_wateralpha.value, 1.0);
+}
+
+/*
+====================
+R_LavaAlpha -- ericw
+====================
+*/
+void R_LavaAlpha (void)
+{
+	map_lavaalpha = CLAMP(0.0, r_lavaalpha.value, 1.0);
+}
+
+/*
+====================
+R_TeleAlpha -- ericw
+====================
+*/
+void R_TeleAlpha (void)
+{
+	map_telealpha = CLAMP(0.0, r_telealpha.value, 1.0);
+}
+
+/*
+====================
+R_SlimeAlpha -- ericw
+====================
+*/
+void R_SlimeAlpha (void)
+{
+	map_slimealpha = CLAMP(0.0, r_slimealpha.value, 1.0);
+}
 
 /*
 ===============
@@ -95,9 +144,6 @@ R_Init
 */
 void R_Init (void)
 {	
-//	extern byte *hunk_base;
-//	int counter;
-
 	Cmd_AddCommand ("timerefresh", R_TimeRefresh_f);	
 	Cmd_AddCommand ("pointfile", R_ReadPointFile_f);	
 
@@ -111,43 +157,47 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_drawentities);
 	Cvar_RegisterVariable (&r_drawworld);
 	Cvar_RegisterVariable (&r_drawviewmodel);
+	Cvar_RegisterVariable (&r_flatturb);
 	Cvar_RegisterVariable (&r_waterquality);
-	Cvar_RegisterVariable (&r_wateralpha);
+	Cvar_RegisterVariableCallback (&r_wateralpha, R_WaterAlpha);
 	Cvar_RegisterVariable (&r_lockalpha);
-//	Cvar_RegisterVariable (&r_lavafog, NULL);
-//	Cvar_RegisterVariable (&r_slimefog, NULL);
-	Cvar_RegisterVariable (&r_lavaalpha);
-	Cvar_RegisterVariable (&r_slimealpha);
-	Cvar_RegisterVariable (&r_telealpha);
+	Cvar_RegisterVariableCallback (&r_lavaalpha, R_LavaAlpha);
+	Cvar_RegisterVariableCallback (&r_slimealpha, R_SlimeAlpha);
+	Cvar_RegisterVariableCallback (&r_telealpha, R_TeleAlpha);
+	Cvar_RegisterVariable (&r_litwater);
+	Cvar_RegisterVariable (&r_noalphasort);
 	Cvar_RegisterVariable (&r_dynamic);
+	Cvar_RegisterVariable (&r_dynamicscale);
 	Cvar_RegisterVariable (&r_novis);
 	Cvar_RegisterVariable (&r_lockfrustum);
 	Cvar_RegisterVariable (&r_lockpvs);
 	Cvar_RegisterVariable (&r_speeds);
 	Cvar_RegisterVariable (&r_waterwarp);
 	Cvar_RegisterVariableCallback (&r_clearcolor, R_ClearColor);
-	Cvar_RegisterVariable (&r_fastsky);
+	Cvar_RegisterVariableCallback (&r_fastsky, R_FastSkyColor);
+	Cvar_RegisterVariableCallback (&r_fastskycolor, R_FastSkyColor);
 	Cvar_RegisterVariable (&r_skyquality);
-	Cvar_RegisterVariable (&r_skyalpha);
-	Cvar_RegisterVariable (&r_skyfog);
+	Cvar_RegisterVariableCallback (&r_skyalpha, R_SkyAlpha);
+	Cvar_RegisterVariableCallback (&r_skyfog, R_Skyfog);
 	Cvar_RegisterVariable (&r_oldsky);
+	Cvar_RegisterVariable (&r_flatworld);
+	Cvar_RegisterVariable (&r_flatmodels);
+//	Cvar_RegisterVariable (&r_flatlightstyles);
 
 	Cvar_RegisterVariable (&gl_finish);
 	Cvar_RegisterVariable (&gl_clear);
-
 	Cvar_RegisterVariable (&gl_cull);
 	Cvar_RegisterVariable (&gl_farclip);
 	Cvar_RegisterVariable (&gl_smoothmodels);
 	Cvar_RegisterVariable (&gl_affinemodels);
+	Cvar_RegisterVariable (&gl_gammablend);
 	Cvar_RegisterVariable (&gl_polyblend);
 	Cvar_RegisterVariable (&gl_flashblend);
-//	Cvar_RegisterVariable (&gl_playermip, NULL);
+	Cvar_RegisterVariable (&gl_flashblendview);
+	Cvar_RegisterVariable (&gl_flashblendscale);
+	Cvar_RegisterVariableCallback (&gl_overbright, GL_Overbright);
+	Cvar_RegisterVariable (&gl_oldspr);
 	Cvar_RegisterVariable (&gl_nocolors);
-
-//	Cvar_RegisterVariable (&gl_keeptjunctions, NULL);
-//	Cvar_RegisterVariable (&gl_reporttjunctions, NULL);
-//
-//	Cvar_RegisterVariable (&gl_zfix, NULL); // z-fighting fix
 
 	// Nehahra
 	Cvar_RegisterVariable (&gl_fogenable);
@@ -161,13 +211,12 @@ void R_Init (void)
 	Cvar_RegisterVariable (&gl_bloomalpha);
 	Cvar_RegisterVariable (&gl_bloomintensity);
 	Cvar_RegisterVariable (&gl_bloomdiamondsize);
-	Cvar_RegisterVariableCallback (&gl_bloomsamplesize, R_InitBloomTextures);
+	Cvar_RegisterVariableCallback (&gl_bloomsamplesize, R_InitBloomTextures); // NULL
 	Cvar_RegisterVariable (&gl_bloomfastsample);
-
 
 	R_InitParticles ();
 
-//	R_InitTranslatePlayerTextures ();
+	R_InitPlayerTextures ();
 
 
 	playerTranslation = (byte *)COM_LoadHunkFile ("gfx/player.lmp", NULL);
@@ -175,65 +224,71 @@ void R_Init (void)
 		Sys_Error ("Couldn't load gfx/player.lmp");
 
 
-//	R_InitMapGlobals ();
+	R_InitSkyBoxTextures ();
 
 	R_InitBloomTextures();
 }
 
-
 /*
 ===============
-R_InitTranslatePlayerTextures
+R_InitPlayerTextures
+
+johnfitz -- handle a game switch
 ===============
 */
-static int oldtop[MAX_SCOREBOARD]; 
-static int oldbottom[MAX_SCOREBOARD];
-static int oldskinnum[MAX_SCOREBOARD];
-static int oldplayerclass[MAX_SCOREBOARD];
-//void R_InitTranslatePlayerTextures (void)
-//{
-//	int i;
-//
-//	for (i = 0; i < MAX_SCOREBOARD; i++)
-//	{
-//		oldtop[i] = -1;
-//		oldbottom[i] = -1;
-//		oldskinnum[i] = -1;
-//		oldplayerclass[i] = -1;
-//
-//		playertextures[i] = NULL; //clear playertexture pointers
-//	}
-//}
+void R_InitPlayerTextures (void)
+{
+	int i;
 
+	// clear playertexture pointers (the textures themselves were freed by texmgr_newgame)
+	for (i = 0; i < MAX_SCOREBOARD; i++)
+		playertextures[i] = NULL;
+}
 
 /*
 ===============
 R_TranslatePlayerSkin
 
 Translates a skin texture by the per-player color lookup
+-- johnfitz -- rewritten.  also, only handles new colors, not new skins
 ===============
 */
 void R_TranslatePlayerSkin (int playernum)
 {
-	extern	byte		player_texels[MAX_PLAYER_CLASS][620*245];
-
 	int		top, bottom;
-	byte	translate[256];
-	int		i, size;
+	int		playerclass;
+
+	top = (cl.scores[playernum].colors & 0xf0)>>4;
+	bottom = (cl.scores[playernum].colors &15);
+	playerclass = (int)cl.scores[playernum].playerclass;
+
+	if (playertextures[playernum])
+		TexMgr_ReloadTextureTranslation (playertextures[playernum], top, bottom);
+}
+
+/*
+===============
+R_TranslateNewPlayerSkin
+ 
+-- johnfitz -- split off of TranslatePlayerSkin --
+this is called when the skin or model actually changes, instead of just new colors
+added bug fix from Bengt Jardrup
+===============
+*/
+void R_TranslateNewPlayerSkin (int playernum)
+{
+	entity_t	*e;
 	model_t	*model;
 	aliashdr_t *paliashdr;
-	byte	*original;
-	byte	*src, *dst; 
-	byte	*pixels = NULL;
-	byte	*sourceA, *sourceB, *colorA, *colorB;
-	int		playerclass;
+	int		skinnum;
+	byte	*pixels;
 	char		name[64];
 
 	//
 	// locate the original skin pixels
 	//
-	currententity = &cl_entities[1+playernum];
-	model = currententity->model;
+	e = &cl_entities[1+playernum];
+	model = e->model;
 
 	if (!model)
 		return;		// player doesn't have a model yet
@@ -242,93 +297,139 @@ void R_TranslatePlayerSkin (int playernum)
 
 	paliashdr = (aliashdr_t *)Mod_Extradata (model);
 
-	top = (cl.scores[playernum].colors & 0xf0) >> 4;
-	bottom = (cl.scores[playernum].colors & 15);
-	playerclass = (int)cl.scores[playernum].playerclass;
 
-/*	if (!strcmp (currententity->model->name, "models/paladin.mdl") ||
-		!strcmp (currententity->model->name, "models/crusader.mdl") ||
-		!strcmp (currententity->model->name, "models/necro.mdl") ||
-		!strcmp (currententity->model->name, "models/assassin.mdl") ||
-		!strcmp (currententity->model->name, "models/succubus.mdl"))	*/
-	if (currententity->model == player_models[0] ||
-	    currententity->model == player_models[1] ||
-	    currententity->model == player_models[2] ||
-	    currententity->model == player_models[3] ||
-	    currententity->model == player_models[4])
+	skinnum = e->skinnum;
+	if (skinnum >= paliashdr->numskins || skinnum < 0)
 	{
-		if (top == oldtop[playernum] && bottom == oldbottom[playernum] && 
-			currententity->skinnum == oldskinnum[playernum] && playerclass == oldplayerclass[playernum])
-			return; // translate if only player change his color
-	}
-	else
-	{
-		oldtop[playernum] = -1;
-		oldbottom[playernum] = -1;
-		oldskinnum[playernum] = -1;
-		oldplayerclass[playernum] = -1;
-		goto skip;
+		Con_DWarning ("R_TranslateNewPlayerSkin: (%d): Invalid player skin # %d (%d skins) in '%s'\n", playernum, skinnum, paliashdr->numskins, model->name);
+		skinnum = 0;
 	}
 
-	oldtop[playernum] = top;
-	oldbottom[playernum] = bottom;
-	oldskinnum[playernum] = currententity->skinnum;
-	oldplayerclass[playernum] = playerclass;
+// get correct texture pixels
+	pixels = (byte *)paliashdr + paliashdr->texels[skinnum]; // This is not a persistent place!
 
-skip:
-	for (i=0 ; i<256 ; i++)
-		translate[i] = i;
+// upload new image
+	sprintf (name, "%s_%i_%i", e->model->name, skinnum, playernum);
+	playertextures[playernum] = TexMgr_LoadTexture (e->model, name, paliashdr->skinwidth, paliashdr->skinheight, SRC_INDEXED, pixels,
+													paliashdr->base[skinnum][0]->source_file,
+													paliashdr->base[skinnum][0]->source_offset, TEXPREF_PAD | TEXPREF_OVERWRITE);
 
-	top -= 1;
-	bottom -= 1;
+// now recolor it
+	R_TranslatePlayerSkin (playernum);
+}
 
-	colorA = playerTranslation + 256 + color_offsets[playerclass-1];
-	colorB = colorA + 256;
-	sourceA = colorB + 256 + (top * 256);
-	sourceB = colorB + 256 + (bottom * 256);
-	for(i=0;i<256;i++,colorA++,colorB++,sourceA++,sourceB++)
+
+/*
+=================
+R_InitSkyBoxTextures
+=================
+*/
+void R_InitSkyBoxTextures (void)
+{
+	int i;
+
+	skybox_name[0] = 0;
+	// clear skyboxtextures pointers
+	for (i=0; i<6; i++)
+		skyboxtextures[i] = NULL;
+}
+
+float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha;
+
+/*
+=================
+R_ParseWorldspawn
+
+called at map load
+=================
+*/
+void R_ParseWorldspawn (void)
+{
+	char	key[128], value[4096];
+	char	*data;
+	int i;
+
+	// initially no skybox
+	skyfog = r_skyfog.value;
+	skyalpha = r_skyalpha.value;
+	oldsky = true;
+	strcpy (skybox_name, "");
+	for (i=0; i<6; i++)
+		skyboxtextures[i] = NULL;
+
+	// initially no fog
+	R_FogReset ();
+
+	// initially no wateralpha
+	map_wateralpha = r_wateralpha.value;
+	map_lavaalpha = r_lavaalpha.value;
+	map_telealpha = r_telealpha.value;
+	map_slimealpha = r_slimealpha.value;
+
+	data = cl.worldmodel->entities;
+	if (!data)
+		return;
+
+	data = COM_Parse(data);
+	if (!data) // should never happen
+		return; // error
+
+	if (com_token[0] != '{') // should never happen
+		return; // error
+
+	while (1)
 	{
-		if (top >= 0 && (*colorA != 255)) 
-			translate[i] = *sourceA;
-		if (bottom >= 0 && (*colorB != 255)) 
-			translate[i] = *sourceB;
+		data = COM_Parse(data);
+		if (!data)
+			return; // error
+
+		if (com_token[0] == '}')
+			break; // end of worldspawn
+
+		if (com_token[0] == '_')
+			strcpy(key, com_token + 1); // Support "_sky" and "_fog" also
+		else
+			strcpy(key, com_token);
+
+		while (key[strlen(key)-1] == ' ') // remove trailing spaces
+			key[strlen(key)-1] = 0;
+
+		data = COM_Parse(data);
+		if (!data)
+			return; // error
+
+		strcpy(value, com_token);
+
+		if (!strcmp("sky", key) && value[0])
+			R_LoadSkyBox(value);
+		// also accept non-standard keys
+		else if (!strcmp("skyname", key) && value[0]) // half-life
+			R_LoadSkyBox(value);
+		else if (!strcmp("qlsky", key) && value[0]) // quake lives
+			R_LoadSkyBox(value);
+		else if (!strcmp("skyalpha", key) && value[0])
+			skyalpha = atof(value);
+		else if (!strcmp("skyfog", key) && value[0])
+			skyfog = atof(value);
+		else if (!strcmp("fog", key) && value[0])
+		{
+			float density, red, green, blue;
+
+			sscanf(value, "%f %f %f %f", &density, &red, &green, &blue);
+
+			R_FogUpdate (density, red, green, blue, 0.0);
+		}
+		else if (!strcmp("wateralpha", key) && value[0])
+			map_wateralpha = atof(value);
+		else if (!strcmp("lavaalpha", key) && value[0])
+			map_lavaalpha = atof(value);
+		else if (!strcmp("telealpha", key) && value[0])
+			map_telealpha = atof(value);
+		else if (!strcmp("slimealpha", key) && value[0])
+			map_slimealpha = atof(value);
+		else if (!strcmp("mapversion", key) && value[0])
+			Con_DPrintf("mapversion is %i\n", atoi(value));
 	}
-
-	// class limit is mission pack dependant
-	i = portals ? MAX_PLAYER_CLASS : MAX_PLAYER_CLASS - PORTALS_EXTRA_CLASSES;
-	if (playerclass >= 1 && playerclass <= i)
-		original = player_texels[playerclass-1];
-	else
-		original = player_texels[0];
-
-	//
-	// translate texture
-	//
-	sprintf (name, "%s_%i_%i", currententity->model->name, currententity->skinnum, playernum);
-	size = paliashdr->skinwidth * paliashdr->skinheight;
-
-	// allocate dynamic memory
-	pixels = malloc (size);
-
-	dst = pixels;
-	src = original;
-
-	for (i=0; i<size; i++)
-		*dst++ = translate[*src++];
-
-	original = pixels;
-
-	// do it fast and correct.
-//	GL_Bind(playertextures + playernum);
-//	GL_Upload8 (name, original, paliashdr->skinwidth, paliashdr->skinheight, false, false, 0); 
-
-	//upload new image
-	playertextures[playernum] = TexMgr_LoadTexture (currententity->model, name, paliashdr->skinwidth, paliashdr->skinheight, SRC_INDEXED, original, "", (uintptr_t)original, TEXPREF_PAD | TEXPREF_OVERWRITE);
-
-
-	// free allocated memory
-	free (pixels);
-
 }
 
 
@@ -358,7 +459,7 @@ void R_NewMap (void)
 
 	R_BuildLightmaps ();
 
-//	R_ParseWorldspawnNewMap ();
+	R_ParseWorldspawn ();
 }
 
 
@@ -387,13 +488,12 @@ void R_TimeRefresh_f (void)
 
 		r_refdef.viewangles[1] = i/128.0*360.0;
 		R_RenderView ();
-//		glFinish ();
 
 // workaround to avoid flickering uncovered by 3d refresh 2d areas when bloom enabled
 		GL_Set2D ();  
 		if (/*scr_sbar.value || */scr_viewsize.value < 120)
 		{
-//			SCR_TileClear ();
+			SCR_TileClear ();
 			Sbar_Changed ();
 			Sbar_Draw ();
 		}

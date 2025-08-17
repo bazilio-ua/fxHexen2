@@ -61,6 +61,10 @@ cvar_t		snow_active= {"snow_active","1", true};
 
 cvar_t	r_particles = {"r_particles","1",true};
 
+gltexture_t *particletexture;	// particle texture
+gltexture_t *particletexture1;	// circle
+gltexture_t *particletexture2;	// square
+
 /*
 ===============
 R_ParticleTextureLookup
