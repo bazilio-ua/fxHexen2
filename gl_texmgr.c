@@ -52,9 +52,9 @@ glmode_t modes[MAXGLMODES] = {
 	{GL_LINEAR,  GL_LINEAR_MIPMAP_LINEAR,	"GL_LINEAR_MIPMAP_LINEAR"},
 };
 
-int		gl_texturemode = 3; // linear
-int		gl_filter_min = GL_LINEAR; // was GL_NEAREST
-int		gl_filter_mag = GL_LINEAR;
+int		gl_texturemode = 0; // nearest
+int		gl_filter_min = GL_NEAREST; // was GL_LINEAR
+int		gl_filter_mag = GL_NEAREST;
 
 float	gl_hardware_max_anisotropy = 1; // just in case
 float 	gl_texture_anisotropy = 1;
@@ -1477,17 +1477,18 @@ int TexMgr_GetMipMemorySize (int width, int height, GLint format)
 	
 	blocksize = 1;
 	blockbytes = 4;
-	switch (format) {
-		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-		case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-			blocksize = 4;
-			blockbytes = 8;
-			break;
-		case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			blocksize = 4;
-			blockbytes = 16;
-			break;
+	switch (format)
+	{
+	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+		blocksize = 4;
+		blockbytes = 8;
+		break;
+	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+		blocksize = 4;
+		blockbytes = 16;
+		break;
 	}
 	
 	blockwidth  = (width  + blocksize - 1) / blocksize;
@@ -1498,15 +1499,16 @@ int TexMgr_GetMipMemorySize (int width, int height, GLint format)
 
 void TexMgr_CompressMip (unsigned *in, int inwidth, int inheight, GLint format, byte *dst)
 {
-	switch (format) {
-		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-			TexMgr_CompressDXT1(in, inwidth, inheight, dst);
-			break;
-		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			TexMgr_CompressDXT5(in, inwidth, inheight, dst);
-			break;
-		default:
-			Sys_Error("Unsupported compressed format");
+	switch (format)
+	{
+	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+		TexMgr_CompressDXT1(in, inwidth, inheight, dst);
+		break;
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+		TexMgr_CompressDXT5(in, inwidth, inheight, dst);
+		break;
+	default:
+		Sys_Error("Unsupported compressed format");
 	}
 }
 
@@ -1515,12 +1517,13 @@ int TexMgr_GetMaxMipLevel (int width, int height, GLint format)
 	int blocksize, max_level;
 	
 	blocksize = 1;
-	switch (format) {
-		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-		case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-		case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			blocksize = 4;
+	switch (format)
+	{
+	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+		blocksize = 4;
 	}
 	
 	max_level = 0;
@@ -1585,11 +1588,12 @@ void TexMgr_Upload32 (gltexture_t *glt, unsigned *data)
 	if (gl_texture_compression && gl_compression.value && !(glt->flags & TEXPREF_NOPICMIP)) {
 		internalformat = (glt->flags & TEXPREF_ALPHA) ? GL_COMPRESSED_RGBA_S3TC_DXT5_EXT : GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		mip_memory_size = TexMgr_GetMipMemorySize(glt->width, glt->height, internalformat);
-		switch (internalformat) {
-			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-			case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-				compressed = Hunk_Alloc(mip_memory_size);
-				break;
+		switch (internalformat)
+		{
+		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+			compressed = Hunk_Alloc(mip_memory_size);
+			break;
 		}
 	}
 	
@@ -1827,114 +1831,6 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 		padbyte = 255;
 	}
     
-	
-	//	// set alpha if we have trans mode
-	//	if (glt->flags & (TEXPREF_TRANSPARENT | TEXPREF_HOLEY | TEXPREF_SPECIAL_TRANS))
-	//		glt->flags |= TEXPREF_ALPHA;
-	//
-	//
-	//	// choose palette and convert to 32bit
-	//	if (glt->flags & TEXPREF_FULLBRIGHT)
-	//	{
-	//		for (i=0 ; i<size ; ++i)
-	//		{
-	//			p = data[i];
-	//			trans[i] = d_8to24table_fbright[p];
-	//		}
-	//	}
-	//	else if (glt->flags & TEXPREF_NOBRIGHT)
-	//	{
-	//		for (i=0 ; i<size ; ++i)
-	//		{
-	//			p = data[i];
-	//			trans[i] = d_8to24table_nobright[p];
-	//		}
-	//	}
-	//	else if (glt->flags & TEXPREF_CONCHARS)
-	//	{
-	//		for (i=0 ; i<size ; ++i)
-	//		{
-	//			p = data[i];
-	//			trans[i] = d_8to24table_conchars[p];
-	//		}
-	//	}
-	
-	
-	////if (glt->flags & (TEXPREF_ALPHA | TEXPREF_TRANSPARENT | TEXPREF_HOLEY | TEXPREF_SPECIAL_TRANS))
-	////if (glt->flags & TEXPREF_ALPHA)
-	//{
-	//	for (i = 0; i < size; i++)
-	//	{
-	//		p = data[i];
-	//		if (p == 255)
-	//		{
-	//
-	//			/* transparent, so scan around for another color
-	//			 * to avoid alpha fringes */
-	//			/* this is a replacement from Quake II for Raven's
-	//			 * "neighboring colors" code */
-	//			if (i > (int)glt->width && data[i-glt->width] != 255)
-	//				p = data[i-glt->width];
-	//			else if (i < size-(int)glt->width && data[i+glt->width] != 255)
-	//				p = data[i+glt->width];
-	//			else if (i > 0 && data[i-1] != 255)
-	//				p = data[i-1];
-	//			else if (i < size-1 && data[i+1] != 255)
-	//				p = data[i+1];
-	//			else
-	//				p = 0;
-	//			/* copy rgb components */
-	//			((byte *)&trans[i])[0] = ((byte *)&d_8to24table[p])[0];
-	//			((byte *)&trans[i])[1] = ((byte *)&d_8to24table[p])[1];
-	//			((byte *)&trans[i])[2] = ((byte *)&d_8to24table[p])[2];
-	//		}
-	//	}
-	//}
-	//
-	//
-	//
-	//	// transmode
-	//	if (glt->flags & TEXPREF_TRANSPARENT)
-	//	{
-	////		glt->flags |= TEXPREF_ALPHA;
-	//		for (i=0 ; i<size ; i++)
-	//		{
-	//			p = data[i];
-	//			if (p == 0)
-	//				trans[i] &= 0x00ffffff; // transparent
-	//			else if( p & 1 )
-	//			{
-	//				trans[i] &= 0x00ffffff; // translucent
-	//				trans[i] |= ( ( int )( 255 * r_wateralpha.value ) ) << 24; //todo r_wateralpha -> r_modelalpha with clamping
-	//			}
-	//			else
-	//			{
-	//				trans[i] |= 0xff000000; // full value
-	//			}
-	//		}
-	//	}
-	//	else if (glt->flags & TEXPREF_HOLEY)
-	//	{
-	////		glt->flags |= TEXPREF_ALPHA;
-	//		for (i=0 ; i<size ; i++)
-	//		{
-	//			p = data[i];
-	//			if (p == 0)
-	//				trans[i] &= 0x00ffffff;
-	//		}
-	//	}
-	//	else if (glt->flags & TEXPREF_SPECIAL_TRANS)
-	//	{
-	////		glt->flags |= TEXPREF_ALPHA;
-	//		for (i=0 ; i<size ; i++)
-	//		{
-	//			p = data[i];
-	//			trans[i] = d_8to24table[ColorIndex[p>>4]] & 0x00ffffff;
-	//			trans[i] |= ( int )ColorPercent[p&15] << 24;
-	//		}
-	//	}
-	
-	
     // pad each dimention, but only if it's not going to be downsampled later
 	if (glt->flags & TEXPREF_PAD)
 	{
