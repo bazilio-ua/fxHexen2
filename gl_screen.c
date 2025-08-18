@@ -72,8 +72,8 @@ console is:
 int			glx, gly, glwidth, glheight;
 
 // only the refresh window will be updated unless these variables are flagged 
-int			scr_copytop;
-int			scr_copyeverything;
+//int			scr_copytop; //SW
+//int			scr_copyeverything; //SW
 
 float		scr_con_current;
 float		scr_conlines;		// lines of console to display
@@ -94,11 +94,11 @@ qpic_t		*scr_ram;
 qpic_t		*scr_net;
 qpic_t		*scr_turtle;
 
-int			scr_fullupdate;
-int			scr_topupdate;
+//int			scr_fullupdate; //SW
+//int			scr_topupdate; //SW
 
 int			clearconsole;
-int			clearnotify;
+//int			clearnotify;
 
 int			sb_lines;
 
@@ -110,7 +110,7 @@ qboolean	scr_disabled_for_loading;
 qboolean	scr_drawloading;
 float		scr_disabled_time;
 
-static qboolean scr_needfull = false;
+//static qboolean scr_needfull = false;
 
 int			total_loading_size, current_loading_size, loading_stage;
 
@@ -274,7 +274,7 @@ void SCR_DrawCenterString (void)
 
 void SCR_CheckDrawCenterString (void)
 {
-	scr_copytop = 1;
+//	scr_copytop = 1;
 	if (scr_center_lines > scr_erase_lines)
 		scr_erase_lines = scr_center_lines;
 
@@ -328,7 +328,7 @@ static void SCR_CalcRefdef (void)
 
 	float		fov_base;
 
-	scr_fullupdate = 0;		// force a background redraw
+//	scr_fullupdate = 0;		// force a background redraw
 	vid.recalc_refdef = 0;
 
 // force the status bar to redraw
@@ -686,7 +686,7 @@ void SCR_DrawConsole (void)
 {
 	if (scr_con_current)
 	{
-		scr_copyeverything = 1;
+//		scr_copyeverything = 1;
 		Con_DrawConsole (scr_con_current, true);
 		clearconsole = 0;
 	}
@@ -799,14 +799,14 @@ void SCR_BeginLoadingPlaque (void)
 	scr_con_current = 0;
 
 	scr_drawloading = true;
-	scr_fullupdate = 0;
+//	scr_fullupdate = 0;
 	Sbar_Changed();
 	SCR_UpdateScreen ();
 	scr_drawloading = false;
 
 	scr_disabled_for_loading = true;
 	scr_disabled_time = realtime;
-	scr_fullupdate = 0; //EER1
+//	scr_fullupdate = 0; //EER1
 }
 
 /*
@@ -818,7 +818,7 @@ SCR_EndLoadingPlaque
 void SCR_EndLoadingPlaque (void)
 {
 	scr_disabled_for_loading = false;
-	scr_fullupdate = 0;
+//	scr_fullupdate = 0;
 //	scr_topupdate = 0; //EER1
 	Con_ClearNotify ();
 }
@@ -858,7 +858,7 @@ int SCR_ModalMessageTimeout (char *text, float timeout) //johnfitz -- timeout
 	scr_notifystring = text;
  
 // draw a fresh screen
-	scr_fullupdate = 0;
+//	scr_fullupdate = 0;
 	scr_drawdialog = true;
 	SCR_UpdateScreen ();
 	scr_drawdialog = false;
@@ -879,7 +879,7 @@ int SCR_ModalMessageTimeout (char *text, float timeout) //johnfitz -- timeout
 		key_lastpress != K_ESCAPE &&
 		time2 <= time1);
 
-	scr_fullupdate = 0;
+//	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 
 	//johnfitz -- timeout
@@ -970,7 +970,7 @@ void Info_Plaque_Draw (char *message)
 	if (!*message) 
 		return;
 
-	scr_needfull = true;
+//	scr_needfull = true;
 
 	FindTextBreaks(message, PLAQUE_WIDTH+4);
 
@@ -1015,7 +1015,7 @@ void Bottom_Plaque_Draw (char *message)
 	if (!*message) 
 		return;
 
-	scr_needfull = true;
+//	scr_needfull = true;
 
 	FindTextBreaks(message, PLAQUE_WIDTH);
 
@@ -1049,8 +1049,8 @@ void Sbar_IntermissionOverlay(void)
 	int		elapsed, size, bx, by, i;
 	char	*message,temp[80];
 
-	scr_copyeverything = 1;
-	scr_fullupdate = 0;
+//	scr_copyeverything = 1;
+//	scr_fullupdate = 0;
 
 	if (cl.gametype == GAME_DEATHMATCH)
 	{
@@ -1197,7 +1197,7 @@ void Sbar_FinaleOverlay(void)
 {
 	qpic_t	*pic;
 
-	scr_copyeverything = 1;
+//	scr_copyeverything = 1;
 
 	pic = Draw_CachePic("gfx/finale.lmp");
 	Draw_TransPic((vid.width-pic->width)/2, 16, pic);
@@ -1229,8 +1229,8 @@ void SCR_UpdateScreen (void)
 		return;				// not initialized yet
 
 
-	scr_copytop = 0;
-	scr_copyeverything = 0;
+//	scr_copytop = 0;
+//	scr_copyeverything = 0;
 
 	if (scr_disabled_for_loading)
 	{
@@ -1282,7 +1282,7 @@ void SCR_UpdateScreen (void)
 		Sbar_Draw();
 		Draw_FadeScreen ();
 		SCR_DrawNotifyString ();
-		scr_copyeverything = true;
+//		scr_copyeverything = true;
 	}
 	else if (scr_drawloading)
 	{

@@ -3253,7 +3253,7 @@ void M_Draw (void)
 
 	if (!m_recursiveDraw)
 	{
-		scr_copyeverything = 1;
+//		scr_copyeverything = 1;
 
 		if (scr_con_current)
 		{
@@ -3263,7 +3263,7 @@ void M_Draw (void)
 		else
 			Draw_FadeScreen ();
 
-		scr_fullupdate = 0;
+//		scr_fullupdate = 0;
 	}
 	else
 	{
