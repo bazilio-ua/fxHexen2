@@ -278,6 +278,7 @@ void R_BloomBlend (void);
 void R_StoreEfrags (efrag_t **efrags);
 
 // gl_fog.c
+void R_FogReset (void);
 void R_FogUpdate (float density, float red, float green, float blue, float time);
 void R_FogParseServerMessage (void);
 void R_FogParseServerMessage2 (void);
@@ -328,6 +329,8 @@ void SCR_TileClear (void);
 void R_DrawSky (void);
 void R_LoadSkyBox (char *skybox);
 void R_FastSkyColor (void);
+void R_SkyAlpha (void);
+void R_Skyfog (void);
 void R_Sky_f (void);
 void Sky_ClearAll (void);
 
@@ -341,8 +344,7 @@ void R_DrawBrushModel (entity_t *e);
 void R_DrawWorld (void);
 void R_DrawGLPoly34 (glpoly_t *p);
 void R_DrawGLPoly56 (glpoly_t *p);
-//void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t *ent);
-void R_DrawSequentialPoly (msurface_t *s);
+void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t *ent);
 void R_BuildLightmaps (void);
 void R_UploadLightmaps (void);
 void R_RebuildAllLightmaps (void);
@@ -441,7 +443,7 @@ typedef struct gl_alphalist_s
 extern gl_alphalist_t	gl_alphalist[MAX_ALPHA_ITEMS];
 extern int				gl_alphalist_num;
 
-qboolean R_SetAlphaSurface(msurface_t *s, float alpha);
+qboolean R_SetAlphaSurface(msurface_t *s, float alpha, qboolean force);
 float R_GetTurbAlpha (msurface_t *s);
 vec_t R_GetAlphaDist (vec3_t origin);
 void R_AddToAlpha (int type, vec_t dist, void *data, model_t *model, entity_t *entity, float alpha);
@@ -451,7 +453,6 @@ void R_DrawAlpha (void);
 
 extern	entity_t	r_worldentity;
 extern	vec3_t		modelorg, r_entorigin;
-extern	entity_t	*currententity; //temp
 extern	int			r_visframecount;	// ??? what difs?
 extern	int			r_framecount;
 extern	mplane_t	frustum[4];
@@ -500,7 +501,9 @@ extern	gltexture_t	*skyboxtextures[6];
 
 extern	qboolean	oldsky;
 extern	char	skybox_name[MAX_OSPATH];
-extern float globalwateralpha;
+extern	float	skyfog; // ericw
+extern	float	skyalpha;
+extern	float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha; //ericw
 
 #define	OVERBRIGHT_SCALE	2.0
 extern	int		d_overbright;
