@@ -54,12 +54,13 @@ float			texturescalefactor; // compensate for apparent size of different particl
 
 static vec3_t		rider_origin;
 
-cvar_t		leak_color = {"leak_color","251", true};
+cvar_t		leak_color = {"leak_color","251", CVAR_ARCHIVE};
 
-cvar_t		snow_flurry= {"snow_flurry","1", true};
-cvar_t		snow_active= {"snow_active","1", true};
+cvar_t		snow_flurry= {"snow_flurry","1", CVAR_ARCHIVE};
+cvar_t		snow_active= {"snow_active","1", CVAR_ARCHIVE};
 
-cvar_t	r_particles = {"r_particles","1",true};
+cvar_t	r_particles = {"r_particles","1", CVAR_ARCHIVE};
+cvar_t	r_particlescale = {"r_particlescale","1", CVAR_ARCHIVE};
 
 gltexture_t *particletexture;	// particle texture
 gltexture_t *particletexture1;	// circle
@@ -142,16 +143,17 @@ R_Particles -- johnfitz
 */
 void R_Particles (void)
 {
+	float scale = CLAMP(1.0, r_particlescale.value, 4.0);
 	switch ((int)(r_particles.value))
 	{
 	default:
 	case 1:
 		particletexture = particletexture1;
-		texturescalefactor = 1.25;
+		texturescalefactor = 1.25 * scale;
 		break;
 	case 2:
 		particletexture = particletexture2;
-		texturescalefactor = 1.0;
+		texturescalefactor = 1.0 * scale;
 		break;
 	}
 }
@@ -175,6 +177,7 @@ void R_InitParticles (void)
 	Cvar_RegisterVariable (&snow_active);
 	
 	Cvar_RegisterVariableCallback (&r_particles, R_Particles);
+	Cvar_RegisterVariableCallback (&r_particlescale, R_Particles);
 
 	R_InitParticleTextures ();
 }
@@ -201,7 +204,7 @@ void R_ClearParticles (void)
 R_AllocParticle
 ===============
 */
-static inline particle_t *R_AllocParticle (void)
+particle_t *R_AllocParticle (void)
 {
 	particle_t *p;
 
@@ -809,29 +812,30 @@ void R_RocketTrail (vec3_t start, vec3_t end, int type)
 	dist[2] = vec[2];
 	size = 1;  
 	lifetime = 2;
+	
 	switch(type)
 	{
-		case 9: // Spit
-			break;
+	case 9: // Spit
+		break;
 
-		case 8: // Ice
-			size *= 5*3;
-			dist[0] *= 5*3;
-			dist[1] *= 5*3;
-			dist[2] *= 5*3;
-			break;
+	case 8: // Ice
+		size *= 5*3;
+		dist[0] *= 5*3;
+		dist[1] *= 5*3;
+		dist[2] *= 5*3;
+		break;
 
-		case rt_acidball: // Ice
-			size=5;
-			lifetime = .8;
-			break;
+	case rt_acidball: // Ice
+		size=5;
+		lifetime = .8;
+		break;
 
-		default:
-			size = 3;
-			dist[0] *= 3;
-			dist[1] *= 3;
-			dist[2] *= 3;
-			break;
+	default:
+		size = 3;
+		dist[0] *= 3;
+		dist[1] *= 3;
+		dist[2] *= 3;
+		break;
 
 	}
 
@@ -848,197 +852,197 @@ void R_RocketTrail (vec3_t start, vec3_t end, int type)
 
 		switch(type)
 		{
-			case rt_rocket_trail: // rocket trail
-				p->ramp = (rand()&3);
-				p->color = ramp3[(int)p->ramp];
-				p->type = pt_fire;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				break;
+		case rt_rocket_trail: // rocket trail
+			p->ramp = (rand()&3);
+			p->color = ramp3[(int)p->ramp];
+			p->type = pt_fire;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()%6)-3);
+			break;
 
-			case rt_smoke: // smoke smoke
-				p->ramp = (rand()&3) + 2;
-				p->color = ramp3[(int)p->ramp];
-				p->type = pt_fire;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				break;
+		case rt_smoke: // smoke smoke
+			p->ramp = (rand()&3) + 2;
+			p->color = ramp3[(int)p->ramp];
+			p->type = pt_fire;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()%6)-3);
+			break;
 
-			case rt_blood: // blood
-				p->type = pt_slowgrav;
-				p->color = 134 + (rand()&7);
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				break;
+		case rt_blood: // blood
+			p->type = pt_slowgrav;
+			p->color = 134 + (rand()&7);
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()%6)-3);
+			break;
 
 
-			case rt_tracer:;
-			case rt_tracer2:;// tracer
-				p->die = cl.time + 0.5;
-				p->type = pt_static;
-				if (type == 3)
-					p->color = 130 + (rand() & 6);
-//			p->color = 243 + (rand() & 3);
-				else
-					p->color = 230 + ((tracercount&4)<<1);
-			
-				tracercount++;
+		case rt_tracer:;
+		case rt_tracer2:;// tracer
+			p->die = cl.time + 0.5;
+			p->type = pt_static;
+			if (type == 3)
+				p->color = 130 + (rand() & 6);
+//				p->color = 243 + (rand() & 3);
+			else
+				p->color = 230 + ((tracercount&4)<<1);
+		
+			tracercount++;
 
-				VectorCopy (start, p->org);
-				if (tracercount & 1)
-				{
-					p->vel[0] = 30*vec[1];
-					p->vel[1] = 30*-vec[0];
-				}
-				else
-				{
-					p->vel[0] = 30*-vec[1];
-					p->vel[1] = 30*vec[0];
-				}
-				break;
-			
-			case rt_slight_blood:// slight blood
-				p->type = pt_slowgrav;
-				p->color = 134 + (rand()&7);
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
-				len -= size;
-				break;
+			VectorCopy (start, p->org);
+			if (tracercount & 1)
+			{
+				p->vel[0] = 30*vec[1];
+				p->vel[1] = 30*-vec[0];
+			}
+			else
+			{
+				p->vel[0] = 30*-vec[1];
+				p->vel[1] = 30*vec[0];
+			}
+			break;
+		
+		case rt_slight_blood:// slight blood
+			p->type = pt_slowgrav;
+			p->color = 134 + (rand()&7);
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()%6)-3);
+			len -= size;
+			break;
 
-			case rt_bloodshot:// bloodshot trail
-				p->type = pt_darken;
-				p->color = 136 + (rand()&5);
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&3)-2);
-				len -= size;
-				break;
+		case rt_bloodshot:// bloodshot trail
+			p->type = pt_darken;
+			p->color = 136 + (rand()&5);
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&3)-2);
+			len -= size;
+			break;
 
-			case rt_voor_trail:// voor trail
-				p->color = 9*16 + 8 + (rand()&3);
-				p->type = pt_static;
-				p->die = cl.time + 0.3;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&15)-8);
-				break;
+		case rt_voor_trail:// voor trail
+			p->color = 9*16 + 8 + (rand()&3);
+			p->type = pt_static;
+			p->die = cl.time + 0.3;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&15)-8);
+			break;
 
-			case rt_fireball: // Fireball
-				p->ramp = rand()&3;
-				p->color = ramp4[(int)(p->ramp)];
-				p->type = pt_fireball;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&3)-2);		
-				p->org[2] += 2; // compensate for model
-				p->vel[0] = (rand() % 200) - 100;
-				p->vel[1] = (rand() % 200) - 100;
-				p->vel[2] = (rand() % 200) - 100;
-				break;
+		case rt_fireball: // Fireball
+			p->ramp = rand()&3;
+			p->color = ramp4[(int)(p->ramp)];
+			p->type = pt_fireball;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&3)-2);
+			p->org[2] += 2; // compensate for model
+			p->vel[0] = (rand() % 200) - 100;
+			p->vel[1] = (rand() % 200) - 100;
+			p->vel[2] = (rand() % 200) - 100;
+			break;
 
-			case rt_acidball: // Acid ball
-				p->ramp = rand()&3;
-				p->color = ramp10[(int)(p->ramp)];
-				p->type = pt_acidball;
-				p->die = cl.time + 0.5;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&3)-2);
-				p->org[2] += 2; // compensate for model
-				p->vel[0] = (rand() % 40) - 20;
-				p->vel[1] = (rand() % 40) - 20;
-				p->vel[2] = (rand() % 40) - 20;
-				break;
+		case rt_acidball: // Acid ball
+			p->ramp = rand()&3;
+			p->color = ramp10[(int)(p->ramp)];
+			p->type = pt_acidball;
+			p->die = cl.time + 0.5;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&3)-2);
+			p->org[2] += 2; // compensate for model
+			p->vel[0] = (rand() % 40) - 20;
+			p->vel[1] = (rand() % 40) - 20;
+			p->vel[2] = (rand() % 40) - 20;
+			break;
 
-			case rt_ice: // Ice
-				p->ramp = rand()&3;
-				p->color = ramp5[(int)(p->ramp)];
-				p->type = pt_ice;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&3)-2);
-				p->org[2] += 2; // compensate for model
-				p->vel[0] = (rand() % 16) - 8;
-				p->vel[1] = (rand() % 16) - 8;
-				p->vel[2] = (rand() % 20) - 40;
-				break;
+		case rt_ice: // Ice
+			p->ramp = rand()&3;
+			p->color = ramp5[(int)(p->ramp)];
+			p->type = pt_ice;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&3)-2);
+			p->org[2] += 2; // compensate for model
+			p->vel[0] = (rand() % 16) - 8;
+			p->vel[1] = (rand() % 16) - 8;
+			p->vel[2] = (rand() % 20) - 40;
+			break;
 
-			case rt_spit: // Spit
-				p->ramp = rand()&3;
-				p->color = ramp6[(int)(p->ramp)];
-				p->type = pt_spit;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&3)-2);
-				p->org[2] += 2; // compensate for model
-				p->vel[0] = (rand() % 10) - 5;
-				p->vel[1] = (rand() % 10) - 5;
-				p->vel[2] = (rand() % 10);
-				break;
+		case rt_spit: // Spit
+			p->ramp = rand()&3;
+			p->color = ramp6[(int)(p->ramp)];
+			p->type = pt_spit;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&3)-2);
+			p->org[2] += 2; // compensate for model
+			p->vel[0] = (rand() % 10) - 5;
+			p->vel[1] = (rand() % 10) - 5;
+			p->vel[2] = (rand() % 10);
+			break;
 
-			case rt_spell: // Spell
-				p->ramp = rand()&3;
-				p->color = ramp6[(int)(p->ramp)];
-				p->type = pt_spell;
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + ((rand()&3)-2);
-				p->vel[0] = (rand() % 10) - 5;
-				p->vel[1] = (rand() % 10) - 5;
-				p->vel[2] = (rand() % 10);
-				p->vel[0] = vec[0]*-10;
-				p->vel[1] = vec[1]*-10;
-				p->vel[2] = vec[2]*-10;
-				break;
+		case rt_spell: // Spell
+			p->ramp = rand()&3;
+			p->color = ramp6[(int)(p->ramp)];
+			p->type = pt_spell;
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + ((rand()&3)-2);
+			p->vel[0] = (rand() % 10) - 5;
+			p->vel[1] = (rand() % 10) - 5;
+			p->vel[2] = (rand() % 10);
+			p->vel[0] = vec[0]*-10;
+			p->vel[1] = vec[1]*-10;
+			p->vel[2] = vec[2]*-10;
+			break;
 
-			case rt_vorpal: // vorpal missile
-				p->type = pt_vorpal;
-				p->color = 44 + (rand()&3) + 256;
-				for (j=0 ; j<2 ; j++)
-					p->org[j] = start[j] + ((rand()%48)-24);
+		case rt_vorpal: // vorpal missile
+			p->type = pt_vorpal;
+			p->color = 44 + (rand()&3) + 256;
+			for (j=0 ; j<2 ; j++)
+				p->org[j] = start[j] + ((rand()%48)-24);
 
-				p->org[2] = start[2] + ((rand()&15)-8);
+			p->org[2] = start[2] + ((rand()&15)-8);
 
-				break;
+			break;
 
-			case rt_setstaff: // set staff
-				p->type = pt_setstaff;
-				p->color = ramp9[0];
-				p->ramp = rand()&3;
+		case rt_setstaff: // set staff
+			p->type = pt_setstaff;
+			p->color = ramp9[0];
+			p->ramp = rand()&3;
 
-				for (j=0 ; j<2 ; j++)
-					p->org[j] = start[j] + ((rand()%6)-3);
+			for (j=0 ; j<2 ; j++)
+				p->org[j] = start[j] + ((rand()%6)-3);
 
-				p->org[2] = start[2] + ((rand()%10)-5);
+			p->org[2] = start[2] + ((rand()%10)-5);
 
-				p->vel[0] = (rand() &7) - 4;
-				p->vel[1] = (rand() &7) - 4;
-				break;
+			p->vel[0] = (rand() &7) - 4;
+			p->vel[1] = (rand() &7) - 4;
+			break;
 
-			case rt_magicmissile: // magic missile
-				p->type = pt_magicmissile;
-				p->color = 148 + (rand()&11);
-				p->ramp = rand()&3;
-				for (j=0 ; j<2 ; j++)
-					p->org[j] = start[j] + ((rand()%48)-24);
+		case rt_magicmissile: // magic missile
+			p->type = pt_magicmissile;
+			p->color = 148 + (rand()&11);
+			p->ramp = rand()&3;
+			for (j=0 ; j<2 ; j++)
+				p->org[j] = start[j] + ((rand()%48)-24);
 
-				p->org[2] = start[2] + ((rand()%48)-24);
+			p->org[2] = start[2] + ((rand()%48)-24);
 
-				p->vel[2] = -((rand()&15)+8);
-				break;
+			p->vel[2] = -((rand()&15)+8);
+			break;
 
-			case rt_boneshard: // bone shard
-				p->type = pt_boneshard;
-				p->color = 368 + (rand()&16);
-				for (j=0 ; j<2 ; j++)
-					p->org[j] = start[j] + ((rand()%48)-24);
+		case rt_boneshard: // bone shard
+			p->type = pt_boneshard;
+			p->color = 368 + (rand()&16);
+			for (j=0 ; j<2 ; j++)
+				p->org[j] = start[j] + ((rand()%48)-24);
 
-				p->org[2] = start[2] + ((rand()%48)-24);
+			p->org[2] = start[2] + ((rand()%48)-24);
 
-				p->vel[2] = -((rand()&15)+8);
-				break;
+			p->vel[2] = -((rand()&15)+8);
+			break;
 
-			case rt_scarab: // scarab staff
-				p->type = pt_scarab;
-				p->color = 250 + (rand()&3);
-				for (j=0 ; j<3 ; j++)
-					p->org[j] = start[j] + (rand()&7);
+		case rt_scarab: // scarab staff
+			p->type = pt_scarab;
+			p->color = 250 + (rand()&3);
+			for (j=0 ; j<3 ; j++)
+				p->org[j] = start[j] + (rand()&7);
 
-				p->vel[2] = -(rand()&7);
-				break;
+			p->vel[2] = -(rand()&7);
+			break;
 
 		}		
 		VectorAdd (start, dist, start);
@@ -1211,7 +1215,7 @@ all the particle behavior, separated from R_DrawParticles
 */
 void R_UpdateParticles (void)
 {
-	particle_t		*p, *kill;
+	particle_t		*p, *particle;
 	float			grav,grav2,percent;
 	int				i;
 	float			time2, time3, time4;
@@ -1238,12 +1242,12 @@ void R_UpdateParticles (void)
 	
 	for ( ;; ) 
 	{
-		kill = active_particles;
-		if (kill && kill->die < cl.time)
+		particle = active_particles;
+		if (particle && particle->die < cl.time)
 		{
-			active_particles = kill->next;
-			kill->next = free_particles;
-			free_particles = kill;
+			active_particles = particle->next;
+			particle->next = free_particles;
+			free_particles = particle;
 			continue;
 		}
 		break;
@@ -1253,12 +1257,12 @@ void R_UpdateParticles (void)
 	{
 		for ( ;; )
 		{
-			kill = p->next;
-			if (kill && kill->die < cl.time)
+			particle = p->next;
+			if (particle && particle->die < cl.time)
 			{
-				p->next = kill->next;
-				kill->next = free_particles;
-				free_particles = kill;
+				p->next = particle->next;
+				particle->next = free_particles;
+				free_particles = particle;
 				continue;
 			}
 			break;
@@ -1452,7 +1456,7 @@ void R_UpdateParticles (void)
 			p->vel[2] -= grav;
 			break;
 
-      case pt_c_explode:
+		case pt_c_explode:
 			p->ramp += time2;
 			if ((int)p->ramp >=8)
 			{
@@ -1469,7 +1473,7 @@ void R_UpdateParticles (void)
 			p->vel[2] -= grav;
 			break;
 
-      case pt_c_explode2:
+		case pt_c_explode2:
 			p->ramp += time3;
 			if ((int)p->ramp >=8)
 			{
@@ -1512,13 +1516,13 @@ void R_UpdateParticles (void)
 			p->vel[2] -= grav*4;
 			break;
 
-      case pt_rain:
+		case pt_rain:
 			break;
 
-      case pt_snow:
+		case pt_snow:
 			break;
 
-	  case pt_fireball:
+		case pt_fireball:
 			p->ramp += time3;
 			if ((int)p->ramp >= 16)
 			{
@@ -1753,17 +1757,40 @@ void R_UpdateParticles (void)
 	}
 }
 
-
 /*
 ===============
-R_DrawParticles
+R_SetupParticles
 
 moved all non-drawing code to R_UpdateParticles
 ===============
 */
-void R_DrawParticles (void)
+void R_SetupParticles (void)
 {
 	particle_t		*p;
+	int				i = 0;
+	
+	if (!r_particles.value)
+		return;
+	
+	for (p=active_particles ; p ; p=p->next)
+	{
+		// improve sound when many particles
+		if (++i % 8192 == 0)
+			S_ExtraUpdateTime ();
+		
+		R_AddToAlpha (ALPHA_PARTICLE, R_GetAlphaDist(p->org), p, NULL, NULL, 0);
+		
+		rs_c_particles++; // r_speeds
+	}
+}
+
+/*
+===============
+R_DrawParticle
+===============
+*/
+void R_DrawParticle (particle_t *p)
+{
 	vec3_t			up, right, p_up, p_right, p_upright;
 	float			scale;
 	byte			*color, alpha;
@@ -1774,15 +1801,15 @@ void R_DrawParticles (void)
 	VectorScale (vup, 1.5, up);
 	VectorScale (vright, 1.5, right);
 
-	GL_BindTexture(particletexture);
+	GL_BindTexture (particletexture);
+
 	glEnable (GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // H2
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glDepthMask (GL_FALSE); // don't bother writing Z (fix for particle z-buffer bug)
+
 	glBegin (GL_QUADS); // quads save fillrate
 
-	for (p=active_particles ; p ; p=p->next)
-	{
 		// hack a scale up to keep particles from disapearing
 		scale = (p->org[0] - r_origin[0])*vpn[0]
 			+ (p->org[1] - r_origin[1])*vpn[1]
@@ -1858,16 +1885,21 @@ void R_DrawParticles (void)
 		glTexCoord2f (0,0.5);
 		VectorMA (p->org, scale, right, p_right);
 		glVertex3fv (p_right);
-	}
 
 	glEnd ();
+
 	glDepthMask (GL_TRUE); // back to normal Z buffering
 	glDisable (GL_BLEND);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glColor3f(1,1,1); //EER1 tst
+	glColor3f(1,1,1);
 }
 
 
+/*
+===============
+R_ReadPointFile_f
+===============
+*/
 void R_ReadPointFile_f (void)
 {
 	FILE	*f;
@@ -1875,11 +1907,14 @@ void R_ReadPointFile_f (void)
 	int		r;
 	int		c;
 	particle_t	*p;
-	char	name[MAX_OSPATH];
+	char	name[MAX_QPATH]; // change MAX_OSPATH
 	byte	color;
+
+	if (cls.state != ca_connected)
+		return;			// need an active map.
 	
 	color = (byte)Cvar_VariableValue("leak_color");
-	sprintf (name,"maps/%s.pts", sv.name);
+	sprintf (name, "maps/%s.pts", cl.worldname); // change sv.name
 
 	COM_FOpenFile (name, &f, NULL);
 	if (!f)
@@ -1907,7 +1942,7 @@ void R_ReadPointFile_f (void)
 		p->die = 99999;
 		p->color = color; // (-c)&15;
 		p->type = pt_static;
-		VectorCopy (vec3_origin, p->vel);
+		VectorClear (p->vel);
 		VectorCopy (org, p->org);
 	}
 
