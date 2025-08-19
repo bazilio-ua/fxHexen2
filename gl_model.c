@@ -375,7 +375,7 @@ Mod_LoadTextures
 */
 void Mod_LoadTextures (lump_t *l)
 {
-	int		i, j, pixels, num, max, altmax;
+	int		i, j, pixels, num, maxanim, altmax;
 	miptex_t	*mt;
 	texture_t	*tx, *tx2;
 	texture_t	*anims[10];
@@ -493,21 +493,21 @@ void Mod_LoadTextures (lump_t *l)
 		memset (anims, 0, sizeof(anims));
 		memset (altanims, 0, sizeof(altanims));
 
-		max = tx->name[1];
+		maxanim = tx->name[1];
 		altmax = 0;
-		if (max >= 'a' && max <= 'z')
-			max -= 'a' - 'A';
-		if (max >= '0' && max <= '9')
+		if (maxanim >= 'a' && maxanim <= 'z')
+			maxanim -= 'a' - 'A';
+		if (maxanim >= '0' && maxanim <= '9')
 		{
-			max -= '0';
+			maxanim -= '0';
 			altmax = 0;
-			anims[max] = tx;
-			max++;
+			anims[maxanim] = tx;
+			maxanim++;
 		}
-		else if (max >= 'A' && max <= 'J')
+		else if (maxanim >= 'A' && maxanim <= 'J')
 		{
-			altmax = max - 'A';
-			max = 0;
+			altmax = maxanim - 'A';
+			maxanim = 0;
 			altanims[altmax] = tx;
 			altmax++;
 		}
@@ -529,8 +529,8 @@ void Mod_LoadTextures (lump_t *l)
 			{
 				num -= '0';
 				anims[num] = tx2;
-				if (num+1 > max)
-					max = num + 1;
+				if (num+1 > maxanim)
+					maxanim = num + 1;
 			}
 			else if (num >= 'A' && num <= 'J')
 			{
@@ -545,15 +545,15 @@ void Mod_LoadTextures (lump_t *l)
 		
 #define	ANIM_CYCLE	2
 	// link them all together
-		for (j=0 ; j<max ; j++)
+		for (j=0 ; j<maxanim ; j++)
 		{
 			tx2 = anims[j];
 			if (!tx2)
 				Sys_Error ("Missing frame %i of %s",j, tx->name);
-			tx2->anim_total = max * ANIM_CYCLE;
+			tx2->anim_total = maxanim * ANIM_CYCLE;
 			tx2->anim_min = j * ANIM_CYCLE;
 			tx2->anim_max = (j+1) * ANIM_CYCLE;
-			tx2->anim_next = anims[ (j+1)%max ];
+			tx2->anim_next = anims[ (j+1)%maxanim ];
 			if (altmax)
 				tx2->alternate_anims = altanims[0];
 		}
@@ -566,7 +566,7 @@ void Mod_LoadTextures (lump_t *l)
 			tx2->anim_min = j * ANIM_CYCLE;
 			tx2->anim_max = (j+1) * ANIM_CYCLE;
 			tx2->anim_next = altanims[ (j+1)%altmax ];
-			if (max)
+			if (maxanim)
 				tx2->alternate_anims = anims[0];
 		}
 	}
@@ -585,7 +585,7 @@ void Mod_LoadLighting (lump_t *l)
 	int i;
 	byte *in, *out, *data;
 	byte d;
-	char litfilename[MAX_QPATH];
+	char filename[MAX_QPATH];
 	unsigned int path_id;
 
 	loadmodel->lightdata = NULL;
@@ -593,26 +593,26 @@ void Mod_LoadLighting (lump_t *l)
 	if (loadmodel->isworldmodel && external_lit.value)
 	{
 		// LordHavoc: check for a .lit file
-		strcpy(litfilename, loadmodel->name);
-		COM_StripExtension(litfilename, litfilename);
-		strcat(litfilename, ".lit");
-		Con_DPrintf("trying to load %s\n", litfilename);
+		strcpy(filename, loadmodel->name);
+		COM_StripExtension(filename, filename);
+		strcat(filename, ".lit");
+		Con_DPrintf("trying to load %s\n", filename);
 
-		data = (byte *) COM_LoadHunkFile (litfilename, &path_id);
+		data = (byte *) COM_LoadHunkFile (filename, &path_id);
 		if (data)
 		{
 			// use .lit file only from the same gamedir as the map
 			// itself or from a searchpath with higher priority.
 			if (path_id < loadmodel->path_id)
 			{
-				Con_DPrintf("Ignored %s from a gamedir with lower priority\n", litfilename);
+				Con_DPrintf("Ignored %s from a gamedir with lower priority\n", filename);
 			}
 			else if (data[0] == 'Q' && data[1] == 'L' && data[2] == 'I' && data[3] == 'T')
 			{
 				i = LittleLong(((int *)data)[1]);
 				if (i == 1)
 				{
-					Con_DPrintf("%s loaded\n", litfilename);
+					Con_DPrintf("%s loaded\n", filename);
 					loadmodel->lightdata = data + 8;
 					return;
 				}
@@ -629,7 +629,7 @@ void Mod_LoadLighting (lump_t *l)
 	{
 		return;
 	}
-	loadmodel->lightdata = Hunk_AllocName ( l->filelen*3, litfilename);	
+	loadmodel->lightdata = Hunk_AllocName ( l->filelen*3, filename);	
 	in = loadmodel->lightdata + l->filelen*2; // place the file at the end, so it will not be overwritten until the very last write
 	out = loadmodel->lightdata;
 	memcpy (in, mod_base + l->fileofs, l->filelen);
