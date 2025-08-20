@@ -1,5 +1,5 @@
 //
-// Prefix header for all source files of the 'fxQuake' target in the 'fxQuake' project
+// Prefix header for all source files of the 'fxHexen2' target in the 'fxHexen2' project
 //
 
 #ifdef __OBJC__

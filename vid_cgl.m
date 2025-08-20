@@ -375,7 +375,7 @@ void VID_SetMode (int width, int height, int refreshrate, int bpp, qboolean full
 		[window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask];
 		[window setFrame:[window frameRectForContentRect:contentRect] display:NO];
 		[window setLevel:NSNormalWindowLevel];
-		[window setTitle:@"fxQuake"];
+		[window setTitle:@"fxHexen II"];
 	} else {
 		// Switch to the requested resolution
 		err = CGDisplaySetDisplayMode(display, VID_GetMatchingDisplayMode (width, height, refreshrate, bpp), NULL); // Do the physical switch
