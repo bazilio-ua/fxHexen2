@@ -1451,7 +1451,7 @@ void SCR_UpdateScreen (void)
 		SCR_CalcRefdef ();
 	}
 
-	if (scr_overdrawsbar.value || gl_clear.value || isIntel) // intel video workaround
+	if (/*scr_overdrawsbar.value || */gl_clear.value || isIntel) // intel video workaround
 		Sbar_Changed ();
 
 //

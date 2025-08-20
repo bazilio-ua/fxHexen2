@@ -162,7 +162,12 @@ static int HelmetAC[MAX_PLAYER_CLASS] =
 //
 //==========================================================================
 
-void Sbar_Init(void)
+/*
+===============
+Sbar_LoadPics -- johnfitz -- load all the sbar pics
+===============
+*/
+void Sbar_LoadPics (void)
 {
 	int i;
 
@@ -173,6 +178,16 @@ void Sbar_Init(void)
 	sb_nums[10] = Draw_PicFromWad("num_minus");
 	sb_colon = Draw_PicFromWad("num_colon");
 	sb_slash = Draw_PicFromWad("num_slash");
+}
+
+/*
+===============
+Sbar_Init
+===============
+*/
+void Sbar_Init(void)
+{
+	Sbar_LoadPics ();
 
 	Cmd_AddCommand("+showinfo", ShowInfoDown_f);
 	Cmd_AddCommand("-showinfo", ShowInfoUp_f);
