@@ -96,6 +96,8 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_idealrollscale);
 	Cvar_RegisterVariable (&sv_aim);
 	Cvar_RegisterVariable (&sv_nostep);
+	Cvar_RegisterVariableCallback (&sv_stupidquakebugfix, SV_StupidQuakeBugFix);
+
 	Cvar_RegisterVariable (&sv_walkpitch);
 	Cvar_RegisterVariable (&sv_flypitch);
 
@@ -167,6 +169,19 @@ void Sv_Edicts_f(void)
 	}
 
 	SV_Edicts(Name);
+}
+
+/*
+===============
+SV_StupidQuakeBugFix
+ 
+compensate stupid quake bug (inverse pitch) for mods where this bug is fixed
+===============
+*/
+void SV_StupidQuakeBugFix (void)
+{
+	stupidquakebugfix = (qboolean)(sv_stupidquakebugfix.value);
+	Con_Printf ("'stupid quake bug' fix %s\n", stupidquakebugfix ? "enabled" : "disabled");
 }
 
 /*

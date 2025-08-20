@@ -475,6 +475,9 @@ PF_vectoangles
 vector vectoangles(vector)
 =================
 */
+qboolean stupidquakebugfix = false; 
+cvar_t	sv_stupidquakebugfix = {"sv_stupidquakebugfix", "0", CVAR_NONE};
+
 void PF_vectoangles (void)
 {
 	float	*value1;
@@ -487,18 +490,18 @@ void PF_vectoangles (void)
 	{
 		yaw = 0;
 		if (value1[2] > 0)
-			pitch = 90;
+			pitch = stupidquakebugfix ? 270 : 90;
 		else
-			pitch = 270;
+			pitch = stupidquakebugfix ? 90 : 270;
 	}
 	else
 	{
-		yaw = (int) (atan2(value1[1], value1[0]) * 180 / M_PI);
+		yaw = (atan2(value1[1], value1[0]) * 180 / M_PI);
 		if (yaw < 0)
 			yaw += 360;
 
-		forward = sqrt (value1[0]*value1[0] + value1[1]*value1[1]);
-		pitch = (int) (atan2(value1[2], forward) * 180 / M_PI);
+		forward = sqrt(value1[0]*value1[0] + value1[1]*value1[1]);
+		pitch = (atan2(stupidquakebugfix ? -value1[2] : value1[2], forward) * 180 / M_PI);
 		if (pitch < 0)
 			pitch += 360;
 	}
