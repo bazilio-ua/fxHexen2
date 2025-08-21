@@ -1565,7 +1565,7 @@ void Host_Class_f (void)
 //just an easy place to do some profile testing
 void Host_Version_f (void)
 {
-	Con_Printf ("%sfxHexen II %4.2f\n", "\x02", (float)VERSION);
+	Con_Printf ("%sfxHexen2 %4.2f\n", "\x02", (float)VERSION);
 	Con_Printf ("Compiled: "__TIME__" "__DATE__"\n");
 }
 

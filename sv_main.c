@@ -446,7 +446,7 @@ void SV_SendServerinfo (client_t *client)
 	char			message[2048];
 
 	MSG_WriteByte (&client->message, svc_print);
-	sprintf (message, "%c\nfxHexen II %4.2f SERVER (%i CRC)", 2, (float)VERSION, pr_crc);
+	sprintf (message, "%c\nfxHexen2 %4.2f SERVER (%i CRC)", 2, (float)VERSION, pr_crc);
 	MSG_WriteString (&client->message,message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);

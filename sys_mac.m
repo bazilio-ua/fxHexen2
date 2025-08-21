@@ -580,7 +580,7 @@ int main (int argc, char *argv[])
 	if (!nostdout)
 	{
 		fcntl (STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) | O_NONBLOCK);
-		printf ("fxHexen II %4.2f\n", (float)VERSION);
+		printf ("fxHexen2 %4.2f\n", (float)VERSION);
 	}
     
 	oldtime = Sys_DoubleTime();

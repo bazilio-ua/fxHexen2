@@ -1331,7 +1331,7 @@ void Con_DrawVersion (void)
 	int		len, x;
 	char ver[32];
 
-	sprintf (ver, "fxHexen II %4.2f", (float)VERSION);
+	sprintf (ver, "fxHexen2 %4.2f", (float)VERSION);
 	len = strlen (ver);
 	for (x = 0; x < len; x++)
 		Draw_Character ((con_linewidth - len + x + 2) << 3, con_vislines - 8, ver[x]);
