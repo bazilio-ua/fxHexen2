@@ -353,7 +353,8 @@ void Draw_LoadPics (void)
 		Sys_Error ("Draw_LoadPics: couldn't load conchars");
 
 	// now turn them into textures
-	char_texture = TexMgr_LoadTexture (NULL, texturepath, 256, 128, SRC_INDEXED, draw_chars, texturepath, sizeof(int)*2, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+	offset = (uintptr_t)0; // was sizeof(int)*2, because "gfx/menu/conchars.lmp" is just data we don't need an offset
+	char_texture = TexMgr_LoadTexture (NULL, texturepath, 256, 128, SRC_INDEXED, draw_chars, texturepath, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 
 	//
@@ -387,7 +388,8 @@ void Draw_LoadPics (void)
 		Sys_Error ("Draw_LoadPics: couldn't load menufont");
 
 	// now turn them into textures
-	char_menufonttexture = TexMgr_LoadTexture (NULL, texturepath, 160, 80, SRC_INDEXED, mf->data, texturepath, sizeof(int)*2, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+	offset = (uintptr_t)sizeof(int)*2;
+	char_menufonttexture = TexMgr_LoadTexture (NULL, texturepath, 160, 80, SRC_INDEXED, mf->data, texturepath, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 	
 	//
 	// get the other pics we need

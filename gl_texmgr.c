@@ -2158,6 +2158,7 @@ void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom)
 		FILE *f;
 		int size;
 
+retry:
 		COM_FOpenFile(glt->source_file, &f, NULL);
 		if (f)
 		{
@@ -2187,7 +2188,11 @@ void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom)
 		}
 	}
 	else if (glt->source_file[0] && !glt->source_offset)
+	{
 		data = Image_LoadImage (glt->source_file, (int *)&glt->source_width, (int *)&glt->source_height); // simple file
+		if (!data)
+			goto retry;
+	}
 	else if (!glt->source_file[0] && glt->source_offset)
 		data = (byte *)glt->source_offset; // image in memory
 
