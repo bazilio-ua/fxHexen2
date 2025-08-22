@@ -19,16 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // host.c -- coordinates spawning and killing of local servers
 
-/*
- * $Header: /H2 Mission Pack/HOST.C 6     3/12/98 6:31p Mgummelt $
- */
-
 #include "quakedef.h"
-
-//need for midi
-//#ifdef _WIN32
-//#include "winquake.h"
-//#endif
 
 /*
 
@@ -41,17 +32,15 @@ Memory is cleared / released when a server or client begins, not when they end.
 
 */
 
-void Host_WriteConfiguration (char *configname);
-
 quakeparms_t *host_parms;
 
 qboolean	host_initialized;		// true if into command execution
 
 double		host_frametime;
-double		host_time;
 double		realtime;				// without any filtering or bounding
 double		oldrealtime;			// last frame run
 int			host_framecount;
+float		host_netinterval;
 
 int			host_hunklevel;
 
@@ -64,33 +53,65 @@ jmp_buf 	host_abortserver;
 byte		*host_basepal = NULL; // set to null
 byte        *host_colormap = NULL;  // set to null
 
-cvar_t	host_framerate = {"host_framerate","0"};	// set for slow motion
-cvar_t	host_timescale = {"host_timescale","0"};	// more sensitivity slow motion
-cvar_t	host_speeds = {"host_speeds","0"};			// set for running times
-cvar_t	host_maxfps = {"host_maxfps", "72"};
+cvar_t	host_framerate = {"host_framerate","0", CVAR_NONE};	// set for slow motion
+cvar_t	host_timescale = {"host_timescale","0", CVAR_NONE};	// more sensitivity slow motion
+cvar_t	host_speeds = {"host_speeds","0", CVAR_NONE};			// set for running times
+cvar_t	host_maxfps = {"host_maxfps", "72", CVAR_ARCHIVE};		// max fps cvar
 
-cvar_t	sys_ticrate = {"sys_ticrate","0.05"};
+cvar_t	sys_ticrate = {"sys_ticrate","0.05", CVAR_NONE};
 cvar_t	sys_throttle = {"sys_throttle","0.02", CVAR_ARCHIVE};
-cvar_t	serverprofile = {"serverprofile","0"};
+cvar_t	serverprofile = {"serverprofile","0", CVAR_NONE};
 
-cvar_t	fraglimit = {"fraglimit","0",false,true};
-cvar_t	timelimit = {"timelimit","0",false,true};
-cvar_t	teamplay = {"teamplay","0",false,true};
+cvar_t	fraglimit = {"fraglimit","0", CVAR_SERVER};
+cvar_t	timelimit = {"timelimit","0", CVAR_SERVER};
+cvar_t	teamplay = {"teamplay","0", CVAR_SERVER};
 
-cvar_t	samelevel = {"samelevel","0"};
-cvar_t	noexit = {"noexit","0",false,true};
+cvar_t	samelevel = {"samelevel","0", CVAR_NONE};
+cvar_t	noexit = {"noexit","0", CVAR_SERVER};
 
-cvar_t	developer = {"developer","0", true};	// should be 0 for release!
+cvar_t	developer = {"developer","0", CVAR_NONE};	// should be 0 for release!
 
-cvar_t	skill = {"skill","1"};						// 0 - 3
-cvar_t	deathmatch = {"deathmatch","0"};			// 0, 1, or 2
-cvar_t	randomclass = {"randomclass","0"};			// 0, 1, or 2
-cvar_t	coop = {"coop","0"};			// 0 or 1
+cvar_t	skill = {"skill","1", CVAR_NONE};						// 0 - 3
+cvar_t	deathmatch = {"deathmatch","0", CVAR_NONE};			// 0, 1, or 2
+cvar_t	randomclass = {"randomclass","0", CVAR_NONE};			// 0, 1, or 2
+cvar_t	coop = {"coop","0", CVAR_NONE};			// 0 or 1
 
-cvar_t	pausable = {"pausable","1"};
+cvar_t	pausable = {"pausable","1", CVAR_NONE};
 
-cvar_t	temp1 = {"temp1","0"};
+cvar_t	temp1 = {"temp1","0", CVAR_NONE};
 
+/*
+================
+Host_MaxFPS -- ericw
+================
+*/
+void Host_MaxFPS (void)
+{
+	if (host_maxfps.value < 0)
+	{
+		if (!host_netinterval) {
+			Con_Printf ("Using renderer/network isolation.\n");
+			Con_Printf ("Negative value sets a packetrate (PPS) while leaving video rates uncapped.\n");
+		}
+		host_netinterval = 1/-host_maxfps.value;
+		if (host_netinterval > 1/10.f)	// don't let it get too jerky for other players
+			host_netinterval = 1/10.f;
+		if (host_netinterval < 1/150.f)	// don't let us spam servers too often. just abusive.
+			host_netinterval = 1/150.f;
+	}
+	else if (host_maxfps.value > 72 || host_maxfps.value <= 0)
+	{
+		if (!host_netinterval)
+			Con_Printf ("Using renderer/network isolation.\n");
+		host_netinterval = 1.f/72;
+	}
+	else
+	{
+		if (host_netinterval)
+			Con_Printf ("Disabling renderer/network isolation.\n");
+		host_netinterval = 0;
+	}
+}
 
 /*
 ================
@@ -145,13 +166,13 @@ void Host_Error (char *error, ...)
 	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 
-	Con_Printf ("Host Error: %s\n",string);
+	Con_Printf ("Host Error: %s\n", string);
 	
 	if (sv.active)
 		Host_ShutdownServer (false);
 
 	if (cls.state == ca_dedicated)
-		Sys_Error ("Host_Error: %s",string);	// dedicated servers exit
+		Sys_Error ("Host_Error: %s", string);	// dedicated servers exit
 
 	CL_Disconnect ();
 	cls.demonum = -1;
@@ -247,6 +268,9 @@ Host_InitLocal
 */
 void Host_InitLocal (void)
 {
+	int		i;
+
+	Host_InitFileList ();
 	Host_InitCommands ();
 
 	Cmd_AddCommand ("saveconfig", Host_SaveConfig_f);
@@ -254,7 +278,7 @@ void Host_InitLocal (void)
 	Cvar_RegisterVariable (&host_framerate);
 	Cvar_RegisterVariable (&host_timescale);
 	Cvar_RegisterVariable (&host_speeds);
-	Cvar_RegisterVariable (&host_maxfps);
+	Cvar_RegisterVariableCallback (&host_maxfps, Host_MaxFPS);
 
 	Cvar_RegisterVariable (&sys_ticrate);
 	Cvar_RegisterVariable (&sys_throttle);
@@ -273,14 +297,20 @@ void Host_InitLocal (void)
 	Cvar_RegisterVariable (&pausable);
 
 	Cvar_RegisterVariable (&developer);
-	if (COM_CheckParm("-developer"))
-		Cvar_SetValue ("developer", 1);
+	i = COM_CheckParm ("-developer");
+	if (i)
+	{
+		if (i != (com_argc - 1))
+			Cvar_SetValue ("developer", atoi(com_argv[i+1]));
+		else
+			Cvar_SetValue ("developer", 1);
+	}
 
 	Cvar_RegisterVariable (&temp1);
 
 	Host_FindMaxClients ();
 	
-	host_time = 1.0;		// so a think at time 0 won't get called
+	cl.last_angle_time = 0.0;  // JPG - smooth chasecam
 }
 
 
@@ -297,7 +327,7 @@ void Host_WriteConfiguration (char *configname)
 
 // dedicated servers initialize the host but don't parse and set the
 // config.cfg cvars
-	if (host_initialized && cls.state != ca_dedicated)
+	if (host_initialized && cls.state != ca_dedicated && !host_parms->errstate)
 	{
 		f = fopen (va("%s/%s",com_gamedir, configname), "w");
 		if (!f)
@@ -313,6 +343,8 @@ void Host_WriteConfiguration (char *configname)
 			fprintf (f, "+mlook\n");
 
 		fclose (f);
+		
+		Host_ConfigListRebuild (); // EER1 -- update
 	}
 }
 
@@ -398,6 +430,10 @@ void SV_DropClient (qboolean crash)
 	int		saveSelf;
 	int		i;
 	client_t *client;
+
+	// ProQuake: - don't drop a client that's already been dropped!
+	if (!host_client->active)
+		return;
 
 	if (!crash)
 	{
@@ -564,27 +600,27 @@ Host_FilterTime
 Returns false if the time is too short to run a frame
 ===================
 */
-qboolean Host_FilterTime (float time)
+qboolean Host_FilterTime (double time)
 {
 	float maxfps;
 
 	realtime += time;
 
+	//johnfitz -- max fps cvar
 	maxfps = CLAMP (1.0, host_maxfps.value, 1000.0);
-
-	if (!cls.timedemo && realtime - oldrealtime < 1.0 / maxfps)
+	if (host_maxfps.value > 0 && !cls.timedemo && realtime - oldrealtime < 1.0/maxfps)
 		return false;	// framerate is too high
 
 	host_frametime = realtime - oldrealtime;
 	oldrealtime = realtime;
 
-	// host_timescale is more intuitive than host_framerate
+	//johnfitz -- host_timescale is more intuitive than host_framerate
 	if (host_timescale.value > 0)
 		host_frametime *= CLAMP (1.0, host_timescale.value, 1000.0);
 	else if (host_framerate.value > 0)
 		host_frametime = CLAMP (1.0, host_framerate.value, 1000.0);
-	else // don't allow really long or short frames
-		host_frametime = CLAMP (0.001, host_frametime, 0.1); // use CLAMP
+	else if (host_maxfps.value > 0) // don't allow really long or short frames
+		host_frametime = CLAMP (0.0001, host_frametime, 0.1); //johnfitz -- use CLAMP
 	
 	return true;
 }
@@ -611,17 +647,11 @@ void Host_GetConsoleCommands (void)
 }
 
 
-
-void R_UpdateParticles (void);
-void CL_UpdateEffects (void);
-
 /*
 ==================
 Host_ServerFrame
-
 ==================
 */
-
 void Host_ServerFrame (void)
 {
 // run the world state	
@@ -649,8 +679,6 @@ void Host_ServerFrame (void)
 }
 
 
-#define HOST_AVG 10
-
 /*
 ==================
 Host_Frame
@@ -660,10 +688,12 @@ Runs all active servers
 */
 void _Host_Frame (double time)
 {
+	float realframetime;
+	static double	accumtime = 0;
 	static double		time1 = 0;
 	static double		time2 = 0;
 	static double		time3 = 0;
-	static int	avg_index;
+	int			pass1, pass2, pass3;
 
 	if (setjmp (host_abortserver) )
 		return;			// something bad happened, or the server disconnected
@@ -672,57 +702,65 @@ void _Host_Frame (double time)
 	rand ();
 	
 // decide the simulation time
+	accumtime += host_netinterval ? CLAMP(0, time, 0.2) : 0;	// for renderer/server isolation
 	if (!Host_FilterTime (time))
 		return;			// don't run too fast, or packets will flood out
 		
-	if (!host_speeds.value)
-		time1 = time2 = time3 = avg_index = 0; // Reset
-
+	if (cls.state != ca_dedicated)
+	{
 // get new events from environment
-	IN_ProcessEvents ();
+		IN_ProcessEvents ();
 
 // allow other external controllers to add commands
-	IN_Commands ();
+		IN_Commands ();
+	}
+	else
+	{
+// check the stdin for commands (dedicated servers) typed to the host
+		Host_GetConsoleCommands ();
+	}
 
 // process console commands
 	Cbuf_Execute ();
 
-	if (host_speeds.value && !time3)
-		time3 = Sys_DoubleTime (); // No previous time3
-
 	NET_Poll();
 
-// if running the server locally, make intentions now
-	if (sv.active)
-		CL_SendCmd ();
-	else // hack from baker to allow console scrolling by dinput mouse wheel when con_forcedup
-	if (con_forcedup && (key_dest == key_game || key_dest == key_console))
+	CL_AccumulateCmd ();
+
+	// hack from Baker to allow console scrolling by dinput mouse wheel when con_forcedup
+	if (!sv.active && con_forcedup && (key_dest == key_game || key_dest == key_console))
 		IN_MouseWheel (); // Grab mouse wheel input for DirectInput
 
 //-------------------
 //
-// server operations
+// Run the server+networking (client->server->client), at a different rate from everything
 //
 //-------------------
-
-// check for commands typed to the host
-	Host_GetConsoleCommands ();
-
-		if (sv.active)
-			Host_ServerFrame ();
-
-//-------------------
-//
-// client operations
-//
-//-------------------
-
-// if running the server remotely, send intentions now after
-// the incoming messages have been read
-	if (!sv.active)
+	if (accumtime >= host_netinterval)
+	{
+		realframetime = host_frametime;
+		if (host_netinterval)
+		{
+			host_frametime = max(accumtime, (double)host_netinterval);
+			accumtime -= host_frametime;
+			if (host_timescale.value > 0)
+				host_frametime *= host_timescale.value;
+			else if (host_framerate.value > 0)
+				host_frametime = host_framerate.value;
+		}
+		else
+			accumtime -= host_netinterval;
+		
 		CL_SendCmd ();
-
-	host_time += host_frametime;
+		
+		if (sv.active)
+		{
+			Host_ServerFrame ();
+		}
+		host_frametime = realframetime;
+		
+		Cbuf_Waited ();
+	}
 
 // fetch results from server
 	if (cls.state == ca_connected)
@@ -756,43 +794,12 @@ void _Host_Frame (double time)
 
 	if (host_speeds.value)
 	{
-		static float pass1[HOST_AVG + 1], pass2[HOST_AVG + 1], pass3[HOST_AVG + 1];
-
-		if (host_speeds.value < 2 || avg_index > HOST_AVG)
-			avg_index = 0;
-
-		pass1[avg_index] = (time1 - time3)*1000;
+		pass1 = (time1 - time3)*1000;
 		time3 = Sys_DoubleTime ();
-		pass2[avg_index] = (time2 - time1)*1000;
-		pass3[avg_index] = (time3 - time2)*1000;
-
-		if (avg_index == HOST_AVG - 1)
-		{
-			int i;
-
-			// Calculate average
-			pass1[HOST_AVG] = pass2[HOST_AVG] = pass3[HOST_AVG] = 0;
-
-			for (i = 0; i < HOST_AVG; ++i)
-			{
-				pass1[HOST_AVG] += pass1[i];
-				pass2[HOST_AVG] += pass2[i];
-				pass3[HOST_AVG] += pass3[i];
-			}
-
-			pass1[HOST_AVG] /= HOST_AVG;
-			pass2[HOST_AVG] /= HOST_AVG;
-			pass3[HOST_AVG] /= HOST_AVG;
-
-			++avg_index;
-		}
-
-		if (host_speeds.value < 2 || avg_index == HOST_AVG)
-			Con_Printf ("%3.0f tot %3.0f server %3.0f gfx %3.0f snd\n",
-				    pass1[avg_index] + pass2[avg_index] + pass3[avg_index], pass1[avg_index], pass2[avg_index], pass3[avg_index]);
-
-		if (host_speeds.value > 1)
-			++avg_index;
+		pass2 = (time2 - time1)*1000;
+		pass3 = (time3 - time2)*1000;
+		Con_Printf ("%3i tot %3i server %3i gfx %3i snd\n",
+					pass1+pass2+pass3, pass1, pass2, pass3);
 	}
 	
 	host_framecount++;
@@ -850,8 +857,6 @@ void Host_Init (void)
 	if (COM_CheckParm ("-minmemory"))
 		host_parms->memsize = minimum_memory;
 
-//	host_parms = *parms;
-
 	if (host_parms->memsize < minimum_memory)
 		Sys_Error ("Only %4.1f megs of memory available, can't execute game", host_parms->memsize / (float)0x100000);
 
@@ -882,27 +887,28 @@ void Host_Init (void)
 	SV_Init ();
 
 	R_InitTextures ();		// needed even for dedicated servers
-//	R_LoadPalette ();
 	Host_LoadPalettes ();
  
 	if (cls.state != ca_dedicated)
 	{
 		VID_Init ();
+		// QuakeSpasm: current vid settings should override config file settings.
+		// so we have to lock the vid mode from now until after all config files are read.
+		Cbuf_AddText ("vid_lock\n");
+		Cbuf_Execute ();
 		TexMgr_Init (); //johnfitz
 		Draw_Init ();
 		SCR_Init ();
 		R_Init ();
 		S_Init ();
 		CDAudio_Init ();
-#ifdef _WIN32
-		MIDI_Init ();//tmp
-#endif
+
+		MIDI_Init ();
+
 		Sbar_Init ();
 		CL_Init ();
 		IN_Init ();
 	}
-
-	Cbuf_InsertText ("exec hexen.rc\n");
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();
@@ -913,10 +919,20 @@ void Host_Init (void)
 	if (cls.state == ca_dedicated)
 		Con_Printf ("\n****** fxHexen II initialized ******\n\n");
 	else
-		Con_Printf ("\n\x1d\x1e\x1e\x1e\x1e\x1f fxHexen II initialized \x1d\x1e\x1e\x1e\x1e\x1f\n\n");
+		Con_Printf ("\n\35\36\36\36\36\37 fxHexen II initialized \35\36\36\36\36\37\n\n");
+
+	if (cls.state != ca_dedicated)
+	{
+		Cbuf_InsertText ("exec hexen.rc\n");
+		// johnfitz -- in case the vid mode was locked during vid_init, we can unlock it now.
+		Cbuf_AddText ("vid_unlock\n");
+	}
 
 	if (cls.state == ca_dedicated)
 	{
+		Cbuf_AddText ("exec autoexec.cfg\n");
+		Cbuf_AddText ("stuffcmds");
+		Cbuf_Execute ();
 		if (!sv.active)
 			Cbuf_AddText (portals ? "map keep1\n" : "map demo1\n");
 	}
@@ -952,15 +968,17 @@ void Host_Shutdown(void)
 	if (cls.state != ca_dedicated)
 	{
 		CDAudio_Shutdown ();
-#ifdef _WIN32
-		MIDI_Cleanup ();//tmp
-#endif
+
+		MIDI_Cleanup ();
+
 		S_Shutdown ();
 		IN_Shutdown ();
 		VID_Shutdown ();
 	}
 
 	LOG_Close ();
+    
+    host_initialized = false;
 }
 
 /*

@@ -180,3 +180,5 @@ struct EffectT
 void SV_SaveEffects(FILE *FH);
 void SV_LoadEffects(FILE *FH);
 
+void CL_UpdateEffects (void);
+

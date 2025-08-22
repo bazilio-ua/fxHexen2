@@ -147,6 +147,7 @@ void R_RunParticleEffect3 (vec3_t org, vec3_t box, int color, int effect, int co
 void R_RunParticleEffect4 (vec3_t org, float radius, int color, int effect, int count);
 void R_RocketTrail (vec3_t start, vec3_t end, int type);
 void R_SunStaffTrail(vec3_t source, vec3_t dest);
+void R_UpdateParticles (void);
 
 void R_RainEffect (vec3_t org,vec3_t e_size,int x_dir, int y_dir,int color,int count);
 void R_SnowEffect (vec3_t org1,vec3_t org2,int flags,vec3_t alldir,int count);
