@@ -359,7 +359,7 @@ extern	cvar_t	cl_minpitch; // variable pitch clamping
 
 extern	cvar_t	cl_anglespeedkey;
 
-extern	cvar_t	cl_autofire;
+//extern	cvar_t	cl_autofire;
 
 extern	cvar_t	cl_shownet;
 extern	cvar_t	cl_nolerp;

@@ -673,6 +673,22 @@ void Host_Connect_f (void)
 	Host_Reconnect_f ();
 }
 
+/*
+=====================
+Host_Disconnect_f
+
+User command to disconnect from server
+=====================
+*/
+void Host_Disconnect_f (void)
+{
+	CL_Disconnect ();
+	if (sv.active)
+		Host_ShutdownServer (false);
+
+	cls.demonum = -1;
+}
+
 
 /*
 ===============================================================================
@@ -961,7 +977,7 @@ void Host_Loadgame_f (void)
 	tempf = -1;
 	fscanf (f, "%f\n",&tempf);
 	if (tempf >= 0)
-		Cvar_SetValue ("cl_playerclass", tempf);
+		Cvar_SetValue ("_cl_playerclass", tempf);
 
 	fscanf (f, "%d\n",&info_mask);
 	fscanf (f, "%d\n",&info_mask2);
@@ -1001,7 +1017,7 @@ void Host_Loadgame_f (void)
 
 	ent = EDICT_NUM(1);
 
-	Cvar_SetValue ("cl_playerclass", ent->v.playerclass);//this better be the same as above...
+	Cvar_SetValue ("_cl_playerclass", ent->v.playerclass);//this better be the same as above...
 
 	// this may be rudundant with the setting in PR_LoadProgs, but not sure so its here too
 	if (progs->crc == PROGS_V112_CRC)
@@ -1520,7 +1536,7 @@ void Host_Class_f (void)
 
 	if (cmd_source == src_command)
 	{
-		Cvar_SetValue ("cl_playerclass", newClass);
+		Cvar_SetValue ("_cl_playerclass", newClass);
 
 		// when classes changes after map load, update cl_playerclass, cl_playerclass should 
 		// probably only be used in worldspawn, though
@@ -2622,6 +2638,20 @@ void Host_Resetdemos (void)
 
 /*
 ==================
+Host_InitFileList
+==================
+*/
+void Host_InitFileList (void)
+{
+	Host_GameListInit ();
+	Host_MapListInit ();
+	Host_DemoListInit ();
+	Host_SaveListInit ();
+	Host_ConfigListInit ();
+}
+
+/*
+==================
 Host_InitCommands
 ==================
 */
@@ -2639,6 +2669,8 @@ void Host_InitCommands (void)
 
 	Cmd_AddCommand ("connect", Host_Connect_f);
 	Cmd_AddCommand ("reconnect", Host_Reconnect_f);
+	Cmd_AddCommand ("disconnect", Host_Disconnect_f);
+
 	Cmd_AddCommand ("name", Host_Name_f);
 	Cmd_AddCommand ("playerclass", Host_Class_f);
 	Cmd_AddCommand ("noclip", Host_Noclip_f);

@@ -21,30 +21,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-// EER1
-void R_ClearParticles (void);
-void R_DarkFieldParticles (entity_t *ent);
-
 // we need to declare some mouse variables here, because the menu system
 // references them even when on a unix system.
 
 // these two are not intended to be set directly
-cvar_t	cl_name = {"cl_name", "player", true};
-cvar_t	cl_color = {"cl_color", "0", true};
-cvar_t	cl_playerclass = {"cl_playerclass", "5", true};
+cvar_t	cl_name = {"_cl_name", "player", CVAR_ARCHIVE};
+cvar_t	cl_color = {"_cl_color", "0", CVAR_ARCHIVE};
+cvar_t	cl_playerclass = {"_cl_playerclass", "1", CVAR_ARCHIVE};
 
-cvar_t	cl_shownet = {"cl_shownet","0"};	// can be 0, 1, or 2
-cvar_t	cl_nolerp = {"cl_nolerp","0"};
+cvar_t	cl_shownet = {"cl_shownet","0", CVAR_NONE};	// can be 0, 1, or 2
+cvar_t	cl_nolerp = {"cl_nolerp","0", CVAR_NONE};
 
-cvar_t	lookspring = {"lookspring","0", true};
-cvar_t	lookstrafe = {"lookstrafe","0", true};
-cvar_t	sensitivity = {"sensitivity","3", true};
-static float save_sensitivity;
+cvar_t	lookspring = {"lookspring","0", CVAR_ARCHIVE};
+cvar_t	lookstrafe = {"lookstrafe","0", CVAR_ARCHIVE};
+cvar_t	sensitivity = {"sensitivity","3", CVAR_ARCHIVE};
+//static float save_sensitivity;
 
-cvar_t	m_pitch = {"m_pitch","0.022", true};
-cvar_t	m_yaw = {"m_yaw","0.022", true};
-cvar_t	m_forward = {"m_forward","1", true};
-cvar_t	m_side = {"m_side","0.8", true};
+cvar_t	m_pitch = {"m_pitch","0.022", CVAR_ARCHIVE};
+cvar_t	m_yaw = {"m_yaw","0.022", CVAR_ARCHIVE};
+cvar_t	m_forward = {"m_forward","1", CVAR_ARCHIVE};
+cvar_t	m_side = {"m_side","0.8", CVAR_ARCHIVE};
 
 
 client_static_t	cls;
@@ -58,6 +54,7 @@ dlight_t		cl_dlights[MAX_DLIGHTS];
 
 int				cl_numvisedicts;
 entity_t		*cl_visedicts[MAX_VISEDICTS];
+
 /*
 =====================
 CL_ClearState
@@ -73,6 +70,10 @@ void CL_ClearState (void)
 
 // wipe the entire cl structure
 	memset (&cl, 0, sizeof(cl));
+
+	// If disconnect was missing, stop sounds here
+	if (cls.state == ca_connected)
+		S_StopAllSounds (true);
 
 	SZ_Clear (&cls.message);
 
@@ -213,6 +214,19 @@ qboolean CL_CopyFiles(char *source, char *pat, char *dest)
 
 /*
 =====================
+CL_Reconnect
+
+Wait for the signon messages again.
+=====================
+*/
+void CL_Reconnect (void)
+{
+	SCR_BeginLoadingPlaque ();
+	cls.signon = 0;		// need new connection messages
+}
+
+/*
+=====================
 CL_Disconnect
 
 Sends a disconnect message to the server
@@ -221,14 +235,26 @@ This is also called on Host_Error, so it shouldn't cause any errors
 */
 void CL_Disconnect (void)
 {
+// stop sounds (especially looping!)
+	S_StopAllSounds (true);
+
+	CDAudio_Stop(); // Stop the CD music
+
 	R_ClearParticles ();	//jfm: need to clear parts because some now check world
-	S_StopAllSounds (true);// stop sounds (especially looping!)
 	loading_stage = 0;
 
-// bring the console down and fade the colors back to normal
-//	SCR_BringDownConsole ();
-
 // if running a local server, shut it down
+	cl.worldmodel = NULL; // This makes sure ambient sounds remain silent
+
+// stop all intermissions 
+// (the intermission screen prints the map name so this is important for preventing a crash)
+	cl.intermission = 0; // Baker: So critical.  SCR_UpdateScreen uses this.
+
+// remove all center prints
+	con_lastcenterstring[0] = 0;
+	scr_centerstring[0] = 0;
+	scr_centertime_off = 0;
+
 	if (cls.demoplayback)
 		CL_StopPlayback ();
 	else if (cls.state == ca_connected)
@@ -252,17 +278,10 @@ void CL_Disconnect (void)
 
 	cls.demoplayback = cls.timedemo = false;
 	cls.signon = 0;
+
+// If we failed to load the requested level, we don't stuck with loading plaque...
+    SCR_EndLoadingPlaque ();
 }
-
-void CL_Disconnect_f (void)
-{
-	CL_Disconnect ();
-	if (sv.active)
-		Host_ShutdownServer (false);
-}
-
-
-
 
 /*
 =====================
@@ -283,15 +302,15 @@ void CL_EstablishConnection (char *host)
 
 	cls.netcon = NET_Connect (host);
 	if (!cls.netcon)
-		Host_Error ("CL_Connect: connect failed\n");
+		Host_Error ("CL_EstablishConnection: connect failed");
 
-	Con_DPrintf ("CL_EstablishConnection: connected to %s\n", host);
+	Con_DPrintf ("Connected to server %s\n", host);
 	
 	cls.demonum = -1;			// not in the demo loop now
 	cls.state = ca_connected;
 	cls.signon = 0;				// need all the signon messages before playing
 
-	MSG_WriteByte(&cls.message, clc_nop); // NAT fix
+	MSG_WriteByte (&cls.message, clc_nop); // ProQuake NAT fix
 }
 
 /*
@@ -303,9 +322,7 @@ An svc_signonnum has been received, perform a client side setup
 */
 void CL_SignonReply (void)
 {
-	char 	str[8192];
-
-Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
+	Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 
 	switch (cls.signon)
 	{
@@ -325,8 +342,7 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		MSG_WriteString (&cls.message, va("color %i %i\n", ((int)cl_color.value)>>4, ((int)cl_color.value)&15));
 
 		MSG_WriteByte (&cls.message, clc_stringcmd);
-		sprintf (str, "spawn %s", cls.spawnparms);
-		MSG_WriteString (&cls.message, str);
+		MSG_WriteString (&cls.message, va("spawn %s", cls.spawnparms));
 		break;
 		
 	case 3:	
@@ -339,38 +355,6 @@ Con_DPrintf ("CL_SignonReply: %i\n", cls.signon);
 		SCR_EndLoadingPlaque ();		// allow normal screen updates
 		break;
 	}
-}
-
-/*
-=====================
-CL_NextDemo
-
-Called to play the next demo in the demo loop
-=====================
-*/
-void CL_NextDemo (void)
-{
-	char	str[1024];
-
-	if (cls.demonum == -1)
-		return;		// don't play demos
-
-	SCR_BeginLoadingPlaque ();
-
-	if (!cls.demos[cls.demonum][0] || cls.demonum == MAX_DEMOS)
-	{
-		cls.demonum = 0;
-		if (!cls.demos[cls.demonum][0])
-		{
-			Con_Printf ("No demos listed with startdemos\n");
-			cls.demonum = -1;
-			return;
-		}
-	}
-
-	sprintf (str,"playdemo %s\n", cls.demos[cls.demonum]);
-	Cbuf_InsertText (str);
-	cls.demonum++;
 }
 
 /*
@@ -411,36 +395,33 @@ dlight_t *CL_AllocDlight (int key)
 // first look for an exact key match
 	if (key)
 	{
-		dl = cl_dlights;
-		for (i=0 ; i<MAX_DLIGHTS ; i++, dl++)
+		for (i=0, dl = cl_dlights ; i<MAX_DLIGHTS ; i++, dl++)
 		{
 			if (dl->key == key)
 			{
+			// reuse this light
 				memset (dl, 0, sizeof(*dl));
 				dl->key = key;
-				dl->color[0] = dl->color[1] = dl->color[2] = 1; // lit support via lordhavoc
 				return dl;
 			}
 		}
 	}
 
 // then look for anything else
-	dl = cl_dlights;
-	for (i=0 ; i<MAX_DLIGHTS ; i++, dl++)
+	for (i=0, dl = cl_dlights ; i<MAX_DLIGHTS ; i++, dl++)
 	{
 		if (dl->die < cl.time)
 		{
 			memset (dl, 0, sizeof(*dl));
 			dl->key = key;
-			dl->color[0] = dl->color[1] = dl->color[2] = 1; // lit support via lordhavoc
 			return dl;
 		}
 	}
 
+// otherwise grab first dlight
 	dl = &cl_dlights[0];
 	memset (dl, 0, sizeof(*dl));
 	dl->key = key;
-	dl->color[0] = dl->color[1] = dl->color[2] = 1; // lit support via lordhavoc
 	return dl;
 }
 
@@ -459,8 +440,7 @@ void CL_DecayLights (void)
 	
 	time = cl.time - cl.oldtime;
 
-	dl = cl_dlights;
-	for (i=0 ; i<MAX_DLIGHTS ; i++, dl++)
+	for (i=0, dl = cl_dlights ; i<MAX_DLIGHTS ; i++, dl++)
 	{
 		if (dl->die < cl.time || !dl->radius)
 			continue;
@@ -495,7 +475,7 @@ float	CL_LerpPoint (void)
 
 	f = cl.mtime[0] - cl.mtime[1];
 
-	if (!f || cl_nolerp.value || cls.timedemo || sv.active)
+	if (!f || cls.timedemo || (sv.active && !host_netinterval))
 	{
 		cl.time = cl.mtime[0];
 		return 1;
@@ -507,13 +487,13 @@ float	CL_LerpPoint (void)
 		f = 0.1;
 	}
 	frac = (cl.time - cl.mtime[1]) / f;
-//	Con_Printf ("frac: %f\n",frac);
+	//Con_Printf ("frac: %f\n",frac);
 	if (frac < 0)
 	{
 		if (frac < -0.01)
 		{
 			cl.time = cl.mtime[1];
-//				Con_Printf ("low frac\n");
+			//Con_Printf ("low frac\n");
 		}
 		frac = 0;
 	}
@@ -522,10 +502,15 @@ float	CL_LerpPoint (void)
 		if (frac > 1.01)
 		{
 			cl.time = cl.mtime[0];
-//				Con_Printf ("high frac\n");
+			//Con_Printf ("high frac\n");
 		}
 		frac = 1;
 	}
+
+	//johnfitz -- better nolerp behavior
+	if (cl_nolerp.value)
+		return 1;
+	//johnfitz
 
 	return frac;
 }
@@ -545,11 +530,9 @@ void CL_RelinkEntities (void)
 	float		objrotate;
 	vec3_t		oldorg;
 	dlight_t	*dl;
-//	int c;
-	static int lastc = 0;
+	static float	lastmsg = 0;
 
-//	c = 0;
-// determine partial update time	
+// determine partial update time
 	frac = CL_LerpPoint ();
 
 	cl_numvisedicts = 0;
@@ -558,10 +541,10 @@ void CL_RelinkEntities (void)
 // interpolate player info
 //
 	for (i=0 ; i<3 ; i++)
-		cl.velocity[i] = cl.mvelocity[1][i] + 
-			frac * (cl.mvelocity[0][i] - cl.mvelocity[1][i]);
+		cl.velocity[i] = cl.mvelocity[1][i] + frac * (cl.mvelocity[0][i] - cl.mvelocity[1][i]);
 
-	if (cls.demoplayback && !intro_playing)
+//	if ((cls.demoplayback && !intro_playing) || (cl.last_angle_time > cl.time && !(in_attack.state & 3))) // JPG - check for last_angle_time for smooth chasecam!
+	if ((cls.demoplayback && !intro_playing) || (cl.last_angle_time > cl.time)) // host time replaced
 	{
 	// interpolate the angles	
 		for (j=0 ; j<3 ; j++)
@@ -571,10 +554,15 @@ void CL_RelinkEntities (void)
 				d -= 360;
 			else if (d < -180)
 				d += 360;
-			cl.viewangles[j] = cl.mviewangles[1][j] + frac*d;
+
+			// JPG - I can't set cl.viewangles anymore since that messes up the demorecording.
+			// So instead, I'll set lerpangles (new variable), and view.c/chase.c will use that instead.
+			cl.lerpangles[j] = cl.mviewangles[1][j] + frac*d;
 		}
 	}
-	
+	else
+		VectorCopy(cl.viewangles, cl.lerpangles);
+
 	//objrotate = anglemod(100*cl.time); //q1
 	//objrotate = anglemod(100*(cl.time+ent->origin[0]+ent->origin[1]));
 	//objrotate = anglemod((ent->origin[0]+ent->origin[1])*0.8+(108*cl.time)); // from R_RotateForEntity2
@@ -634,7 +622,6 @@ void CL_RelinkEntities (void)
 	//objrotate = anglemod(100*(cl.time+ent->origin[0]+ent->origin[1]));
 	objrotate = anglemod((ent->origin[0]+ent->origin[1])*0.8+(108*cl.time)); // from R_RotateForEntity2
 
-//		c++; //wtf?
 
 // rotate binary objects locally
 		if (ent->model->flags & EF_ROTATE)
@@ -791,7 +778,7 @@ void CL_RelinkEntities (void)
 		if (i == cl.viewentity && !chase_active.value)
 			continue;
 
-		if ( ent->effects & EF_NODRAW )
+		if (ent->effects & EF_NODRAW)
 			continue;
 
 		if (cl_numvisedicts < MAX_VISEDICTS)
@@ -799,6 +786,8 @@ void CL_RelinkEntities (void)
 			cl_visedicts[cl_numvisedicts] = ent;
 			cl_numvisedicts++;
 		}
+		else if (IsTimeout (&lastmsg, 2))
+			Con_DWarning ("CL_RelinkEntities: too many visedicts (max = %d)\n", MAX_VISEDICTS);
 	}
 }
 
@@ -843,6 +832,25 @@ int CL_ReadFromServer (void)
 
 /*
 =================
+CL_UpdateViewAngles
+
+Spike: split from CL_SendCmd, to do clientside viewangle changes separately from outgoing packets.
+=================
+*/
+void CL_AccumulateCmd (void)
+{
+	if (cls.signon == SIGNONS)
+	{
+	// basic keyboard looking
+		CL_AdjustAngles ();
+
+	// accumulate movement from other devices
+		IN_Move (&cl.pendingcmd);
+	}
+}
+
+/*
+=================
 CL_SendCmd
 =================
 */
@@ -859,12 +867,17 @@ void CL_SendCmd (void)
 		CL_BaseMove (&cmd);
 	
 	// allow mice or other external controllers to add to the move
-		IN_Move (&cmd);
+		cmd.forwardmove += cl.pendingcmd.forwardmove;
+		cmd.sidemove += cl.pendingcmd.sidemove;
+		cmd.upmove += cl.pendingcmd.upmove;
 	
 	// send the unreliable message
 		CL_SendMove (&cmd);
-	
 	}
+	else
+		CL_SendMove (NULL);
+	
+	memset(&cl.pendingcmd, 0, sizeof(cl.pendingcmd));
 
 	if (cls.demoplayback)
 	{
@@ -878,29 +891,29 @@ void CL_SendCmd (void)
 	
 	if (!NET_CanSendMessage (cls.netcon))
 	{
-		Con_DPrintf ("CL_WriteToServer: can't send\n");
+		Con_DPrintf ("CL_SendCmd: can't send\n");
 		return;
 	}
 
 	if (NET_SendMessage (cls.netcon, &cls.message) == -1)
-		Host_Error ("CL_WriteToServer: lost server connection");
+		Host_Error ("CL_SendCmd: lost server connection");
 
 	SZ_Clear (&cls.message);
 }
 
-void CL_Sensitivity_save_f (void)
-{
-	if (Cmd_Argc() != 2)
-	{
-		Con_Printf ("sensitivity_save <save/restore>\n");
-		return;
-	}
-
-	if (strcasecmp(Cmd_Argv(1),"save") == 0)
-		save_sensitivity = sensitivity.value;
-	else if (strcasecmp(Cmd_Argv(1),"restore") == 0)
-		Cvar_SetValue ("sensitivity", save_sensitivity);
-}
+//void CL_Sensitivity_save_f (void)
+//{
+//	if (Cmd_Argc() != 2)
+//	{
+//		Con_Printf ("sensitivity_save <save/restore>\n");
+//		return;
+//	}
+//
+//	if (strcasecmp(Cmd_Argv(1),"save") == 0)
+//		save_sensitivity = sensitivity.value;
+//	else if (strcasecmp(Cmd_Argv(1),"restore") == 0)
+//		Cvar_SetValue ("sensitivity", save_sensitivity);
+//}
 /*
 =================
 CL_Init
@@ -908,7 +921,7 @@ CL_Init
 */
 void CL_Init (void)
 {	
-	SZ_Alloc (&cls.message, 1024);
+	SZ_Alloc (&cls.message, 8192); //1024, possibly dependant on CMD_TEXTSIZE
 
 	CL_InitInput ();
 	CL_InitTEnts ();
@@ -923,8 +936,8 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&cl_playerclass);
 	Cvar_RegisterVariable (&cl_upspeed);
 	Cvar_RegisterVariable (&cl_forwardspeed);
-//	Cvar_RegisterVariable (&cl_backspeed);
 	Cvar_RegisterVariable (&cl_sidespeed);
+	Cvar_RegisterVariable (&cl_backspeed); // keep for compatibility
 	Cvar_RegisterVariable (&cl_movespeedkey);
 	Cvar_RegisterVariable (&cl_yawspeed);
 	Cvar_RegisterVariable (&cl_pitchspeed);
@@ -946,11 +959,10 @@ void CL_Init (void)
 //	Cvar_RegisterVariable (&cl_autofire);
 	
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
-	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("stop", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
-	Cmd_AddCommand ("sensitivity_save", CL_Sensitivity_save_f);
+//	Cmd_AddCommand ("sensitivity_save", CL_Sensitivity_save_f);
 }
 

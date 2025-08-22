@@ -321,6 +321,7 @@ void R_SetupParticles (void);
 void R_DrawParticle (particle_t *p);
 void R_ClearParticles (void);
 void R_ReadPointFile_f (void);
+void R_DarkFieldParticles (entity_t *ent);
 
 // gl_screen.c
 void SCR_TileClear (void);

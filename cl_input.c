@@ -19,9 +19,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // cl.input.c  -- builds an intended movement command to send to the server
 
-// Quake is a trademark of Id Software, Inc., (c) 1996 Id Software, Inc. All
-// rights reserved.
-
 #include "quakedef.h"
 
 /*
@@ -180,25 +177,36 @@ float CL_KeyState (kbutton_t *key)
 	val = 0;
 	
 	if (impulsedown && !impulseup)
+	{
 		if (down)
 			val = 0.5;	// pressed and held this frame
 		else
 			val = 0;	//	I_Error ();
+	}
+	// FIXME: both alternatives zero?
 	if (impulseup && !impulsedown)
+	{
 		if (down)
 			val = 0;	//	I_Error ();
 		else
 			val = 0;	// released this frame
+	}
+
 	if (!impulsedown && !impulseup)
+	{
 		if (down)
 			val = 1.0;	// held the entire frame
 		else
 			val = 0;	// up the entire frame
+	}
+
 	if (impulsedown && impulseup)
+	{
 		if (down)
 			val = 0.75;	// released and re-pressed this frame
 		else
 			val = 0.25;	// pressed and released this frame
+	}
 
 	key->state &= 1;		// clear impulses
 	
@@ -210,23 +218,24 @@ float CL_KeyState (kbutton_t *key)
 
 //==========================================================================
 
-cvar_t	cl_upspeed = {"cl_upspeed","200"};
-cvar_t	cl_forwardspeed = {"cl_forwardspeed","200", true};
-cvar_t	cl_backspeed = {"cl_backspeed","200", true};
-cvar_t	cl_sidespeed = {"cl_sidespeed","350"};
-//cvar_t	cl_sidespeed = {"cl_sidespeed","225"};
+cvar_t	cl_run = {"cl_run","0", CVAR_ARCHIVE}; // adapted from q2
 
-cvar_t	cl_movespeedkey = {"cl_movespeedkey","2.0"};
+cvar_t	cl_upspeed = {"cl_upspeed","200", CVAR_NONE};
+cvar_t	cl_forwardspeed = {"cl_forwardspeed","200", CVAR_NONE};
+cvar_t	cl_sidespeed = {"cl_sidespeed","200", CVAR_NONE};
+cvar_t	cl_backspeed = {"cl_backspeed","200", CVAR_NONE}; // keep for compatibility
 
-cvar_t	cl_yawspeed = {"cl_yawspeed","140"};
-cvar_t	cl_pitchspeed = {"cl_pitchspeed","150"};
+cvar_t	cl_movespeedkey = {"cl_movespeedkey","2.0", CVAR_NONE};
 
-cvar_t	cl_maxpitch = {"cl_maxpitch", "90", true}; // variable pitch clamping
-cvar_t	cl_minpitch = {"cl_minpitch", "-90", true}; // variable pitch clamping
+cvar_t	cl_yawspeed = {"cl_yawspeed","140", CVAR_NONE};
+cvar_t	cl_pitchspeed = {"cl_pitchspeed","150", CVAR_NONE};
 
-cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5"};
+cvar_t	cl_maxpitch = {"cl_maxpitch", "90", CVAR_NONE}; // variable pitch clamping
+cvar_t	cl_minpitch = {"cl_minpitch", "-90", CVAR_NONE}; // variable pitch clamping
 
-cvar_t	cl_prettylights = {"cl_prettylights","1"};
+cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5", CVAR_NONE};
+
+cvar_t	cl_prettylights = {"cl_prettylights","1", CVAR_NONE};
 
 /*
 ================
@@ -240,7 +249,7 @@ void CL_AdjustAngles (void)
 	float	speed;
 	float	up, down;
 	
-	if (in_speed.state & 1)
+	if ( (in_speed.state & 1) ^ (cl_run.value != 0.f) )
 		speed = host_frametime * cl_anglespeedkey.value;
 	else
 		speed = host_frametime;
@@ -298,67 +307,6 @@ CL_BaseMove
 Send the intended movement message to the server
 ================
 */
-/*
-void CL_BaseMove (usercmd_t *cmd)
-{	
-	if (cls.signon != SIGNONS)
-		return;
-			
-	if (cl.v.cameramode)	// Stuck in a different camera so don't move
-	{
-		memset (cmd, 0, sizeof(*cmd));
-		return;
-	}
-
-	CL_AdjustAngles ();
-	
-	memset (cmd, 0, sizeof(*cmd));
-	
-	if (in_strafe.state & 1)
-	{
-//		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right);
-//		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left);
-		cmd->sidemove += 225 * CL_KeyState (&in_right);
-		cmd->sidemove -= 225 * CL_KeyState (&in_left);
-	}
-
-//	cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright);
-//	cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft);
-	cmd->sidemove += 225 * CL_KeyState (&in_moveright);
-	cmd->sidemove -= 225 * CL_KeyState (&in_moveleft);
-
-	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up);
-	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down);
-
-	if (! (in_klook.state & 1) )
-	{	
-//		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward);
-		cmd->forwardmove += 200 * CL_KeyState (&in_forward);
-//		cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back);
-		cmd->forwardmove -= 200 * CL_KeyState (&in_back);
-	}	
-
-//
-// adjust for speed key (but not if always runs has been chosen)
-//
-	if ((cl_forwardspeed.value > 200 || in_speed.state & 1) && cl.v.hasted <= 1)
-	{
-		cmd->forwardmove *= cl_movespeedkey.value;
-		cmd->sidemove *= cl_movespeedkey.value;
-		cmd->upmove *= cl_movespeedkey.value;
-	}
-
-	// Hasted player?
-	if (cl.v.hasted)
-	{
-		cmd->forwardmove = cmd->forwardmove * cl.v.hasted;
-		cmd->sidemove = cmd->sidemove * cl.v.hasted;
-		cmd->upmove = cmd->upmove * cl.v.hasted;
-	}
-
-	cmd->lightlevel = cl.light_level;
-}
-*/
 void CL_BaseMove (usercmd_t *cmd)
 {
 	if (cls.signon != SIGNONS)
@@ -370,22 +318,16 @@ void CL_BaseMove (usercmd_t *cmd)
 		return;
 	}
 
-	CL_AdjustAngles ();
-
 	memset (cmd, 0, sizeof(*cmd));
 
 	if (in_strafe.state & 1)
 	{
 		cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_right);
 		cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_left);
-//		cmd->sidemove += 225 * CL_KeyState (&in_right);
-//		cmd->sidemove -= 225 * CL_KeyState (&in_left);
 	}
 
 	cmd->sidemove += cl_sidespeed.value * CL_KeyState (&in_moveright);
 	cmd->sidemove -= cl_sidespeed.value * CL_KeyState (&in_moveleft);
-//	cmd->sidemove += 225 * CL_KeyState (&in_moveright);
-//	cmd->sidemove -= 225 * CL_KeyState (&in_moveleft);
 
 	cmd->upmove += cl_upspeed.value * CL_KeyState (&in_up);
 	cmd->upmove -= cl_upspeed.value * CL_KeyState (&in_down);
@@ -393,16 +335,15 @@ void CL_BaseMove (usercmd_t *cmd)
 	if (! (in_klook.state & 1) )
 	{	
 		cmd->forwardmove += cl_forwardspeed.value * CL_KeyState (&in_forward);
-//		cmd->forwardmove += 200 * CL_KeyState (&in_forward);
-		cmd->forwardmove -= cl_backspeed.value * CL_KeyState (&in_back);
-//		cmd->forwardmove -= 200 * CL_KeyState (&in_back);
+		cmd->forwardmove -= cl_forwardspeed.value * CL_KeyState (&in_back);
 	}	
 
 //
 // adjust for speed key (but not if always runs has been chosen)
 //
 //	if ((cl_forwardspeed.value > 200 || in_speed.state & 1) && cl.v.hasted <= 1)
-	if ( (in_speed.state & 1) && cl.v.hasted <= 1)
+//	if ( (in_speed.state & 1) && cl.v.hasted <= 1)
+	if ( (in_speed.state & 1) ^ (cl_run.value != 0.f) )
 	{
 		cmd->forwardmove *= cl_movespeedkey.value;
 		cmd->sidemove *= cl_movespeedkey.value;
@@ -437,56 +378,59 @@ void CL_SendMove (usercmd_t *cmd)
 	buf.cursize = 0;
 	buf.data = data;
 	
-	cl.cmd = *cmd;
+	if (cmd)
+	{
+		cl.cmd = *cmd;
 
-//
-// send the movement message
-//
-	MSG_WriteByte (&buf, clc_frame);
-	MSG_WriteByte (&buf, cl.reference_frame);
-	MSG_WriteByte (&buf, cl.current_sequence);
+	//
+	// send the movement message
+	//
+		MSG_WriteByte (&buf, clc_frame);
+		MSG_WriteByte (&buf, cl.reference_frame);
+		MSG_WriteByte (&buf, cl.current_sequence);
 
-	MSG_WriteByte (&buf, clc_move);
+		MSG_WriteByte (&buf, clc_move);
 
-	MSG_WriteFloat (&buf, cl.mtime[0]);	// so server can get ping times
+		MSG_WriteFloat (&buf, cl.mtime[0]);	// so server can get ping times
 
-	for (i=0 ; i<3 ; i++)
-		MSG_WriteAngle (&buf, cl.viewangles[i]);
-	
-    MSG_WriteShort (&buf, cmd->forwardmove);
-    MSG_WriteShort (&buf, cmd->sidemove);
-    MSG_WriteShort (&buf, cmd->upmove);
+		for (i=0 ; i<3 ; i++)
+			MSG_WriteAngle (&buf, cl.viewangles[i]);
+		
+		MSG_WriteShort (&buf, cmd->forwardmove);
+		MSG_WriteShort (&buf, cmd->sidemove);
+		MSG_WriteShort (&buf, cmd->upmove);
 
-//
-// send button bits
-//
-	bits = 0;
-	
-	if ( in_attack.state & 3 )
-		bits |= 1;
-	in_attack.state &= ~2;
-	
-	if (in_jump.state & 3)
-		bits |= 2;
-	in_jump.state &= ~2;
-	
-	if (in_crouch.state & 1)
-		bits |= 4;
+	//
+	// send button bits
+	//
+		bits = 0;
+		
+		if ( in_attack.state & 3 )
+			bits |= 1;
+		in_attack.state &= ~2;
+		
+		if (in_jump.state & 3)
+			bits |= 2;
+		in_jump.state &= ~2;
+		
+		if (in_crouch.state & 1)
+			bits |= 4;
 
-    MSG_WriteByte (&buf, bits);
+		MSG_WriteByte (&buf, bits);
 
-    MSG_WriteByte (&buf, in_impulse);
-	in_impulse = 0;
+		MSG_WriteByte (&buf, in_impulse);
+		in_impulse = 0;
 
-//
-// light level
-//
-	MSG_WriteByte (&buf, cmd->lightlevel);
+	//
+	// light level
+	//
+		MSG_WriteByte (&buf, cmd->lightlevel);
+	}
 
 //
 // deliver the message
 //
-	if (cls.demoplayback)
+	if (cls.demoplayback || !buf.cursize)
 		return;
 
 //
@@ -617,7 +561,7 @@ CL_ClearStates
 */
 void CL_ClearStates (void)
 {
-
+	// fixme: not used?
 	in_mlook.state = 0;
 	in_klook.state = 0;
 	in_left.state = 0;
