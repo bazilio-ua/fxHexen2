@@ -70,7 +70,7 @@ cvar_t ambient_level = {"ambient_level", "0.3"};
 cvar_t ambient_fade = {"ambient_fade", "100"};
 cvar_t snd_noextraupdate = {"snd_noextraupdate", "0"};
 cvar_t snd_show = {"snd_show", "0"};
-cvar_t snd_mixahead = {"snd_mixahead", "0.1", true};
+cvar_t snd_mixahead = {"_snd_mixahead", "0.1", true};
 
 
 // ====================================================================
