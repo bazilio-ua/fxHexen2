@@ -400,11 +400,13 @@ void Draw_LoadPics (void)
 //	draw_disc = Draw_PicFromWad ("disc");
 	// Do this backwards so we don't try and draw the 
 	// skull as we are loading
+	block_drawing = true;
 	for(i=MAX_DISC-1 ; i>=0 ; i--)
 	{
 		sprintf(texturepath, "gfx/menu/skull%d.lmp", i);
 		draw_disc[i] = Draw_PicFromFile (texturepath, draw_disc[i]);
 	}
+	block_drawing = false;
 
 //	draw_backtile = Draw_PicFromWad ("backtile");
 	draw_backtile = Draw_PicFromFile ("gfx/menu/backtile.lmp", draw_backtile);
