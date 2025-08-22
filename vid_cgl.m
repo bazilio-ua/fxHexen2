@@ -1272,26 +1272,26 @@ void VID_MenuKey (int key)
 	{
 	case K_ESCAPE:
 		VID_SyncCvars (); // sync cvars before leaving menu. FIXME: there are other ways to leave menu
-		S_LocalSound ("misc/menu1.wav");
+		S_LocalSound ("raven/menu1.wav");
 		M_Menu_Options_f ();
 		break;
 
 	case K_UPARROW:
-		S_LocalSound ("misc/menu1.wav");
+		S_LocalSound ("raven/menu1.wav");
 		video_options_cursor--;
 		if (video_options_cursor < 0)
 			video_options_cursor = VIDEO_OPTIONS_ITEMS-1;
 		break;
 
 	case K_DOWNARROW:
-		S_LocalSound ("misc/menu1.wav");
+		S_LocalSound ("raven/menu1.wav");
 		video_options_cursor++;
 		if (video_options_cursor >= VIDEO_OPTIONS_ITEMS)
 			video_options_cursor = 0;
 		break;
 
 	case K_LEFTARROW:
-		S_LocalSound ("misc/menu3.wav");
+		S_LocalSound ("raven/menu3.wav");
 		switch (video_options_cursor)
 		{
 		case VID_OPT_MODE:
@@ -1315,7 +1315,7 @@ void VID_MenuKey (int key)
 		break;
 
 	case K_RIGHTARROW:
-		S_LocalSound ("misc/menu3.wav");
+		S_LocalSound ("raven/menu3.wav");
 		switch (video_options_cursor)
 		{
 		case VID_OPT_MODE:
@@ -1382,18 +1382,23 @@ VID_MenuDraw
 void VID_MenuDraw (void)
 {
 	int i, y;
-	qpic_t *p;
+//	qpic_t *p;
 
-	y = 4;
+//	y = 4;
+	y = 0;
 
 	// plaque
 //	p = Draw_CachePic ("gfx/qplaque.lmp");
 //	M_DrawTransPic (16, y, p);
 
-	p = Draw_CachePic ("gfx/vidmodes.lmp");
-	M_DrawPic ( (320-p->width)/2, y, p);
+//	p = Draw_CachePic ("gfx/vidmodes.lmp");
+//	M_DrawPic ( (320-p->width)/2, y, p);
 
-	y += 28;
+//	y += 28;
+
+	ScrollTitle("gfx/menu/title7.lmp");
+
+	y += 60;
 
 	// options
 	for (i = 0; i < VIDEO_OPTIONS_ITEMS; i++)
