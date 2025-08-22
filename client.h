@@ -144,7 +144,7 @@ typedef struct
 // client_state_t should hold all pieces of the client state
 //
 
-#define	MAX_DLIGHTS		32
+#define	MAX_DLIGHTS		512 //johnfitz -- was 32
 typedef struct
 {
 	vec3_t	origin;
@@ -162,7 +162,7 @@ typedef struct
 //define DL_COLOR
 
 
-#define	MAX_EFRAGS	2048 // was 640
+#define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 
 #define	MAX_MAPSTRING	2048
 #define	MAX_DEMOS		8
@@ -347,6 +347,7 @@ extern	cvar_t	cl_run;
 extern	cvar_t	cl_upspeed;
 extern	cvar_t	cl_forwardspeed;
 extern	cvar_t	cl_sidespeed;
+extern	cvar_t	cl_backspeed; // keep for compatibility
 
 extern	cvar_t	cl_movespeedkey;
 
@@ -382,7 +383,7 @@ extern	cvar_t	m_side;
 
 
 #define	MAX_TEMP_ENTITIES	512 // was 64			// lightning bolts, etc
-#define	MAX_STATIC_ENTITIES	1024 // was 256 //128			// torches, etc
+#define	MAX_STATIC_ENTITIES		4096 // fx 512 // was 128 //bjp 256	// torches, etc
 
 extern	client_state_t	cl;
 
@@ -412,7 +413,6 @@ void CL_SignonReply (void);
 
 void CL_Reconnect (void);
 void CL_Disconnect (void);
-//void CL_Disconnect_f (void); // fixme:
 
 void CL_RemoveGIPFiles (char *path);
 qboolean CL_CopyFiles(char *source, char *pat, char *dest);
@@ -495,8 +495,6 @@ void CL_NewTranslation (int slot);
 void V_StartPitchDrift (void);
 void V_StopPitchDrift (void);
 
-//void V_RenderView (void); // fixme:
-//void V_UpdatePalette (void); // fixme:
 void V_Register (void);
 void V_ParseDamage (void);
 void V_SetContentsColor (int contents);
