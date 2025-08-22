@@ -192,12 +192,15 @@ nonscrap:
 }
 
 
-qpic_t *Draw_PicFromFile (char *name)
+qpic_t *Draw_PicFromFile (char *name, void *buf)
 {
 	qpic_t	*p;
 	glpic_t *glp;
 
-	p = (qpic_t *)COM_LoadHunkFile (name, NULL);
+	//johnfitz -- dynamic gamedir loading
+	//johnfitz -- modified to use malloc
+	p = (qpic_t *)COM_LoadMallocFile (name, buf, NULL);
+
 	if (!p)
 		return NULL;
 
@@ -400,11 +403,11 @@ void Draw_LoadPics (void)
 	for(i=MAX_DISC-1 ; i>=0 ; i--)
 	{
 		sprintf(texturepath, "gfx/menu/skull%d.lmp", i);
-		draw_disc[i] = Draw_PicFromFile (texturepath);
+		draw_disc[i] = Draw_PicFromFile (texturepath, draw_disc[i]);
 	}
 
 //	draw_backtile = Draw_PicFromWad ("backtile");
-	draw_backtile = Draw_PicFromFile ("gfx/menu/backtile.lmp");
+	draw_backtile = Draw_PicFromFile ("gfx/menu/backtile.lmp", draw_backtile);
 
 }
 
