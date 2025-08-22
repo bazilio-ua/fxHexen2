@@ -538,7 +538,7 @@ int main (int argc, char *argv[])
     
     parms.errstate = 0;
     
-    Sys_Printf ("Starting Quake...\n");
+    Sys_Printf ("Starting Hexen II...\n");
     
 	parms.memsize = DEFAULT_MEMORY_SIZE * 1024 * 1024;
     
