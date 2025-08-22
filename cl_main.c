@@ -934,6 +934,7 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&cl_name);
 	Cvar_RegisterVariable (&cl_color);
 	Cvar_RegisterVariable (&cl_playerclass);
+	Cvar_RegisterVariable (&cl_run);
 	Cvar_RegisterVariable (&cl_upspeed);
 	Cvar_RegisterVariable (&cl_forwardspeed);
 	Cvar_RegisterVariable (&cl_sidespeed);
@@ -956,7 +957,6 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&m_side);
 	Cvar_RegisterVariable (&cl_prettylights);
 
-//	Cvar_RegisterVariable (&cl_autofire);
 	
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
 	Cmd_AddCommand ("record", CL_Record_f);
