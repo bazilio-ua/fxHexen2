@@ -545,7 +545,7 @@ void Mod_LoadTextures (lump_t *l)
 				}
 				
 				//now create the warpimage, using dummy data from the hunk to create the initial image
-				Hunk_Alloc (warpimage_size*warpimage_size*4 * (tx->glow ? 2 : 1)); //make sure hunk is big enough so we don't reach an illegal address
+				Hunk_Alloc (warpimage_size*warpimage_size*4); //make sure hunk is big enough so we don't reach an illegal address
 				
 				Hunk_FreeToLowMark (mark);
 				
@@ -2690,12 +2690,12 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	for (i=0 ; i<numskins ; i++)
 	{
 		// save 8 bit texels for the player model to remap
-		if (!strcmp(loadmodel->name, "models/paladin.mdl") ||
+/*		if (!strcmp(loadmodel->name, "models/paladin.mdl") ||
 			!strcmp(loadmodel->name, "models/crusader.mdl") ||
 			!strcmp(loadmodel->name, "models/necro.mdl") ||
 			!strcmp(loadmodel->name, "models/assassin.mdl") ||
 			!strcmp(loadmodel->name, "models/succubus.mdl"))
-		{
+*/		{
 			texels = Hunk_AllocName(size, loadname);
 			pheader->texels[i] = texels - (byte *)pheader;
 			memcpy (texels, (byte *)(pskintype + 1), size);
