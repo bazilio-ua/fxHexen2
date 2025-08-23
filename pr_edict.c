@@ -1,14 +1,30 @@
-// sv_edict.c -- entity dictionary
-
 /*
- * $Header: /H2 Mission Pack/Pr_edict.c 11    3/27/98 2:12p Jmonroe $
- */
+Copyright (C) 1996-1997 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+// pr_edict.c -- entity dictionary
 
 #include "quakedef.h"
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
 char			*pr_strings;
+int         pr_strings_size;
 ddef_t			*pr_fielddefs;
 ddef_t			*pr_globaldefs;
 dstatement_t	*pr_statements;
@@ -32,23 +48,24 @@ qboolean		ignore_precache = false;
 
 unsigned short		pr_crc;
 
-int		type_size[8] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
+#define		TYPE_SIZE   8
+int		type_size[TYPE_SIZE] = {1,sizeof(string_t)/4,1,3,1,1,sizeof(func_t)/4,sizeof(void *)/4};
 
 ddef_t *ED_FieldAtOfs (int ofs);
 qboolean	ED_ParseEpair (void *base, ddef_t *key, char *s);
 
-cvar_t	nomonsters = {"nomonsters", "0"};
-cvar_t	gamecfg = {"gamecfg", "0"};
-cvar_t	scratch1 = {"scratch1", "0"};
-cvar_t	scratch2 = {"scratch2", "0"};
-cvar_t	scratch3 = {"scratch3", "0"};
-cvar_t	scratch4 = {"scratch4", "0"};
-cvar_t	savedgamecfg = {"savedgamecfg", "0", true};
-cvar_t	saved1 = {"saved1", "0", true};
-cvar_t	saved2 = {"saved2", "0", true};
-cvar_t	saved3 = {"saved3", "0", true};
-cvar_t	saved4 = {"saved4", "0", true};
-cvar_t	max_temp_edicts = {"max_temp_edicts", "30", true};
+cvar_t	nomonsters = {"nomonsters", "0", CVAR_NONE};
+cvar_t	gamecfg = {"gamecfg", "0", CVAR_NONE};
+cvar_t	scratch1 = {"scratch1", "0", CVAR_NONE};
+cvar_t	scratch2 = {"scratch2", "0", CVAR_NONE};
+cvar_t	scratch3 = {"scratch3", "0", CVAR_NONE};
+cvar_t	scratch4 = {"scratch4", "0", CVAR_NONE};
+cvar_t	savedgamecfg = {"savedgamecfg", "0", CVAR_ARCHIVE};
+cvar_t	saved1 = {"saved1", "0", CVAR_ARCHIVE};
+cvar_t	saved2 = {"saved2", "0", CVAR_ARCHIVE};
+cvar_t	saved3 = {"saved3", "0", CVAR_ARCHIVE};
+cvar_t	saved4 = {"saved4", "0", CVAR_ARCHIVE};
+cvar_t	max_temp_edicts = {"max_temp_edicts", "30", CVAR_ARCHIVE};
 
 static char field_name[256], class_name[256];
 static qboolean RemoveBadReferences;

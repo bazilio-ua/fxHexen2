@@ -1,19 +1,29 @@
+/*
+Copyright (C) 1996-1997 Id Software, Inc.
 
-//**************************************************************************
-//**
-//** pr_exec.c
-//**
-//** $Header: /H2 Mission Pack/PR_EXEC.C 5     3/06/98 12:35a Jmonroe $
-//**
-//**************************************************************************
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-// HEADER FILES ------------------------------------------------------------
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+// pr_exec.c
 
 #include "quakedef.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_STACK_DEPTH 32
+#define MAX_STACK_DEPTH 	256 //32
 #define LOCALSTACK_SIZE 2048
 
 //#if defined(_MSC_VER) && defined(_WIN32) && defined(_DEBUG)
@@ -1217,3 +1227,57 @@ void PR_Profile_f(void)
  * 4     2/20/97 11:17a Rjohnson
  * Id Updates
  */
+
+/*----------------------*/
+
+#define PR_STRTBL_CHUNK 256
+char **pr_strtbl = NULL;
+int pr_strtbl_size;
+int num_prstr;
+
+void PR_InitStringTable(void)
+{
+	if (pr_strtbl) {
+		Z_Free (pr_strtbl);
+		pr_strtbl = NULL;
+	}
+	pr_strtbl_size = 0;
+	num_prstr = 0;
+}
+
+char *PR_GetString(int num)
+{
+	if (num >= 0 && num < pr_strings_size - 1)
+		return pr_strings + num;
+	else if (num < 0 && num >= -num_prstr)
+		return pr_strtbl[-num - 1];
+	else
+	{
+		Con_Error ("PR_GetString: invalid string offset %d (%d to %d valid)\n", num, -num_prstr, pr_strings_size - 2);
+		return pr_strings;
+//		Host_Error ("PR_GetString: invalid string offset %d (%d to %d valid)", num, -num_prstr, pr_strings_size - 2);
+	}
+	
+	return "";
+}
+
+int PR_SetString(char *s)
+{
+	int i;
+	
+	if (s - pr_strings < 0 || s - pr_strings > pr_strings_size - 2) {
+		for (i = 0; i < num_prstr; i++)
+			if (pr_strtbl[i] == s)
+				break;
+		if (i < num_prstr)
+			return -i - 1;
+		if (num_prstr == pr_strtbl_size) {
+			pr_strtbl_size += PR_STRTBL_CHUNK;
+			pr_strtbl = Z_Realloc(pr_strtbl, pr_strtbl_size * sizeof(char *));
+		}
+		pr_strtbl[num_prstr] = s;
+		num_prstr++;
+		return -num_prstr;
+	}
+	return (int)(s - pr_strings);
+}
