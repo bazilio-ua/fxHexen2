@@ -703,7 +703,7 @@ LOAD / SAVE GAME
 #define ShortTime "%m/%d/%Y %H:%M"
 
 
-char	savename[MAX_OSPATH],savedest[MAX_OSPATH],tempdir[MAX_OSPATH];
+char	savename[MAX_OSPATH],savedest[MAX_OSPATH];//,tempdir[MAX_OSPATH];
 
 /*
 ===============
@@ -811,19 +811,22 @@ retry:
 	//FIXME: do we really need the tempdir?
 //	i = GetTempPath(sizeof(tempdir),tempdir);
 //	if (!i) 
-	{
-		sprintf(tempdir,"%s\\",com_savedir);
-	}
+//	{
+//		sprintf(tempdir,"%s\\",com_savedir);
+//	}
 
-	sprintf (savename, "%sclients.gip",tempdir);
+//	sprintf (savename, "%sclients.gip",tempdir);
+	sprintf (savename, "%s/clients.gip", com_savedir);
 //	DeleteFile(savename);
 	Sys_unlink(savename);
 
-	sprintf (savename, "%s*.gip", tempdir);
+//	sprintf (savename, "%s*.gip", tempdir);
+	sprintf (savename, "%s/*.gip", com_savedir);
 	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
 	Con_Printf ("Saving game to %s...\n", savedest);
 
-	error_state = CL_CopyFiles(tempdir, savename, savedest);
+//	error_state = CL_CopyFiles(tempdir, savename, savedest);
+	error_state = CL_CopyFiles(com_savedir, savename, savedest);
 
 	sprintf(savedest,"%s/%s/info.dat",com_savedir, Cmd_Argv(1));
 	f = fopen (savedest, "w");
@@ -912,9 +915,9 @@ void Host_Loadgame_f (void)
 
 //	i = GetTempPath(sizeof(tempdir),tempdir);
 //	if (!i) 
-	{
-		sprintf(tempdir,"%s\\",com_savedir);
-	}
+//	{
+//		sprintf(tempdir,"%s\\",com_savedir);
+//	}
 
 	sprintf(savedest,"%s/info.dat",savename);
 
@@ -984,16 +987,18 @@ void Host_Loadgame_f (void)
 
 	fclose (f);
 
-	CL_RemoveGIPFiles(tempdir);
+//	CL_RemoveGIPFiles(tempdir);
+	CL_RemoveGIPFiles(com_savedir);
 
 	retry:
 	attempts++;
 
 	sprintf (savename, "%s/%s/*.gip", com_savedir, Cmd_Argv(1));
 	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
-	strcat(tempdir,"/");
+//	strcat(tempdir,"/");
 
-	error_state = CL_CopyFiles(savedest, savename, tempdir);
+//	error_state = CL_CopyFiles(savedest, savename, tempdir);
+	error_state = CL_CopyFiles(savedest, savename, com_savedir);
 
 	if (error_state)
 	{
@@ -1053,25 +1058,28 @@ retry:
 
 //	i = GetTempPath(sizeof(tempdir),tempdir);
 //	if (!i) 
-	{
-		sprintf(tempdir,"%s\\",com_savedir);
-	}
+//	{
+//		sprintf(tempdir,"%s\\",com_savedir);
+//	}
 
 	if (ClientsOnly)
 	{
 		start = 1;
 		end = svs.maxclients+1;
 
-		sprintf (savename, "%sclients.gip",tempdir);
+//		sprintf (savename, "%sclients.gip",tempdir);
+		sprintf (savename, "%s/clients.gip", com_savedir);
+		
 	}
 	else
 	{
 		start = 1;
 		end = sv.num_edicts;
 
-		sprintf (savename, "%s%s.gip", tempdir, sv.name);
-		
-//		Con_Printf ("Saving game to %s...\n", name);
+//		sprintf (savename, "%s%s.gip", tempdir, sv.name);
+		sprintf (savename, "%s/%s.gip", com_savedir, sv.name);
+
+		Con_Printf ("Saving game to %s...\n", savename);
 	}
 
 	f = fopen (savename, "w");
@@ -1229,18 +1237,20 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 
 //	i = GetTempPath(sizeof(tempdir),tempdir);
 //	if (!i) 
-	{
-		sprintf(tempdir,"%s\\",com_savedir);
-	}
+//	{
+//		sprintf(tempdir,"%s\\",com_savedir);
+//	}
 
 	if (ClientsMode == 1)
 	{
-		sprintf (savename, "%sclients.gip",tempdir);
+//		sprintf (savename, "%sclients.gip",tempdir);
+		sprintf (savename, "%s/clients.gip", com_savedir);
 	}
 	else
 	{
-		sprintf (savename, "%s%s.gip", tempdir, level);
-	
+//		sprintf (savename, "%s%s.gip", tempdir, level);
+		sprintf (savename, "%s/%s.gip", com_savedir, level);
+
 		if (ClientsMode != 2 && ClientsMode != 3)
 			Con_Printf ("Loading game from %s...\n", savename);
 	}

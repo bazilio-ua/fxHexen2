@@ -16,17 +16,17 @@
 #define MAX_STACK_DEPTH 32
 #define LOCALSTACK_SIZE 2048
 
-#if defined(_MSC_VER) && defined(_WIN32) && defined(_DEBUG)
-// Uses the Pentium specific opcode RDTSC (ReaD TimeStamp Counter)
-#define TIMESNAP_ACTIVE
-#define TIMESNAP(clock) __asm push eax\
-	__asm push edx\
-	__asm _emit 0x0F\
-	__asm _emit 0x31\
-	__asm mov clock, eax\
-	__asm pop edx\
-	__asm pop eax
-#endif
+//#if defined(_MSC_VER) && defined(_WIN32) && defined(_DEBUG)
+//// Uses the Pentium specific opcode RDTSC (ReaD TimeStamp Counter)
+//#define TIMESNAP_ACTIVE
+//#define TIMESNAP(clock) __asm push eax\
+//	__asm push edx\
+//	__asm _emit 0x0F\
+//	__asm _emit 0x31\
+//	__asm mov clock, eax\
+//	__asm pop edx\
+//	__asm pop eax
+//#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -49,9 +49,9 @@ static int EnterFunction(dfunction_t *f);
 static int LeaveFunction(void);
 static void PrintStatement(dstatement_t *s);
 static void PrintCallHistory(void);
-#ifdef TIMESNAP_ACTIVE
-static unsigned int ProgsTimer(void);
-#endif
+//#ifdef TIMESNAP_ACTIVE
+//static unsigned int ProgsTimer(void);
+//#endif
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -164,9 +164,9 @@ void PR_ExecuteProgram(func_t fnum)
 	exitdepth = pr_depth;
 
 	s = EnterFunction(f);
-#ifdef TIMESNAP_ACTIVE
-	ProgsTimer(); // Init
-#endif
+//#ifdef TIMESNAP_ACTIVE
+//	ProgsTimer(); // Init
+//#endif
 
 while (1)
 {
@@ -182,9 +182,9 @@ while (1)
 		PR_RunError("runaway loop error");
 	}
 
-#ifndef TIMESNAP_ACTIVE
+//#ifndef TIMESNAP_ACTIVE
 	pr_xfunction->profile++;
-#endif
+//#endif
 
 	pr_xstatement = s;
 	
@@ -506,9 +506,9 @@ while (1)
 			break;
 		}
 		// Normal function
-#ifdef TIMESNAP_ACTIVE
-		pr_xfunction->profile += ProgsTimer();
-#endif
+//#ifdef TIMESNAP_ACTIVE
+//		pr_xfunction->profile += ProgsTimer();
+//#endif
 		s = EnterFunction(newf);
 		break;
 
@@ -517,9 +517,9 @@ while (1)
 		pr_globals[OFS_RETURN] = pr_globals[(unsigned short)st->a];
 		pr_globals[OFS_RETURN+1] = pr_globals[(unsigned short)st->a+1];
 		pr_globals[OFS_RETURN+2] = pr_globals[(unsigned short)st->a+2];
-#ifdef TIMESNAP_ACTIVE
-		pr_xfunction->profile += ProgsTimer();
-#endif
+//#ifdef TIMESNAP_ACTIVE
+//		pr_xfunction->profile += ProgsTimer();
+//#endif
 		s = LeaveFunction();
 		if(pr_depth == exitdepth)
 		{ // Done
@@ -1021,16 +1021,16 @@ void PR_Profile_f(void)
 		}
 	}
 
-#ifdef TIMESNAP_ACTIVE
-	if(*saveName)
-	{
-		fprintf(saveFile, "(Timesnap Profile)\n");
-	}
-	else
-	{
-		Con_Printf("(Timesnap Profile)\n");
-	}
-#endif
+//#ifdef TIMESNAP_ACTIVE
+//	if(*saveName)
+//	{
+//		fprintf(saveFile, "(Timesnap Profile)\n");
+//	}
+//	else
+//	{
+//		Con_Printf("(Timesnap Profile)\n");
+//	}
+//#endif
 
 	if(byHC == false)
 	{
@@ -1157,26 +1157,26 @@ void PR_Profile_f(void)
 //
 //==========================================================================
 
-#ifdef TIMESNAP_ACTIVE
-static unsigned int ProgsTimer(void)
-{
-	unsigned int c;
-	unsigned int cycleCount;
-	static unsigned int cycleTimer;
-
-	TIMESNAP(c);
-	if(cycleTimer > c)
-	{
-		cycleCount = ((unsigned int)0xffffffff-(cycleTimer-c));
-	}
-	else
-	{
-		cycleCount = c-cycleTimer;
-	}
-	cycleTimer = c;
-	return cycleCount>>8;
-}
-#endif
+//#ifdef TIMESNAP_ACTIVE
+//static unsigned int ProgsTimer(void)
+//{
+//	unsigned int c;
+//	unsigned int cycleCount;
+//	static unsigned int cycleTimer;
+//
+//	TIMESNAP(c);
+//	if(cycleTimer > c)
+//	{
+//		cycleCount = ((unsigned int)0xffffffff-(cycleTimer-c));
+//	}
+//	else
+//	{
+//		cycleCount = c-cycleTimer;
+//	}
+//	cycleTimer = c;
+//	return cycleCount>>8;
+//}
+//#endif
 
 /*
  * $Log: /H2 Mission Pack/PR_EXEC.C $
