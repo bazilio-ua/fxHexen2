@@ -714,15 +714,13 @@ void SetPaletteColor (unsigned int *dst, byte r, byte g, byte b, byte a)
 	((byte *)dst)[3] = a;
 }
 
-float RTint[256],GTint[256],BTint[256];
+float RTint[256], GTint[256], BTint[256];
 
-int ColorIndex[16] =
-{
+int ColorIndex[16] = {
 	0, 31, 47, 63, 79, 95, 111, 127, 143, 159, 175, 191, 199, 207, 223, 231
 };
 
-unsigned ColorPercent[16] =
-{
+unsigned int ColorPercent[16] = {
 	25, 51, 76, 102, 114, 127, 140, 153, 165, 178, 191, 204, 216, 229, 237, 247
 };
 
@@ -772,30 +770,34 @@ void V_SetPalette (byte *palette)
 	((byte *)&d_8to24table_conchars[0])[3] = 0;
 	
 	
-	//	//h2 part d_8to24TranslucentTable, used for rain effect in castle4 and eidolon map
-	//	//fixme: tint(ottenok) is not used yet
-	//	pal = host_basepal;
-	//	table = d_8to24TranslucentTable;
-	////
-	//	for (i=0; i<16;i++)
-	//	{
-	//		c = ColorIndex[i]*3;
-	//
-	//		r = pal[c];
-	//		g = pal[c+1];
-	//		b = pal[c+2];
-	//
-	//		for(p=0;p<16;p++)
-	//		{
-	//			v = (ColorPercent[15-p]<<24) + (r<<0) + (g<<8) + (b<<16);
-	//			*table++ = v;
-	//
-	//			// tint part, FIXME not used?
-	//			RTint[i*16+p] = ((float)r) / ((float)ColorPercent[15-p]) ;
-	//			GTint[i*16+p] = ((float)g) / ((float)ColorPercent[15-p]);
-	//			BTint[i*16+p] = ((float)b) / ((float)ColorPercent[15-p]);
-	//		}
-	//	}
+
+	int		r,g,b,v;
+	int		c,p;
+	unsigned int	*table;
+
+	//h2 part d_8to24TranslucentTable, used for rain effect in castle4 and eidolon map
+	pal = palette;
+	table = d_8to24TranslucentTable;
+
+	for (i=0; i<16;i++)
+	{
+		c = ColorIndex[i]*3;
+
+		r = pal[c];
+		g = pal[c+1];
+		b = pal[c+2];
+
+		for(p=0;p<16;p++)
+		{
+			v = (ColorPercent[15-p]<<24) + (r<<0) + (g<<8) + (b<<16);
+			*table++ = v;
+
+			// tint part, FIXME not used?
+			RTint[i*16+p] = ((float)r) / ((float)ColorPercent[15-p]) ;
+			GTint[i*16+p] = ((float)g) / ((float)ColorPercent[15-p]);
+			BTint[i*16+p] = ((float)b) / ((float)ColorPercent[15-p]);
+		}
+	}
 	
 	
 }
