@@ -1867,6 +1867,7 @@ void R_DrawParticle (particle_t *p)
 		}
 		else
 		{
+//			color = (byte *)&d_8to24table[(int)p->color-256]; // fix gcc warnings -- TEST
 			color = (byte *)&d_8to24TranslucentTable[(int)p->color-256]; // fix gcc warnings
 			glColor4ubv (color);
 		}
