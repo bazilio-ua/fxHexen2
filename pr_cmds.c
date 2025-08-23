@@ -1,7 +1,23 @@
-
 /*
- * $Header: /H2 Mission Pack/Pr_cmds.c 26    3/23/98 7:24p Jmonroe $
- */
+Copyright (C) 1996-1997 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+// pr_cmds.c
 
 #include "quakedef.h"
 
@@ -934,7 +950,8 @@ void PF_checkpos (void)
 
 //============================================================================
 
-byte	checkpvs[MAX_MAP_LEAFS/8];
+static byte	*checkpvs;	//ericw -- changed to malloc
+static int	checkpvs_capacity;
 
 int PF_newcheckclient (int check)
 {
@@ -943,6 +960,7 @@ int PF_newcheckclient (int check)
 	edict_t	*ent;
 	mleaf_t	*leaf;
 	vec3_t	org;
+	int		pvsbytes;
 
 // cycle to the next one
 
@@ -981,7 +999,16 @@ int PF_newcheckclient (int check)
 	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
 	leaf = Mod_PointInLeaf (org, sv.worldmodel);
 	pvs = Mod_LeafPVS (leaf, sv.worldmodel);
-	memcpy (checkpvs, pvs, (sv.worldmodel->numleafs+7)>>3 );
+    
+	pvsbytes = (sv.worldmodel->numleafs+7)>>3;
+	if (checkpvs == NULL || pvsbytes > checkpvs_capacity)
+	{
+		checkpvs_capacity = pvsbytes;
+		checkpvs = (byte *) realloc (checkpvs, checkpvs_capacity);
+		if (!checkpvs)
+			Host_Error ("PF_newcheckclient: realloc() failed on %d bytes", checkpvs_capacity);
+	}
+	memcpy (checkpvs, pvs, pvsbytes);
 
 	return i;
 }
