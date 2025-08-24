@@ -647,7 +647,7 @@ void CL_ParseUpdate (int bits)
 			forcelink = true;	// hack to make null model players work
 
 		if (num > 0 && num <= cl.maxclients)
-			R_TranslatePlayerSkin (num - 1);
+			R_TranslateNewPlayerSkin (num - 1);
 
 	}
 
