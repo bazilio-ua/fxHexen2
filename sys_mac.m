@@ -63,18 +63,19 @@ void Sys_rmdir (char *path)
 	if (rc != 0)
 	{
 		rc = errno;
-		Con_Error("Unable to remove directory file %s: %s", path, strerror(rc)); // Sys_Error?
+		Con_Error("Unable to remove directory file %s: %s\n", path, strerror(rc)); // Sys_Error?
 	}
 }
 
 void Sys_unlink (char *path)
 {
 	int rc = unlink(path);
-	
+	if (rc != 0 && errno == ENOENT)
+		rc = 0;
 	if (rc != 0)
 	{
 		rc = errno;
-		Con_Error("Unable to remove directory entry %s: %s", path, strerror(rc)); // Sys_Error?
+		Con_Error("Unable to remove directory entry %s: %s\n", path, strerror(rc)); // Sys_Error?
 	}
 }
 
@@ -85,7 +86,7 @@ void Sys_rename (char *oldp, char *newp)
 	if (rc != 0)
 	{
 		rc = errno;
-		Con_Error("Unable to rename file %s to %s: %s", oldp, newp, strerror(rc)); // Sys_Error?
+		Con_Error("Unable to rename file %s to %s: %s\n", oldp, newp, strerror(rc)); // Sys_Error?
 	}
 }
 

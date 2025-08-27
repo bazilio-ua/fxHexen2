@@ -116,7 +116,8 @@ void CL_RemoveGIPFiles (char *path)
 	if (path)
 	{
 //		sprintf(tempdir,"%s\\",path);
-		sprintf(tempdir,"%s/",path);
+//		sprintf(tempdir,"%s/",path);
+		sprintf(tempdir,"%s",path);
 	}
 	else
 	{
@@ -124,7 +125,8 @@ void CL_RemoveGIPFiles (char *path)
 //		if (!i) 
 		{
 //			sprintf(tempdir,"%s\\",com_gamedir);
-			sprintf(tempdir,"%s/",com_gamedir);
+//			sprintf(tempdir,"%s/",com_gamedir);
+			sprintf(tempdir,"%s",com_gamedir);
 		}
 	}
 

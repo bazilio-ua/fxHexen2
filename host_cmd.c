@@ -803,6 +803,9 @@ retry:
 	attempts++;
 
 	sprintf (savename, "%s/%s", com_savedir, Cmd_Argv(1));
+	
+	Con_Printf ("Saving game to %s...\n", savename);
+
 	Sys_mkdir (savename);
 
 	CL_RemoveGIPFiles(savename);
@@ -821,13 +824,15 @@ retry:
 	Sys_unlink(savename);
 
 //	sprintf (savename, "%s*.gip", tempdir);
-	sprintf (savename, "%s/*.gip", com_savedir);
-	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
-	Con_Printf ("Saving game to %s...\n", savedest);
+//	sprintf (savename, "%s/*.gip", com_savedir);
+//	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
+	sprintf (savedest, "%s/%s",com_savedir, Cmd_Argv(1));
+//	Con_Printf ("Saving game to %s...\n", savedest);
 
 //	error_state = CL_CopyFiles(tempdir, savename, savedest);
-	error_state = CL_CopyFiles(com_savedir, savename, savedest);
-
+//	error_state = CL_CopyFiles(com_savedir, savename, savedest);
+	error_state = CL_CopyFiles(com_savedir, "*.gip", savedest);
+	
 	sprintf(savedest,"%s/%s/info.dat",com_savedir, Cmd_Argv(1));
 	f = fopen (savedest, "w");
 	if (!f)
@@ -993,12 +998,14 @@ void Host_Loadgame_f (void)
 	retry:
 	attempts++;
 
-	sprintf (savename, "%s/%s/*.gip", com_savedir, Cmd_Argv(1));
-	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
+//	sprintf (savename, "%s/%s/*.gip", com_savedir, Cmd_Argv(1));
+//	sprintf (savedest, "%s/%s/",com_savedir, Cmd_Argv(1));
+	sprintf (savedest, "%s/%s",com_savedir, Cmd_Argv(1));
 //	strcat(tempdir,"/");
 
 //	error_state = CL_CopyFiles(savedest, savename, tempdir);
-	error_state = CL_CopyFiles(savedest, savename, com_savedir);
+//	error_state = CL_CopyFiles(savedest, savename, com_savedir);
+	error_state = CL_CopyFiles(savedest, "*.gip", com_savedir);
 
 	if (error_state)
 	{
@@ -1024,7 +1031,7 @@ void Host_Loadgame_f (void)
 
 	Cvar_SetValue ("_cl_playerclass", ent->v.playerclass);//this better be the same as above...
 
-	// this may be rudundant with the setting in PR_LoadProgs, but not sure so its here too
+	// this may be redundant with the setting in PR_LoadProgs, but not sure so its here too
 	if (progs->crc == PROGS_V112_CRC)
 		pr_global_struct->cl_playerclass = ent->v.playerclass;
 
@@ -1079,13 +1086,13 @@ retry:
 //		sprintf (savename, "%s%s.gip", tempdir, sv.name);
 		sprintf (savename, "%s/%s.gip", com_savedir, sv.name);
 
-		Con_Printf ("Saving game to %s...\n", savename);
+		Con_Printf ("Saving gamestate to %s...\n", savename);
 	}
 
 	f = fopen (savename, "w");
 	if (!f)
 	{
-		Con_Printf ("ERROR: couldn't open.\n");
+		Con_Error ("couldn't open.\n");
 		return;
 	}
 	
@@ -1117,11 +1124,11 @@ retry:
 		fprintf(f,"-1\n");
 		ED_WriteGlobals (f);
 	}
-	else
-	{
-		/*fprintf(f, "%d\n", info_mask);
-		fprintf(f, "%d\n", info_mask2);*/
-	}
+//	else
+//	{
+//		/*fprintf(f, "%d\n", info_mask);
+//		fprintf(f, "%d\n", info_mask2);*/
+//	}
 
 	host_client = svs.clients;
 
@@ -1253,14 +1260,14 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		sprintf (savename, "%s/%s.gip", com_savedir, level);
 
 		if (ClientsMode != 2 && ClientsMode != 3)
-			Con_Printf ("Loading game from %s...\n", savename);
+			Con_Printf ("Loading gamestate from %s...\n", savename);
 	}
 
 	f = fopen (savename, "r");
 	if (!f)
 	{
 		if (ClientsMode == 2)
-			Con_Printf ("ERROR: couldn't open.\n");
+			Con_Error ("couldn't open.\n");
 
 		return -1;
 	}
