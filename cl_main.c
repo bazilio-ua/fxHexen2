@@ -105,47 +105,19 @@ void CL_ClearState (void)
 void CL_RemoveGIPFiles (char *path)
 {
 	char	*name;
-	char	/*name[MAX_OSPATH],*/tempdir[MAX_OSPATH];
-//	int i;
-//	HANDLE handle;
-//	WIN32_FIND_DATA filedata;
-//	BOOL retval;
+	char	tempdir[MAX_OSPATH];
 	char	*p;
 	size_t	len;
 
 	if (path)
 	{
-//		sprintf(tempdir,"%s\\",path);
-//		sprintf(tempdir,"%s/",path);
 		sprintf(tempdir,"%s",path);
 	}
 	else
 	{
-//		i = GetTempPath(sizeof(tempdir),tempdir);
-//		if (!i) 
-		{
-//			sprintf(tempdir,"%s\\",com_gamedir);
-//			sprintf(tempdir,"%s/",com_gamedir);
-			sprintf(tempdir,"%s",com_gamedir);
-		}
+		sprintf(tempdir,"%s",com_gamedir);
 	}
 
-//	sprintf (name, "%s*.gip", tempdir);
-//
-//	handle = FindFirstFile(name,&filedata);
-//	retval = TRUE;
-//
-//	while (handle != INVALID_HANDLE_VALUE && retval)
-//	{
-//		sprintf(name,"%s%s", tempdir,filedata.cFileName);
-//		DeleteFile(name);
-//
-//		retval = FindNextFile(handle,&filedata);
-//	}
-//
-//	if (handle != INVALID_HANDLE_VALUE)
-//		FindClose(handle);
-	
 	len = strlen(tempdir);
 	p = tempdir + len;
 	len = sizeof(tempdir) - len;
@@ -165,32 +137,7 @@ void CL_RemoveGIPFiles (char *path)
 qboolean CL_CopyFiles(char *source, char *pat, char *dest)
 {
 	char	*name;
-//	char	/*name[MAX_OSPATH],*/tempdir[MAX_OSPATH];
 	char	tempdir[MAX_OSPATH], tempdir2[MAX_OSPATH];
-
-//	HANDLE handle;
-//	WIN32_FIND_DATA filedata;
-//	BOOL retval,error;
-
-//	handle = FindFirstFile(pat,&filedata);
-//	retval = TRUE;
-//	error = false;
-//
-//	while (handle != INVALID_HANDLE_VALUE && retval)
-//	{
-//		sprintf(name,"%s%s", source, filedata.cFileName);
-//		sprintf(tempdir,"%s%s", dest, filedata.cFileName);
-//		if (!CopyFile(name,tempdir,FALSE))
-//			error = true;
-//
-//		retval = FindNextFile(handle,&filedata);
-//	}
-//
-//	if (handle != INVALID_HANDLE_VALUE)
-//		FindClose(handle);
-//
-//	return error;
-	
 	qboolean	error;
 
 	name = Sys_FindFirstFile(source, pat);
