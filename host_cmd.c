@@ -1197,7 +1197,6 @@ void RestoreClients(void)
 
 			//ent->v.colormap = NUM_FOR_EDICT(ent);
 			ent->v.team = (host_client->colors & 15) + 1;
-//			ent->v.netname = host_client->name - pr_strings;
 			ent->v.netname = PR_SetString(host_client->name);
 			ent->v.playerclass = host_client->playerclass;
 
@@ -1346,9 +1345,9 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 			ED_ParseGlobals (start);
 			// Need to restore this
 			if (is_progdefs111)
-				pr_global_struct_v111->startspot = PR_SetString(sv.startspot); // sv.startspot - pr_strings;
+				pr_global_struct_v111->startspot = PR_SetString(sv.startspot);
 			else
-				pr_global_struct->startspot = PR_SetString(sv.startspot); // sv.startspot - pr_strings;
+				pr_global_struct->startspot = PR_SetString(sv.startspot);
 		}
 		else
 		{
@@ -1366,7 +1365,6 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 				SV_LinkEdict (ent, false);
 				if (ent->v.modelindex && ent->v.model)
 				{
-//					i = SV_ModelIndex(ent->v.model + pr_strings);
 					i = SV_ModelIndex(PR_GetString(ent->v.model));
 					if (i != ent->v.modelindex)
 					{
@@ -1507,7 +1505,6 @@ void Host_Name_f (void)
 		if (strcmp(host_client->name, newName) != 0)
 			Con_Printf ("%s renamed to %s\n", host_client->name, newName);
 	strcpy (host_client->name, newName);
-//	host_client->edict->v.netname = host_client->name - pr_strings;
 	host_client->edict->v.netname = PR_SetString(host_client->name);
 	
 // send notification to all clients
@@ -1842,12 +1839,10 @@ void Host_Pause_f (void)
 
 		if (sv.paused)
 		{
-//			SV_BroadcastPrintf ("%s paused the game\n", pr_strings + sv_player->v.netname);
 			SV_BroadcastPrintf ("%s paused the game\n", PR_GetString(sv_player->v.netname));
 		}
 		else
 		{
-//			SV_BroadcastPrintf ("%s unpaused the game\n",pr_strings + sv_player->v.netname);
 			SV_BroadcastPrintf ("%s unpaused the game\n",PR_GetString(sv_player->v.netname));
 		}
 
@@ -1929,7 +1924,6 @@ void Host_Spawn_f (void)
 		
 			//ent->v.colormap = NUM_FOR_EDICT(ent);
 			ent->v.team = (host_client->colors & 15) + 1;
-//			ent->v.netname = host_client->name - pr_strings;
 			ent->v.netname = PR_SetString(host_client->name);
 			ent->v.playerclass = host_client->playerclass;
 
@@ -2106,18 +2100,14 @@ void Host_Create_f(void)
 		for (i=0 ; i<progs->numfunctions ; i++)
 		{
 			Search = &pr_functions[i];
-//			if (!strncasecmp(pr_strings + Search->s_name,FindName,Length) )
 			if ( !strncasecmp(PR_GetString(Search->s_name), FindName, Length) )
 			{
 				if (NumFound == 1)
 				{
-//					Con_Printf("   %s\n",pr_strings+func->s_name);
 					Con_Printf("   %s\n", PR_GetString(func->s_name));
 			}
 				if (NumFound) 
 				{
-//					Con_Printf("   %s\n",pr_strings+Search->s_name);
-//					NewDiff = strdiff(pr_strings+Search->s_name,pr_strings+func->s_name);
 					Con_Printf("   %s\n", PR_GetString(Search->s_name));
 					NewDiff = strdiff(PR_GetString(Search->s_name), PR_GetString(func->s_name));
 					if (NewDiff < Diff)
@@ -2137,7 +2127,6 @@ void Host_Create_f(void)
 		
 		if (NumFound != 1)
 		{
-//			sprintf(key_lines[edit_line],">create %s",func->s_name+pr_strings);
 			sprintf(key_lines[edit_line],">create %s", PR_GetString(func->s_name));
 			key_lines[edit_line][Diff+8] = 0;
 			key_linepos = strlen(key_lines[edit_line]);
@@ -2145,7 +2134,6 @@ void Host_Create_f(void)
 		}
 	}
 
-//	Con_Printf("Executing %s...\n",pr_strings+func->s_name);
 	Con_Printf("Executing %s...\n", PR_GetString(func->s_name));
 
 	ent = ED_Alloc ();
@@ -2456,7 +2444,6 @@ edict_t	*FindViewthing (void)
 	for (i=0 ; i<sv.num_edicts ; i++)
 	{
 		e = EDICT_NUM(i);
-//		if ( !strcmp (pr_strings + e->v.classname, "viewthing") )
 		if ( !strcmp (PR_GetString(e->v.classname), "viewthing") )
 			return e;
 	}

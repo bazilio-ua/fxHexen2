@@ -909,7 +909,6 @@ static void PrintCallHistory(void)
 		}
 		else
 		{
-//			Con_Printf("%12s : %s\n", pr_strings+f->s_file, pr_strings+f->s_name);
 			Con_Printf("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
 		}
 	}
@@ -1069,14 +1068,12 @@ void PR_Profile_f(void)
 					{
 						fprintf(saveFile, "%05.2f %s\n",
 							((float)bestFunc->profile/(float)total)*100.0,
-//							pr_strings+bestFunc->s_name);
 							PR_GetString(bestFunc->s_name));
 					}
 					else
 					{
 						Con_Printf("%05.2f %s\n",
 							((float)bestFunc->profile/(float)total)*100.0,
-//							pr_strings+bestFunc->s_name);
 							PR_GetString(bestFunc->s_name));
 					}
 				}
@@ -1115,12 +1112,10 @@ void PR_Profile_f(void)
 		{
 			if(*saveName)
 			{
-//				fprintf(saveFile, "\"%s\"\n", pr_strings+currentFile);
 				fprintf(saveFile, "\"%s\"\n", PR_GetString(currentFile));
 			}
 			else
 			{
-//				Con_Printf("\"%s\"\n", pr_strings+currentFile);
 				Con_Printf("\"%s\"\n", PR_GetString(currentFile));
 			}
 			j = 0;
@@ -1146,7 +1141,6 @@ void PR_Profile_f(void)
 							fprintf(saveFile, "   %05.2f %s\n",
 								((float)bestFunc->profile
 								/(float)total)*100.0,
-//								pr_strings+bestFunc->s_name);
 								PR_GetString(bestFunc->s_name));
 						}
 						else
@@ -1154,7 +1148,6 @@ void PR_Profile_f(void)
 							Con_Printf("   %05.2f %s\n",
 								((float)bestFunc->profile
 								/(float)total)*100.0,
-//								pr_strings+bestFunc->s_name);
 								PR_GetString(bestFunc->s_name));
 						}
 					}

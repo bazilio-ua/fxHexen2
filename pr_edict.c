@@ -308,7 +308,6 @@ dfunction_t *ED_FindFunctioni (char *name)
 	for (i=0 ; i<progs->numfunctions ; i++)
 	{
 		func = &pr_functions[i];
-//		if (!strcasecmp(pr_strings + func->s_name,name) )
 		if (!strcasecmp(PR_GetString(func->s_name), name))
 			return func;
 	}
