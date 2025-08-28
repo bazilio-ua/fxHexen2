@@ -2518,7 +2518,8 @@ void PF_GetString(void)
 		PR_RunError ("PF_GetString: index(%d) >= pr_string_count(%d)",Index,pr_string_count);
 
 //	G_INT(OFS_RETURN) = (&pr_global_strings[pr_string_index[Index]]) - pr_strings;
-	G_INT(OFS_RETURN) = PR_SetString((&pr_global_strings[pr_string_index[Index]]));
+//	G_INT(OFS_RETURN) = PR_SetString((&pr_global_strings[pr_string_index[Index]]));
+	G_INT(OFS_RETURN) = PR_SetString(&pr_global_strings[pr_string_index[Index]]);
 }
 
 
