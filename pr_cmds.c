@@ -53,7 +53,7 @@ char *PF_VarString (int	first)
 
 /*
 =================
-PF_errror
+PF_error
 
 This is a TERMINAL error, which will kill off the entire server.
 Dumps self.
@@ -97,7 +97,7 @@ void PF_objerror (void)
 	ED_Print (ed);
 	ED_Free (ed);
 	
-	Host_Error ("Program error");
+	//Host_Error ("Program error"); //johnfitz -- by design, this should not be fatal
 }
 
 
@@ -136,7 +136,7 @@ void PF_setorigin (void)
 }
 
 
-void SetMinMaxSize (edict_t *e, float *min, float *max, qboolean rotate)
+void SetMinMaxSize (edict_t *e, float *minvec, float *maxvec, qboolean rotate)
 {
 	float	*angles;
 	vec3_t	rmin, rmax;
@@ -147,15 +147,15 @@ void SetMinMaxSize (edict_t *e, float *min, float *max, qboolean rotate)
 	int		i, j, k, l;
 	
 	for (i=0 ; i<3 ; i++)
-		if (min[i] > max[i])
-			PR_RunError ("backwards mins/maxs");
+		if (minvec[i] > maxvec[i])
+			PR_RunError ("SetMinMaxSize: backwards mins/maxs (%c, %g/%g)", 'x' + i, minvec[i], maxvec[i]);
 
 	rotate = false;		// FIXME: implement rotation properly again
 
 	if (!rotate)
 	{
-		VectorCopy (min, rmin);
-		VectorCopy (max, rmax);
+		VectorCopy (minvec, rmin);
+		VectorCopy (maxvec, rmax);
 	}
 	else
 	{
@@ -169,11 +169,11 @@ void SetMinMaxSize (edict_t *e, float *min, float *max, qboolean rotate)
 		yvector[0] = -sin(a);
 		yvector[1] = cos(a);
 		
-		VectorCopy (min, bounds[0]);
-		VectorCopy (max, bounds[1]);
+		VectorCopy (minvec, bounds[0]);
+		VectorCopy (maxvec, bounds[1]);
 		
-		rmin[0] = rmin[1] = rmin[2] = 9999;
-		rmax[0] = rmax[1] = rmax[2] = -9999;
+		rmin[0] = rmin[1] = rmin[2] =  FLT_MAX;
+		rmax[0] = rmax[1] = rmax[2] = -FLT_MAX;
 		
 		for (i=0 ; i<= 1 ; i++)
 		{
@@ -205,7 +205,7 @@ void SetMinMaxSize (edict_t *e, float *min, float *max, qboolean rotate)
 // set derived values
 	VectorCopy (rmin, e->v.mins);
 	VectorCopy (rmax, e->v.maxs);
-	VectorSubtract (max, min, e->v.size);
+	VectorSubtract (maxvec, minvec, e->v.size);
 	
 	SV_LinkEdict (e, false);
 }
@@ -222,12 +222,12 @@ setsize (entity, minvector, maxvector)
 void PF_setsize (void)
 {
 	edict_t	*e;
-	float	*min, *max;
+	float	*minvec, *maxvec;
 	
 	e = G_EDICT(OFS_PARM0);
-	min = G_VECTOR(OFS_PARM1);
-	max = G_VECTOR(OFS_PARM2);
-	SetMinMaxSize (e, min, max, false);
+	minvec = G_VECTOR(OFS_PARM1);
+	maxvec = G_VECTOR(OFS_PARM2);
+	SetMinMaxSize (e, minvec, maxvec, false);
 }
 
 
@@ -254,8 +254,7 @@ void PF_setmodel (void)
 			break;
 			
 	if (!*check)
-		PR_RunError ("no precache: %s\n", m);
-		
+		PR_RunError ("PF_setmodel: no precache: %s\n", m);
 
 	e->v.model = PR_SetString(m);
 	e->v.modelindex = i; //SV_ModelIndex (m);
@@ -397,21 +396,22 @@ void PF_normalize (void)
 {
 	float	*value1;
 	vec3_t	newvalue;
-	float	new;
+	double	val;
 	
 	value1 = G_VECTOR(OFS_PARM0);
 
-	new = value1[0] * value1[0] + value1[1] * value1[1] + value1[2]*value1[2];
-	new = sqrt(new);
-	
-	if (new == 0)
+	// add casts to double to force 64-bit precision on SSE builds.
+	val = (double)value1[0] * value1[0] + (double)value1[1] * value1[1] + (double)value1[2] * value1[2];
+	val = sqrt(val);
+
+	if (val == 0)
 		newvalue[0] = newvalue[1] = newvalue[2] = 0;
 	else
 	{
-		new = 1/new;
-		newvalue[0] = value1[0] * new;
-		newvalue[1] = value1[1] * new;
-		newvalue[2] = value1[2] * new;
+		val = 1/val;
+		newvalue[0] = value1[0] * val;
+		newvalue[1] = value1[1] * val;
+		newvalue[2] = value1[2] * val;
 	}
 	
 	VectorCopy (newvalue, G_VECTOR(OFS_RETURN));	
@@ -427,14 +427,15 @@ scalar vlen(vector)
 void PF_vlen (void)
 {
 	float	*value1;
-	float	new;
+	double	val;
 	
 	value1 = G_VECTOR(OFS_PARM0);
 
-	new = value1[0] * value1[0] + value1[1] * value1[1] + value1[2]*value1[2];
-	new = sqrt(new);
-	
-	G_FLOAT(OFS_RETURN) = new;
+	// add casts to double to force 64-bit precision on SSE builds.
+	val = (double)value1[0] * value1[0] + (double)value1[1] * value1[1] + (double)value1[2] * value1[2];
+	val = sqrt(val);
+
+	G_FLOAT(OFS_RETURN) = val;
 }
 
 /*
@@ -447,14 +448,15 @@ scalar vhlen(vector)
 void PF_vhlen (void)
 {
 	float	*value1;
-	float	new;
+	float	val;
 	
 	value1 = G_VECTOR(OFS_PARM0);
 
-	new = value1[0] * value1[0] + value1[1] * value1[1];
-	new = sqrt(new);
+	// add casts to double to force 64-bit precision on SSE builds.
+	val = (double)value1[0] * (double)value1[0] + (double)value1[1] * (double)value1[1];
+	val = sqrt(val);
 	
-	G_FLOAT(OFS_RETURN) = new;
+	G_FLOAT(OFS_RETURN) = val;
 }
 
 /*
@@ -475,7 +477,7 @@ void PF_vectoyaw (void)
 		yaw = 0;
 	else
 	{
-		yaw = (int) (atan2(value1[1], value1[0]) * 180 / M_PI);
+		yaw = (atan2(value1[1], value1[0]) * 180 / M_PI);
 		if (yaw < 0)
 			yaw += 360;
 	}
@@ -1224,18 +1226,30 @@ void PF_dprintv (void)
 	Con_DPrintf (G_STRING(OFS_PARM0),temp);
 }
 
-char	pr_string_temp[1024];
+
+#define	STRINGTEMP_BUFFERS		16
+#define	STRINGTEMP_LENGTH		1024
+char	pr_string_temp[STRINGTEMP_BUFFERS][STRINGTEMP_LENGTH];
+byte	pr_string_tempindex = 0;
+
+char *PR_GetTempString (void)
+{
+	return pr_string_temp[(STRINGTEMP_BUFFERS-1) & ++pr_string_tempindex];
+}
+
 
 void PF_ftos (void)
 {
 	float	v;
+	char	*s;
+
 	v = G_FLOAT(OFS_PARM0);
-	
+	s = PR_GetTempString();
 	if (v == (int)v)
-		sprintf (pr_string_temp, "%d",(int)v);
+		sprintf (s, "%d",(int)v);
 	else
-		sprintf (pr_string_temp, "%5.1f",v);
-	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+		sprintf (s, "%5.1f",v);
+	G_INT(OFS_RETURN) = PR_SetString(s);
 }
 
 void PF_fabs (void)
@@ -1247,8 +1261,20 @@ void PF_fabs (void)
 
 void PF_vtos (void)
 {
-	sprintf (pr_string_temp, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
-	G_INT(OFS_RETURN) = PR_SetString(pr_string_temp);
+	char	*s;
+
+	s = PR_GetTempString();
+	sprintf (s, "'%5.1f %5.1f %5.1f'", G_VECTOR(OFS_PARM0)[0], G_VECTOR(OFS_PARM0)[1], G_VECTOR(OFS_PARM0)[2]);
+	G_INT(OFS_RETURN) = PR_SetString(s);
+}
+
+void PF_etos (void)
+{
+	char	*s;
+	
+	s = PR_GetTempString();
+	sprintf (s, "entity %i", G_EDICTNUM(OFS_PARM0));
+	G_INT(OFS_RETURN) = PR_SetString(s);
 }
 
 void PF_Spawn (void)
