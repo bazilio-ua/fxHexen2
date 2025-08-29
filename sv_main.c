@@ -24,17 +24,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 server_t		sv;
 server_static_t	svs;
 
-char	localmodels[MAX_MODELS][5];			// inline model names for precache
+char	localmodels[MAX_MODELS][8];			// inline model names for precache
 
-cvar_t	sv_sound_distance = {"sv_sound_distance","800", true}; /* doesn't seem functional, but the hcode calls it */
+cvar_t	sv_sound_distance = {"sv_sound_distance","800", CVAR_NONE}; /* doesn't seem functional, but the hcode calls it */
 
-cvar_t	sv_update_player	= {"sv_update_player","1", true};
-cvar_t	sv_update_monsters	= {"sv_update_monsters","1", true};
-cvar_t	sv_update_missiles	= {"sv_update_missiles","1", true};
-cvar_t	sv_update_misc		= {"sv_update_misc","1", true};
+cvar_t	sv_update_player	= {"sv_update_player","1", CVAR_ARCHIVE};
+cvar_t	sv_update_monsters	= {"sv_update_monsters","1", CVAR_ARCHIVE};
+cvar_t	sv_update_missiles	= {"sv_update_missiles","1", CVAR_ARCHIVE};
+cvar_t	sv_update_misc		= {"sv_update_misc","1", CVAR_ARCHIVE};
 
-cvar_t	sv_ce_scale			= {"sv_ce_scale","0", true};
-cvar_t	sv_ce_max_size		= {"sv_ce_max_size","0", true};
+cvar_t	sv_ce_scale			= {"sv_ce_scale","0", CVAR_ARCHIVE};
+cvar_t	sv_ce_max_size		= {"sv_ce_max_size","0", CVAR_ARCHIVE};
 
 unsigned int	info_mask, info_mask2;
 int		sv_kingofhill;
