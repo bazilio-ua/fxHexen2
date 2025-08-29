@@ -446,7 +446,7 @@ void SV_SendServerinfo (client_t *client)
 	char			message[2048];
 
 	MSG_WriteByte (&client->message, svc_print);
-	sprintf (message, "%c\nfxHexen2 %4.2f SERVER (%i CRC)", 2, (float)VERSION, pr_crc);
+	sprintf (message, "%c\nfxHexen2 %4.2f SERVER (%i CRC)\n", 2, (float)VERSION, pr_crc);
 	MSG_WriteString (&client->message,message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
@@ -813,7 +813,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 
 	pvs = SV_FatPVS (org, sv.worldmodel);
 
-	// send over all entities (excpet the client) that touch the pvs
+	// send over all entities (except the client) that touch the pvs
 	ent = NEXT_EDICT(sv.edicts);
 	for (e=1 ; e<sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
 	{
