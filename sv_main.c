@@ -349,7 +349,6 @@ already running on that entity/channel pair.
 
 An attenuation of 0 will play full volume everywhere in the level.
 Larger attenuations will drop off.  (max 4 attenuation)
-
 ==================
 */  
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, float attenuation)
