@@ -36,8 +36,8 @@ cvar_t	sv_update_misc		= {"sv_update_misc","1", CVAR_ARCHIVE};
 cvar_t	sv_ce_scale			= {"sv_ce_scale","0", CVAR_ARCHIVE};
 cvar_t	sv_ce_max_size		= {"sv_ce_max_size","0", CVAR_ARCHIVE};
 
-unsigned int	info_mask, info_mask2;
-int		sv_kingofhill;
+int		sv_kingofhill;		/* mission pack, king of the hill. */
+unsigned int	info_mask, info_mask2;	/* mission pack, objectives */
 
 //============================================================================
 
@@ -45,34 +45,50 @@ void Sv_Edicts_f(void);
 
 /*
 ===============
-SV_SetProtocol_f
+SV_Protocol_f
 ===============
 */
-static int sv_protocol = PROTOCOL_VERSION;
-
-static void SV_SetProtocol_f (void)
+int sv_protocol = PROTOCOL_VERSION;
+void SV_Protocol_f (void)
 {
 	int i;
+	char	*p;
 
 	switch (Cmd_Argc())
 	{
+	case 1:
+		switch (sv_protocol)
+		{
+		case PROTOCOL_RAVEN_111:
+			p = "Raven/H2/1.11";
+			break;
+		case PROTOCOL_RAVEN_112:
+			p = "Raven/MP/1.12";
+			break;
+		case PROTOCOL_UQE_113:
+			p = "UQE/1.13";
+			break;
 		default:
-		case 1:
-			Con_Printf ("sv_protocol is %d\n", sv_protocol);
-			break;
-		case 2:
-			i = atoi(Cmd_Argv(1));
-			if (i != PROTOCOL_RAVEN_111 && 
-				i != PROTOCOL_RAVEN_112 &&
-				i != PROTOCOL_UQE_113)
-				Con_Printf ("sv_protocol must be %i or %i - %i\n", PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
-			else
-			{
-				sv_protocol = i;
-				if (sv.active)
-					Con_Printf ("changes will not take effect until the next level load.\n");
-			}
-			break;
+			return;
+		}
+		Con_Printf ("sv_protocol is %d (%s)\n", sv_protocol, p);
+		break;
+	case 2:
+		i = atoi(Cmd_Argv(1));
+		if (i != PROTOCOL_RAVEN_111 &&
+			i != PROTOCOL_RAVEN_112 &&
+			i != PROTOCOL_UQE_113)
+			Con_Printf ("sv_protocol must be %i or %i - %i\n", PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		else
+		{
+			sv_protocol = i;
+			if (sv.active)
+				Con_Printf ("changes will not take effect until the next level load.\n");
+		}
+		break;
+	default:
+		Con_SafePrintf ("usage: sv_protocol <protocol>\n");
+		break;
 	}
 }
 
@@ -84,6 +100,7 @@ SV_Init
 void SV_Init (void)
 {
 	int		i;
+	char	*p;
 
 	Cvar_RegisterVariable (&sv_maxvelocity);
 	Cvar_RegisterVariable (&sv_gravity);
@@ -110,13 +127,34 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_ce_max_size);
 
 	Cmd_AddCommand ("sv_edicts", Sv_Edicts_f);
-	Cmd_AddCommand ("sv_protocol", &SV_SetProtocol_f);
+	Cmd_AddCommand ("sv_protocol", &SV_Protocol_f);
 
 	for (i=0 ; i<MAX_MODELS ; i++)
 		sprintf (localmodels[i], "*%i", i);
 
 	// Initialize King of Hill to world
 	sv_kingofhill = 0;
+
+	i = COM_CheckParm ("-protocol");
+	if (i && i < com_argc - 1)
+		sv_protocol = atoi (com_argv[i + 1]);
+	switch (sv_protocol)
+	{
+	case PROTOCOL_RAVEN_111:
+		p = "Raven/H2/1.11";
+		break;
+	case PROTOCOL_RAVEN_112:
+		p = "Raven/MP/1.12";
+		break;
+	case PROTOCOL_UQE_113:
+		p = "UQE/1.13";
+		break;
+	default:
+		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i, %i",
+				   sv_protocol, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		return; /* silence compiler */
+	}
+	Sys_Printf ("Server using protocol %i (%s)\n", sv_protocol, p);
 }
 
 void SV_Edicts(char *Name)
@@ -399,7 +437,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		field_mask |= SND_ATTENUATION;
 	if (sound_num >= MAX_SOUNDS_OLD)
 	{
-		if (sv_protocol == PROTOCOL_RAVEN_111)
+		if (sv.protocol == PROTOCOL_RAVEN_111)
 		{
 			Con_DPrintf("SV_StartSound: protocol 18 violation: %s sound_num == %i >= %i\n",
 					sample, sound_num, MAX_SOUNDS_OLD);
@@ -449,13 +487,13 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteString (&client->message,message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
-	MSG_WriteLong (&client->message, sv.Protocol);
+	MSG_WriteLong (&client->message, sv.protocol);
 	MSG_WriteByte (&client->message, svs.maxclients);
 
 	if (!coop.value && deathmatch.value)
 	{
 		MSG_WriteByte (&client->message, GAME_DEATHMATCH);
-		if (sv_protocol > PROTOCOL_RAVEN_111)
+		if (sv.protocol > PROTOCOL_RAVEN_111)
 			MSG_WriteShort (&client->message, sv_kingofhill);
 	}
 	else
@@ -490,7 +528,7 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteByte (&client->message, svc_midi_name);
 	MSG_WriteString (&client->message, sv.midi_name);
 
-	if (sv_protocol >= PROTOCOL_UQE_113)
+	if (sv.protocol >= PROTOCOL_UQE_113)
 	{
 		MSG_WriteByte (&client->message, svc_mod_name);
 		MSG_WriteString (&client->message, "");	/* uqe-hexen2 sends sv.mod_name */
@@ -1390,7 +1428,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 			sc2 |= SC2_FLAGS;
 
 		// mission pack, objectives
-		if (sv_protocol > PROTOCOL_RAVEN_111)
+		if (sv.protocol > PROTOCOL_RAVEN_111)
 		{
 			if (info_mask != client->info_mask)
 			sc2 |= SC2_OBJ;
@@ -1551,7 +1589,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		MSG_WriteFloat(&host_client->message, ent->v.flags);
 
 // mission pack, objectives
-	if (sv_protocol > PROTOCOL_RAVEN_111)
+	if (sv.protocol > PROTOCOL_RAVEN_111)
 	{
 		if (sc2 & SC2_OBJ)
 		{
@@ -1974,7 +2012,7 @@ void SV_SpawnServer (char *server, char *startspot)
 	//memset (&sv, 0, sizeof(sv));
 
 	strcpy (sv.name, server);
-	sv.Protocol = sv_protocol;
+	sv.protocol = sv_protocol;
 
 	if (startspot)
 		strcpy(sv.startspot, startspot);

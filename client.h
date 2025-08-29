@@ -322,7 +322,7 @@ typedef struct
 
 	qboolean		noclip_anglehack;
 
-	int	Protocol;
+	int	protocol;
 
 // light level at player's position including dlights
 // this is sent back to the server each frame

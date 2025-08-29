@@ -262,7 +262,7 @@ void CL_ParseServerInfo (void)
 		i != PROTOCOL_UQE_113)
 		Host_Error ("Server returned version %i, not %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 
-	cl.Protocol = i;
+	cl.protocol = i;
 
 	Con_DPrintf ("Server protocol is %i", i);
 
@@ -278,7 +278,7 @@ void CL_ParseServerInfo (void)
 // parse gametype
 	cl.gametype = MSG_ReadByte (net_message);
 	
-	if (cl.gametype == GAME_DEATHMATCH && cl.Protocol > PROTOCOL_RAVEN_111)
+	if (cl.gametype == GAME_DEATHMATCH && cl.protocol > PROTOCOL_RAVEN_111)
 		sv_kingofhill = MSG_ReadShort (net_message);
 
 // parse signon message
@@ -289,7 +289,9 @@ void CL_ParseServerInfo (void)
 	Con_SafePrintf ("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
 	Con_SafePrintf ("%c%s\n", 2, str);
 
-//
+// tell user which protocol this is
+	Con_SafePrintf ("Using protocol %i\n", cl.protocol);
+
 // first we go through and touch all of the precache data that still
 // happens to be in the cache, so precaching something else doesn't
 // needlessly purge it
@@ -1015,7 +1017,7 @@ void CL_ParseStaticSound (void)
 	for (i=0 ; i<3 ; i++)
 		org[i] = MSG_ReadCoord (net_message);
 
-	if (cl.Protocol == PROTOCOL_RAVEN_111)
+	if (cl.protocol == PROTOCOL_RAVEN_111)
 		sound_num = MSG_ReadByte (net_message);
 	else 
 		sound_num = MSG_ReadShort (net_message);
@@ -1177,10 +1179,12 @@ void CL_ParseServerMessage (void)
 				i != PROTOCOL_RAVEN_112 && 
 				i != PROTOCOL_UQE_113)
 				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
-			cl.Protocol = i;
+			cl.protocol = i;
+			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
 			break;
 			
 		case svc_disconnect:
+			Con_Printf ("Disconnect\n");
 			Host_EndGame ("Server disconnected\n");
 
 		case svc_print:
@@ -1704,7 +1708,7 @@ void CL_ParseServerMessage (void)
 			/* SC2_OBJ, SC2_OBJ2: mission pack objectives
 			 * With protocol 18 (PROTOCOL_RAVEN_111), these
 			 * bits get set somehow (?!): let's avoid them. */
-			if (cl.Protocol > PROTOCOL_RAVEN_111)
+			if (cl.protocol > PROTOCOL_RAVEN_111)
 			{
 				if (sc2 & SC2_OBJ)
 					cl.info_mask = MSG_ReadLong(net_message);

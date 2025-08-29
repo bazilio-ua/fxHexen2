@@ -278,7 +278,7 @@ void SV_SendEffect(sizebuf_t *sb, int index)
 				MSG_WriteFloat(sb, sv.Effects[index].effect.Smoke.velocity[2]);
 				MSG_WriteFloat(sb, sv.Effects[index].effect.Smoke.framelength);
 				/* smoke frame is a mission pack thing only. */
-				if (sv.Protocol > PROTOCOL_RAVEN_111)
+				if (sv.protocol > PROTOCOL_RAVEN_111)
 					MSG_WriteFloat(sb, sv.Effects[index].effect.Smoke.frame);
 				break;
 				
@@ -689,7 +689,7 @@ void SV_SaveEffects(FILE *FH)
 					fprintf(FH, "%f ", sv.Effects[index].effect.Smoke.velocity[1]);
 					fprintf(FH, "%f ", sv.Effects[index].effect.Smoke.velocity[2]);
 			/* smoke frame is a mission pack thing only. */
-			if (sv.Protocol > PROTOCOL_RAVEN_111)
+			if (sv.protocol > PROTOCOL_RAVEN_111)
 			{
 					fprintf(FH, "%f ", sv.Effects[index].effect.Smoke.framelength);
 					fprintf(FH, "%f\n", sv.Effects[index].effect.Smoke.frame);

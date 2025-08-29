@@ -75,7 +75,7 @@ typedef struct
 	sizebuf_t	signon;
 	byte		signon_buf[MAX_MSGLEN-2]; // was NET_MAXMESSAGE
 
-	int			Protocol;
+	int			protocol;
 
 	int			frozen;
 } server_t;
