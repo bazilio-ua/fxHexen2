@@ -558,10 +558,10 @@ void SV_ConnectClient (int clientnum)
 	client->datagram.maxsize = sizeof(client->datagram_buf);
 	client->datagram.allowoverflow = false;
 
-	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
-	{
-		svent = EDICT_NUM(entnum);
-	}
+//	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
+//	{
+//		svent = EDICT_NUM(entnum);
+//	}
 	memset(&sv.states[clientnum],0,sizeof(client_state2_t ));
 
 	if (sv.loadgame)
@@ -723,7 +723,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 	long	flagtest;
 	int				position = 0;
 	int				client_num;
-	unsigned long   client_bit;
+//	unsigned long   client_bit;
 	client_frames_t *reference, *build;
 	client_state2_t  *state;
 	entity_state2_t *ref_ent,*set_ent,build_ent;
@@ -732,7 +732,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 
 
 	client_num = client-svs.clients;
-	client_bit = 1<<client_num;
+//	client_bit = 1<<client_num;
 	state = &sv.states[client_num];
 	reference = &state->frames[0];
 
