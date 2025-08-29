@@ -14,13 +14,13 @@ SV_CheckBottom
 
 Returns false if any part of the bottom of the entity is off an edge that
 is not a staircase.
-
 =============
 */
 //int c_yes, c_no;//These are never checked!!
 
 qboolean SV_CheckBottom (edict_t *ent)
-{//By this point, ent has been moved to it's new position after the
+{
+	//By this point, ent has been moved to it's new position after the
 	//move, and adjusted for steps
 	vec3_t	mins, maxs, start, stop;
 	trace_t	trace;
@@ -31,13 +31,13 @@ qboolean SV_CheckBottom (edict_t *ent)
 	VectorAdd (ent->v.origin, ent->v.mins, mins);
 	VectorAdd (ent->v.origin, ent->v.maxs, maxs);
 
-/*//Make it use the clipping hull's size, not their bounding box...
+/*	//Make it use the clipping hull's size, not their bounding box...
 	model = sv.models[ (int)sv.edicts->v.modelindex ];
 	VectorSubtract (ent->v.maxs, ent->v.mins, size);
-	if(ent->v.hull)
+	if (ent->v.hull)
 	{
 		index = ent->v.hull-1;
-		wclip_hull = &model->hulls[index];;
+		wclip_hull = &model->hulls[index];
 		if (!wclip_hull)  // Invalid hull
 		{
 			Con_Printf ("ERROR: hull %d is null.\n",wclip_hull);
@@ -64,14 +64,15 @@ qboolean SV_CheckBottom (edict_t *ent)
 // with the tougher checks
 // the corners must be within 16 of the midpoint
 	start[2] = mins[2] - 1;
-	for	(x=0 ; x<2 ; x++)
-		for	(y=0 ; y<2 ; y++)
+	for (x=0 ; x<2 ; x++)
+	{
+		for (y=0 ; y<2 ; y++)
 		{
-			if(x)
+			if (x)
 				start[0] = maxs[0];
 			else
 				start[0] = mins[0];
-			if(y)
+			if (y)
 				start[1] = maxs[1];
 			else
 				start[1] = mins[1];
@@ -80,7 +81,7 @@ qboolean SV_CheckBottom (edict_t *ent)
 			if (SV_PointContents (start) != CONTENTS_SOLID)
 				goto realcheck;
 		}
-
+	}
 //	c_yes++;
 	return true;		// we got out easy
 
@@ -93,6 +94,7 @@ realcheck:	// check it for real...
 	start[0] = stop[0] = (mins[0] + maxs[0])*0.5;
 	start[1] = stop[1] = (mins[1] + maxs[1])*0.5;
 	stop[2] = start[2] - 2*STEPSIZE;
+	
 //do a trace from the bottom center of the ent down
 //to 36 below the bottom center of the ent, using a point hull
 //the "true" in this function is telling SV_Move to consider
@@ -107,34 +109,38 @@ realcheck:	// check it for real...
 	trace = SV_Move (start, vec3_origin, vec3_origin, stop, true, ent);
 	ent->v.hull = save_hull;
 	
-/*	if((int)ent->v.flags&FL_MONSTER)
+/*	if ((int)ent->v.flags&FL_MONSTER)
 	{
-		if(trace.allsolid)
+		if (trace.allsolid)
 			Con_DPrintf("Checkbottom midpoint check was all solid!!!\n");
-		else if(trace.startsolid)
+		else if (trace.startsolid)
 			Con_DPrintf("Checkbottom midpoint check started solid!!!\n");
 	}
 */
 	if (trace.fraction == 1.0)
 		return false;
+	
 //trace did not reach full 36 below, so set mid and bottom
 //to whatever distance it did get to below the ent's
 //bottom centerpoint (start[2])
 	mid = bottom = trace.endpos[2];
 
 	// the corners must be within 16 of the midpoint	
-	for	(x=0 ; x<2 ; x++)
-		for	(y=0 ; y<2 ; y++)
-		{//check 4 corners, in this order:
+	for (x=0 ; x<2 ; x++)
+	{
+		for (y=0 ; y<2 ; y++)
+		{
+			//check 4 corners, in this order:
 			//x = 0, y = 0 (NE)
 			//x = 0, y = 1 (SE)
 			//x = 1, y = 0 (NW)
 			//x = 1, y = 1 (SW)
-			if(x)
+			
+			if (x)
 				start[0] = stop[0] = maxs[0];
 			else
 				start[0] = stop[0] = mins[0];
-			if(y)
+			if (y)
 				start[1] = stop[1] = maxs[1];
 			else
 				start[1] = stop[1] = mins[1];
@@ -146,14 +152,15 @@ realcheck:	// check it for real...
 			ent->v.hull = 0;
 			trace = SV_Move (start, vec3_origin, vec3_origin, stop, true, ent);
 			ent->v.hull = save_hull;
-
-/*			if((int)ent->v.flags&FL_MONSTER)
+			
+/*			if ((int)ent->v.flags&FL_MONSTER)
 			{
-				if(trace.allsolid)
+				if (trace.allsolid)
 					Con_DPrintf("Checkbottom (x=%d,y=%d) check was all solid!!!\n",x,y);
-				else if(trace.startsolid)
+				else if (trace.startsolid)
 					Con_DPrintf("Checkbottom (x=%d,y=%d) check started solid!!!\n",x,y);
 			}*/
+			
 			//Hit a closer surface than did when checked center,
 			//so set the "bottom" to the new, closer z height
 			//we hit
@@ -168,6 +175,7 @@ realcheck:	// check it for real...
 			if (trace.fraction == 1.0 || mid - trace.endpos[2] > STEPSIZE)
 				return false;
 		}
+	}
 
 //	c_yes++;
 	return true;
@@ -218,8 +226,7 @@ possible, no move is done, false is returned, and
 pr_global_struct->trace_normal is set to the normal of the blocking wall
 =============
 */
-qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noenemy,
-					  qboolean set_trace)
+qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noenemy, qboolean set_trace)
 {
 	float		dz;
 	vec3_t		oldorg, neworg, end;
@@ -243,7 +250,7 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 				enemy = PROG_TO_EDICT(ent->v.enemy);
 				if (i == 0 && enemy != sv.edicts)
 				{
-					if((int)ent->v.flags&FL_HUNTFACE)//Go for face
+					if ((int)ent->v.flags&FL_HUNTFACE)//Go for face
 						dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2] + PROG_TO_EDICT(ent->v.enemy)->v.view_ofs[2];
 					else
 						dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2];
@@ -256,12 +263,12 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 			}
 
 			if ( ((int)ent->v.flags & FL_SWIM) && SV_PointContents(neworg) == CONTENTS_EMPTY )
-			{//Would end up out of water, don't do z move
+			{	//Would end up out of water, don't do z move
 				neworg[2]=ent->v.origin[2];
 				trace = SV_Move (ent->v.origin, ent->v.mins, ent->v.maxs, neworg, false, ent);
 				if (set_trace)
 					set_move_trace(&trace);
-				if(trace.fraction < 1||SV_PointContents(trace.endpos) == CONTENTS_EMPTY )
+				if (trace.fraction < 1||SV_PointContents(trace.endpos) == CONTENTS_EMPTY )
 					return false;	// swim monster left water
 			}
 			else
@@ -295,7 +302,9 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 	trace = SV_Move (neworg, ent->v.mins, ent->v.maxs, end, false, ent);
 
 	if (set_trace)
+	{
 		set_move_trace(&trace);
+	}
 
 	if (trace.allsolid)
 	{
@@ -307,7 +316,9 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 		neworg[2] -= STEPSIZE;
 		trace = SV_Move (neworg, ent->v.mins, ent->v.maxs, end, false, ent);
 		if (set_trace)
+		{
 			set_move_trace(&trace);
+		}
 		if (trace.allsolid || trace.startsolid)
 		{
 			return false;
@@ -368,7 +379,6 @@ SV_StepDirection
 
 Turns to the movement direction, and walks the current distance if
 facing it.
-
 ======================
 */
 void PF_changeyaw (void);
@@ -387,7 +397,7 @@ qboolean SV_StepDirection (edict_t *ent, float yaw, float dist)
 	move[2] = 0;//FIXME: Make wallcrawlers and flying monsters use this!
 
 	VectorCopy (ent->v.origin, oldorigin);
-	if((int)ent->v.flags & FL_SET_TRACE)
+	if ((int)ent->v.flags & FL_SET_TRACE)
 		set_trace_plane = true;
 	else
 		set_trace_plane = false;
@@ -441,17 +451,18 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	deltax = enemy->v.origin[0] - actor->v.origin[0];
 	deltay = enemy->v.origin[1] - actor->v.origin[1];
 
-	if((int)actor->v.flags&FL_FLY)//Pentacles
+/*	if ((int)actor->v.flags&FL_FLY)//Pentacles
 		deltaz = enemy->v.origin[2] + enemy->v.view_ofs[2] - actor->v.origin[2];
 	else
 		deltaz = enemy->v.origin[2] - actor->v.origin[2];
-
+*/
 	if (deltax>10)
 		d[1]= 0;
 	else if (deltax<-10)
 		d[1]= 180;
 	else
 		d[1]= DI_NODIR;
+	
 	if (deltay<-10)
 		d[2]= 270;
 	else if (deltay>10)
@@ -591,7 +602,7 @@ void SV_MoveToGoal (void)
 		}
 		G_FLOAT(OFS_RETURN) = 1;
 	}
-	return;
+//	return;
 }
 
 /*
