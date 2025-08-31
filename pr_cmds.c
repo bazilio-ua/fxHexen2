@@ -448,7 +448,7 @@ scalar vhlen(vector)
 void PF_vhlen (void)
 {
 	float	*value1;
-	float	val;
+	double	val;
 	
 	value1 = G_VECTOR(OFS_PARM0);
 
