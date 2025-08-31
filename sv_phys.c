@@ -24,13 +24,13 @@ solid_edge items only clip against bsp models.
 
 */
 
-cvar_t	sv_friction = {"sv_friction","4",false,true};
-cvar_t	sv_stopspeed = {"sv_stopspeed","100"};
-cvar_t	sv_gravity = {"sv_gravity","800",false,true};
-cvar_t	sv_maxvelocity = {"sv_maxvelocity","2000"};
-cvar_t	sv_nostep = {"sv_nostep","0"};
-cvar_t	sv_flypitch={"sv_flypitch","20"};
-cvar_t	sv_walkpitch={"sv_walkpitch","0"};
+cvar_t	sv_friction = {"sv_friction","4", CVAR_SERVER};
+cvar_t	sv_stopspeed = {"sv_stopspeed","100", CVAR_NONE};
+cvar_t	sv_gravity = {"sv_gravity","800", CVAR_SERVER};
+cvar_t	sv_maxvelocity = {"sv_maxvelocity","2000", CVAR_NONE};
+cvar_t	sv_nostep = {"sv_nostep","0", CVAR_NONE};
+cvar_t	sv_flypitch={"sv_flypitch","20", CVAR_NONE};
+cvar_t	sv_walkpitch={"sv_walkpitch","0", CVAR_NONE};
 
 static	vec3_t	vec_origin = {0.0, 0.0, 0.0};
 
@@ -1605,7 +1605,7 @@ void SV_Physics_Step (edict_t *ent)
 		SV_LinkEdict (ent, true);
 
 //		if ( (int)ent->v.flags & FL_ONGROUND )	// just hit ground
-		if (((int)ent->v.flags & FL_ONGROUND) && (!ent->v.flags & FL_MONSTER))
+		if (((int)ent->v.flags & FL_ONGROUND) && !((int)ent->v.flags & FL_MONSTER))
 		{
 			if (hitsound)
 				SV_StartSound (ent, 0, "fx/thngland.wav", 255, 1);
@@ -1654,6 +1654,8 @@ void SV_Physics (void)
 // treat each object in turn
 //
 	ent = sv.edicts;
+	VectorClear(oldOrigin);	// avoid compiler warning
+	VectorClear(oldAngle);	// avoid compiler warning	
 	for (i=0 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)

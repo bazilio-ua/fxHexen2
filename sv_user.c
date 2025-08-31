@@ -9,7 +9,7 @@
 edict_t	*sv_player = NULL;
 
 extern	cvar_t	sv_friction;
-cvar_t	sv_edgefriction = {"edgefriction", "2"};
+cvar_t	sv_edgefriction = {"edgefriction", "2", CVAR_NONE};
 extern	cvar_t	sv_stopspeed;
 
 static	vec3_t		forward, right, up;
@@ -26,8 +26,8 @@ qboolean	onground;
 
 usercmd_t	cmd;
 
-cvar_t	sv_idealpitchscale = {"sv_idealpitchscale","0.8"};
-cvar_t	sv_idealrollscale = {"sv_idealrollscale","0.8"};
+cvar_t	sv_idealpitchscale = {"sv_idealpitchscale","0.8", CVAR_NONE};
+cvar_t	sv_idealrollscale = {"sv_idealrollscale","0.8", CVAR_NONE};
 
 
 /*
@@ -191,13 +191,13 @@ void SV_UserFriction (void)
 SV_Accelerate
 ==============
 */
-//cvar_t	sv_maxspeed = {"sv_maxspeed", "320", false, true};
-cvar_t	sv_maxspeed = {"sv_maxspeed", "640", false, true};
-cvar_t	sv_accelerate = {"sv_accelerate", "10"};
+//cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_SERVER};
+cvar_t	sv_maxspeed = {"sv_maxspeed", "640", CVAR_SERVER};
+cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
 
 /* Old values before the id 1.07 update
-cvar_t	sv_maxspeed = {"sv_maxspeed", "640", false, true};
-cvar_t	sv_accelerate = {"sv_accelerate", "100"};
+cvar_t	sv_maxspeed = {"sv_maxspeed", "640", CVAR_SERVER};
+cvar_t	sv_accelerate = {"sv_accelerate", "100", CVAR_NONE};
 */
 
 void SV_Accelerate (void)

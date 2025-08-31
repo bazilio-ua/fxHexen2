@@ -92,9 +92,9 @@ static int sb_updates; // if >= vid.numpages, no update needed
 
 static float BarHeight;
 static float BarTargetHeight;
-cvar_t BarSpeed = { "barspeed", "5" };
-cvar_t sbtemp = { "sbtemp", "5" };
-cvar_t DMMode = { "dm_mode", "1", true };
+cvar_t BarSpeed = { "barspeed", "5", CVAR_NONE };
+cvar_t sbtemp = { "sbtemp", "5", CVAR_NONE };
+cvar_t DMMode = { "dm_mode", "1", CVAR_ARCHIVE };
 
 static qpic_t *sb_nums[11];
 static qpic_t *sb_colon, *sb_slash;
