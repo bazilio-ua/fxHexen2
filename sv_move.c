@@ -232,14 +232,16 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 	vec3_t		oldorg, neworg, end;
 	trace_t		trace;
 	int			i;
-	edict_t		*enemy;
+	edict_t		*enemy = NULL;	// avoid compiler warning.
 
 // try the move	
 	VectorCopy (ent->v.origin, oldorg);
 	VectorAdd (ent->v.origin, move, neworg);
 
 // flying monsters don't step up, unless no_z turned on
-	if ( ((int)ent->v.flags&(FL_SWIM|FL_FLY)) && !((int)ent->v.flags&FL_NOZ) && !((int)ent->v.flags&FL_HUNTFACE))
+	if ( ((int)ent->v.flags&(FL_SWIM|FL_FLY))
+		&& !((int)ent->v.flags&FL_HUNTFACE)
+		&& !((int)ent->v.flags&FL_NOZ) )
 	{
 	// try one move with vertical motion, then one without
 		for (i=0 ; i<2 ; i++)
@@ -250,10 +252,16 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 				enemy = PROG_TO_EDICT(ent->v.enemy);
 				if (i == 0 && enemy != sv.edicts)
 				{
-					if ((int)ent->v.flags&FL_HUNTFACE)//Go for face
-						dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2] + PROG_TO_EDICT(ent->v.enemy)->v.view_ofs[2];
-					else
-						dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2];
+//					if ((int)ent->v.flags&FL_HUNTFACE)//Go for face
+//						dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2] + PROG_TO_EDICT(ent->v.enemy)->v.view_ofs[2];
+//					else
+//						dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2];
+						
+					dz = ent->v.origin[2] - PROG_TO_EDICT(ent->v.enemy)->v.origin[2];
+					// This is utterly broken: we already made sure
+					// that FL_HUNTFACE is not set just above. -O.S
+					if ((int)ent->v.flags & FL_HUNTFACE)//Go for face
+						dz += PROG_TO_EDICT(ent->v.enemy)->v.view_ofs[2];
 
 					if (dz > 40)
 						neworg[2] -= 8;
@@ -497,12 +505,10 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 		d[2]=tdir;
 	}
 
-	if (d[1]!=DI_NODIR && d[1]!=turnaround 
-	&& SV_StepDirection(actor, d[1], dist))
+	if (d[1]!=DI_NODIR && d[1]!=turnaround && SV_StepDirection(actor, d[1], dist))
 			return;
 
-	if (d[2]!=DI_NODIR && d[2]!=turnaround
-	&& SV_StepDirection(actor, d[2], dist))
+	if (d[2]!=DI_NODIR && d[2]!=turnaround && SV_StepDirection(actor, d[2], dist))
 			return;
 
 /* there is no direct path to the player, so pick another direction */
@@ -513,14 +519,18 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	if (rand()&1) 	/*randomly determine direction of search*/
 	{
 		for (tdir=0 ; tdir<=315 ; tdir += 45)
+		{
 			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist) )
-					return;
+				return;
+		}
 	}
 	else
 	{
 		for (tdir=315 ; tdir >=0 ; tdir -= 45)
+		{
 			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist) )
-					return;
+				return;
+		}
 	}
 
 	if (turnaround != DI_NODIR && SV_StepDirection(actor, turnaround, dist) )
@@ -533,7 +543,6 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 
 	if (!SV_CheckBottom (actor))
 		SV_FixCheckBottom (actor);
-
 }
 
 /*
