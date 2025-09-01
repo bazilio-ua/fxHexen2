@@ -147,8 +147,10 @@ void SetMinMaxSize (edict_t *e, float *minvec, float *maxvec, qboolean rotate)
 	int		i, j, k, l;
 	
 	for (i=0 ; i<3 ; i++)
+	{
 		if (minvec[i] > maxvec[i])
 			PR_RunError ("SetMinMaxSize: backwards mins/maxs (%c, %g/%g)", 'x' + i, minvec[i], maxvec[i]);
+	}
 
 	rotate = false;		// FIXME: implement rotation properly again
 
@@ -250,9 +252,11 @@ void PF_setmodel (void)
 
 // check to see if model was properly precached
 	for (i=0, check = sv.model_precache ; *check ; i++, check++)
+	{
 		if (!strcmp(*check, m))
 			break;
-			
+	}
+
 	if (!*check)
 		PR_RunError ("PF_setmodel: no precache: %s\n", m);
 
@@ -281,9 +285,11 @@ void PF_setpuzzlemodel (void)
 	sprintf(NewName,"models/puzzle/%s.mdl",m);
 // check to see if model was properly precached
 	for (i=0, check = sv.model_precache ; *check ; i++, check++)
+	{
 		if (!strcmp(*check, NewName))
 			break;
-			
+	}
+
 	e->v.model = PR_SetString(ED_NewString(NewName));
 
 	if (!*check)
@@ -895,45 +901,45 @@ void PF_tracearea (void)
 
 
 
-struct PointInfo_t
-{
-   char Found,NumFound,MarkedWhen;
-   struct PointInfo_t *FromPos, *Next;
-};
-
-#define MAX_POINT_X 21
-#define MAX_POINT_Y 21
-#define MAX_POINT_Z 11
-#define MAX_POINT (MAX_POINT_X * MAX_POINT_Y * MAX_POINT_Z)
-
-#define POINT_POS(x,y,z) ((z*ZOffset)+(y*YOffset)+(x))
-
-#define POINT_X_SIZE 160
-#define POINT_Y_SIZE 160
-#define POINT_Z_SIZE 50
-
-#define POINT_MAX_DEPTH 5
-
-struct PointInfo_t PI[MAX_POINT];
-int ZOffset,YOffset;
-
-extern particle_t	*active_particles, *free_particles;
-
-void AddParticle(float *Org, float color)
-{
-	particle_t	*p;
-
-	p = free_particles;
-	free_particles = p->next;
-	p->next = active_particles;
-	active_particles = p;
-
-	p->die = 99999;
-	p->color = color;
-	p->type = pt_static;
-	VectorCopy (vec3_origin, p->vel);
-	VectorCopy (Org, p->org);
-}
+//struct PointInfo_t
+//{
+//   char Found,NumFound,MarkedWhen;
+//   struct PointInfo_t *FromPos, *Next;
+//};
+//
+//#define MAX_POINT_X 21
+//#define MAX_POINT_Y 21
+//#define MAX_POINT_Z 11
+//#define MAX_POINT (MAX_POINT_X * MAX_POINT_Y * MAX_POINT_Z)
+//
+//#define POINT_POS(x,y,z) ((z*ZOffset)+(y*YOffset)+(x))
+//
+//#define POINT_X_SIZE 160
+//#define POINT_Y_SIZE 160
+//#define POINT_Z_SIZE 50
+//
+//#define POINT_MAX_DEPTH 5
+//
+//struct PointInfo_t PI[MAX_POINT];
+//int ZOffset,YOffset;
+//
+//extern particle_t	*active_particles, *free_particles;
+//
+//void AddParticle(float *Org, float color)
+//{
+//	particle_t	*p;
+//
+//	p = free_particles;
+//	free_particles = p->next;
+//	p->next = active_particles;
+//	active_particles = p;
+//
+//	p->die = 99999;
+//	p->color = color;
+//	p->type = pt_static;
+//	VectorCopy (vec3_origin, p->vel);
+//	VectorCopy (Org, p->org);
+//}
 
 
 /*
@@ -1584,7 +1590,6 @@ void PF_walkmove (void)
 	
 	G_FLOAT(OFS_RETURN) = SV_movestep(ent, move, true, true, set_trace);
 	
-	
 // restore program state
 	pr_xfunction = oldf;
 	if (is_progdefs111)
@@ -1690,6 +1695,14 @@ void PF_lightstylevalue(void)
 //
 //==========================================================================
 
+static char *styleDefs[] =
+{
+	"a", "b", "c", "d", "e", "f", "g",
+	"h", "i", "j", "k", "l", "m", "n",
+	"o", "p", "q", "r", "s", "t", "u",
+	"v", "w", "x", "y", "z"
+};
+
 void PF_lightstylestatic(void)
 {
 	int i;
@@ -1697,13 +1710,6 @@ void PF_lightstylestatic(void)
 	int styleNumber;
 	char *styleString;
 	client_t *client;
-	static char *styleDefs[] =
-	{
-		"a", "b", "c", "d", "e", "f", "g",
-		"h", "i", "j", "k", "l", "m", "n",
-		"o", "p", "q", "r", "s", "t", "u",
-		"v", "w", "x", "y", "z"
-	};
 
 	styleNumber = G_FLOAT(OFS_PARM0);
 	value = G_FLOAT(OFS_PARM1);
@@ -1837,6 +1843,7 @@ void PF_aim (void)
 	ent = G_EDICT(OFS_PARM0);
 	shot_org = G_VECTOR(OFS_PARM1);
 	speed = G_FLOAT(OFS_PARM2);
+	(void) speed; /* variable set but not used */
 
 //	VectorCopy (ent->v.origin, start);
 	VectorCopy (shot_org, start);
@@ -1873,8 +1880,7 @@ void PF_aim (void)
 		if (teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team)
 			continue;	// don't aim at teammate
 		for (j=0 ; j<3 ; j++)
-			end[j] = check->v.origin[j]
-			+ 0.5*(check->v.mins[j] + check->v.maxs[j]);
+			end[j] = check->v.origin[j] + 0.5*(check->v.mins[j] + check->v.maxs[j]);
 		VectorSubtract (end, start, dir);
 		VectorNormalize (dir);
 		dist = DotProduct (dir, PR_GLOBAL_STRUCT(v_forward));
@@ -1958,7 +1964,6 @@ void PF_changeyaw (void)
 			move = -speed;
 	}
 
-	
 	ent->v.angles[1] = anglemod (current + move);
 }
 
@@ -2044,15 +2049,12 @@ void PF_WriteString (void)
 	MSG_WriteString (WriteDest(), G_STRING(OFS_PARM1));
 }
 
-
 void PF_WriteEntity (void)
 {
 	MSG_WriteShort (WriteDest(), G_EDICTNUM(OFS_PARM1));
 }
 
 //=============================================================================
-
-int SV_ModelIndex (char *name);
 
 void PF_makestatic (void)
 {
@@ -2164,12 +2166,19 @@ void PF_plaque_draw (void)
 
 	Index = ((int)G_FLOAT(OFS_PARM1));
 
-	if (Index < 0)
-		PR_RunError ("PF_plaque_draw: index(%d) < 1",Index);
+//	if (Index < 0)
+//		PR_RunError ("PF_plaque_draw: index(%d) < 1",Index);
+//
+//	if (Index > pr_string_count)
+//		PR_RunError ("PF_plaque_draw: index(%d) >= pr_string_count(%d)",Index,pr_string_count);
 
-	if (Index > pr_string_count)
-		PR_RunError ("PF_plaque_draw: index(%d) >= pr_string_count(%d)",Index,pr_string_count);
-
+	/* 0 means "clear the plaquemessage", hence
+	 * the check for Index < 0 and NOT for Index < 1 */
+	if (Index < 0 || Index > pr_string_count)
+	{
+		PR_RunError ("PF_plaque_draw: unexpected index (%d) (pr_string_count: %d)", Index, pr_string_count);
+	}
+	
 	MSG_WriteByte (WriteDest(), svc_plaque);
 	MSG_WriteShort (WriteDest(), Index);
 }
@@ -2437,7 +2446,8 @@ void PF_endeffect (void)
 	index = G_FLOAT(OFS_PARM0);
 	index = G_FLOAT(OFS_PARM1);
 
-	if (!sv.Effects[index].type) return;
+	if (!sv.Effects[index].type)
+		return;
 
 	sv.Effects[index].type = 0;
 	MSG_WriteByte (&sv.reliable_datagram, svc_end_effect);
@@ -2511,12 +2521,18 @@ void PF_concatv(void)
 	range = G_VECTOR(OFS_PARM1);
 
 	VectorCopy (in, result);
-	if (result[0] < -range[0]) result[0] = -range[0];
-	if (result[0] > range[0]) result[0] = range[0];
-	if (result[1] < -range[1]) result[1] = -range[1];
-	if (result[1] > range[1]) result[1] = range[1];
-	if (result[2] < -range[2]) result[2] = -range[2];
-	if (result[2] > range[2]) result[2] = range[2];
+	if (result[0] < -range[0])
+		result[0] = -range[0];
+	if (result[0] > range[0])
+		result[0] = range[0];
+	if (result[1] < -range[1])
+		result[1] = -range[1];
+	if (result[1] > range[1])
+		result[1] = range[1];
+	if (result[2] < -range[2])
+		result[2] = -range[2];
+	if (result[2] > range[2])
+		result[2] = range[2];
 
 	VectorCopy (result, G_VECTOR(OFS_RETURN));
 }
@@ -2525,15 +2541,22 @@ void PF_GetString(void)
 {
 	int Index;
 
-	Index = (int)G_FLOAT(OFS_PARM0) - 1;
+//	Index = (int)G_FLOAT(OFS_PARM0) - 1;
+	Index = (int)G_FLOAT(OFS_PARM0);
 
-	if (Index < 0)
-		PR_RunError ("PF_GetString: index(%d) < 1",Index+1);
+//	if (Index < 0)
+//		PR_RunError ("PF_GetString: index(%d) < 1",Index+1);
+//
+//	if (Index >= pr_string_count)
+//		PR_RunError ("PF_GetString: index(%d) >= pr_string_count(%d)",Index,pr_string_count);
 
-	if (Index >= pr_string_count)
-		PR_RunError ("PF_GetString: index(%d) >= pr_string_count(%d)",Index,pr_string_count);
+	if (Index < 1 || Index > pr_string_count)
+	{
+		PR_RunError ("PF_GetString: unexpected index (%d) (pr_string_count: %d)", Index, pr_string_count);
+	}
 
-	G_INT(OFS_RETURN) = PR_SetString(&pr_global_strings[pr_string_index[Index]]);
+//	G_INT(OFS_RETURN) = PR_SetString(&pr_global_strings[pr_string_index[Index]]);
+	G_INT(OFS_RETURN) = PR_SetString(&pr_global_strings[pr_string_index[Index - 1]]);
 }
 
 
@@ -2628,177 +2651,186 @@ void PF_matchAngleToSlope(void)
 
 void PF_updateInfoPlaque (void)
 {
+/* update the objectives in the mission pack :
+ * see trigger_objective() and objective_use()  */
 	unsigned int check;
 	unsigned int index, mode;
-	long *use;
-	int	ofs = 0;
+	unsigned int *use;
 
 	index = G_FLOAT(OFS_PARM0);
 	mode = G_FLOAT(OFS_PARM1);
 
-	if (index > 31) 
+	/* index to infolist.txt must be >= 0 && < 64 */
+	if (index < 32)
+	{
+		use = &info_mask;
+		check = 1U << index;
+	}
+	else if (index < 64)
 	{
 		use = &info_mask2;
-		ofs = 32;
+		index -= 32U;
+		check = 1U << index;
 	}
 	else
 	{
-		use = &info_mask;
+		PR_RunError ("PF_updateInfoPlaque: bad objective index %u", index);
 	}
 
-	check = (long) (1 << (index - ofs));
-
-	if (((mode & 1) && ((*use) & check)) || ((mode & 2) && !((*use) & check)))
+	if ( ((mode & 1 /* FORCE_ON */) && (*use & check)) ||
+		 ((mode & 2 /* FORCE_OFF */) && !(*use & check)) )
 		;
 	else
 	{
-		(*use) ^= check;
+		*use ^= check;
 	}
 }
 
-extern void V_WhiteFlash_f(void);
-
 void PF_doWhiteFlash(void)
 {
-	V_WhiteFlash_f();
+/* called from mission pack's buddha.hc::buddha_die().  original code
+ * used to do V_WhiteFlash_f() here affecting the local client only. */
+	MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);
+	MSG_WriteString (&sv.reliable_datagram, "wf\n");
 }
+
 
 builtin_t pr_builtin[] =
 {
-PF_Fixme,
+	PF_Fixme,
 
-PF_makevectors,			// 1
-PF_setorigin,			// 2
-PF_setmodel,			// 3
-PF_setsize,				// 4
-PF_lightstylestatic,	// 5
+	PF_makevectors,		// void(entity e) makevectors		= #1
+	PF_setorigin,		// void(entity e, vector o) setorigin	= #2
+	PF_setmodel,		// void(entity e, string m) setmodel	= #3
+	PF_setsize,		// void(entity e, vector min, vector max) setsize	= #4
+	PF_lightstylestatic,	// 5
 
-PF_break,									// void() break														= #6
-PF_random,									// float() random														= #7
-PF_sound,									// void(entity e, float chan, string samp) sound			= #8
-PF_normalize,								// vector(vector v) normalize										= #9
-PF_error,									// void(string e) error												= #10
-PF_objerror,								// void(string e) objerror											= #11
-PF_vlen,										// float(vector v) vlen												= #12
-PF_vectoyaw,								// float(vector v) vectoyaw										= #13
-PF_Spawn,									// entity() spawn														= #14
-PF_Remove,									// void(entity e) remove											= #15
-PF_traceline,								// float(vector v1, vector v2, float tryents) traceline	= #16
-PF_checkclient,							// entity() clientlist												= #17
-PF_Find,										// entity(entity start, .string fld, string match) find	= #18
-PF_precache_sound,						// void(string s) precache_sound									= #19
-PF_precache_model,						// void(string s) precache_model									= #20
-PF_stuffcmd,								// void(entity client, string s)stuffcmd						= #21
-PF_findradius,								// entity(vector org, float rad) findradius					= #22
-PF_bprint,									// void(string s) bprint											= #23
-PF_sprint,									// void(entity client, string s) sprint						= #24
-PF_dprint,									// void(string s) dprint											= #25
-PF_ftos,										// void(string s) ftos												= #26
-PF_vtos,										// void(string s) vto				s								= #27
-PF_coredump,								//	PF_coredump															= #28
-PF_traceon,									// PF_traceon															= #29
-PF_traceoff,								// PF_traceoff															= #30
-PF_eprint,									// void(entity e) debug print an entire entity				= #31
-PF_walkmove,								// float(float yaw, float dist) walkmove						= #32
-PF_tracearea,								// float(vector v1, vector v2, vector mins, vector maxs, 
-												//       float tryents) traceline								= #33
-PF_droptofloor,							// PF_droptofloor														= #34
-PF_lightstyle,								//																			= #35
-PF_rint,										//																			= #36
-PF_floor,									//																			= #37
-PF_ceil,										//																			= #38
-PF_Fixme,
-PF_checkbottom,							//																			= #40
-PF_pointcontents,							//																			= #41
-PF_particle2,
-PF_fabs,										//																			= #43
-PF_aim,										//																			= #44
-PF_cvar,										//																			= #45
-PF_localcmd,								//																			= #46
-PF_nextent,									//																			= #47
-PF_particle,								//																			= #48
-PF_changeyaw,								//																			= #49
-PF_vhlen,									// float(vector v) vhlen											= #50
-PF_vectoangles,							//																			= #51
+	PF_break,		// void() break				= #6
+	PF_random,		// float() random			= #7
+	PF_sound,		// void(entity e, float chan, string samp) sound	= #8
+	PF_normalize,		// vector(vector v) normalize		= #9
+	PF_error,		// void(string e) error			= #10
+	PF_objerror,		// void(string e) objerror		= #11
+	PF_vlen,		// float(vector v) vlen			= #12
+	PF_vectoyaw,		// float(vector v) vectoyaw		= #13
+	PF_Spawn,		// entity() spawn			= #14
+	PF_Remove,		// void(entity e) remove		= #15
+	PF_traceline,		// float(vector v1, vector v2, float tryents) traceline	= #16
+	PF_checkclient,		// entity() clientlist			= #17
+	PF_Find,		// entity(entity start, .string fld, string match) find	= #18
+	PF_precache_sound,	// void(string s) precache_sound	= #19
+	PF_precache_model,	// void(string s) precache_model	= #20
+	PF_stuffcmd,		// void(entity client, string s)stuffcmd	= #21
+	PF_findradius,		// entity(vector org, float rad) findradius	= #22
+	PF_bprint,		// void(string s) bprint		= #23
+	PF_sprint,		// void(entity client, string s) sprint	= #24
+	PF_dprint,		// void(string s) dprint		= #25
+	PF_ftos,		// void(string s) ftos			= #26
+	PF_vtos,		// void(string s) vtos			= #27
+	PF_coredump,		// PF_coredump	= #28
+	PF_traceon,		// PF_traceon	= #29
+	PF_traceoff,		// PF_traceoff	= #30
+	PF_eprint,		// void(entity e) debug print an entire entity	= #31
+	PF_walkmove,		// float(float yaw, float dist) walkmove	= #32
+	PF_tracearea,		// float(vector v1, vector v2, vector mins, vector maxs, 
+				//		float tryents) traceline	= #33
+	PF_droptofloor,		// PF_droptofloor = #34
+	PF_lightstyle,		// 35
+	PF_rint,		// 36
+	PF_floor,		// 37
+	PF_ceil,		// 38
+	PF_Fixme,
+	PF_checkbottom,		// 40
+	PF_pointcontents,	// 41
+	PF_particle2,
+	PF_fabs,		// 43
+	PF_aim,			// 44
+	PF_cvar,		// 45
+	PF_localcmd,		// 46
+	PF_nextent,		// 47
+	PF_particle,		// 48
+	PF_changeyaw,		// 49
+	PF_vhlen,		// float(vector v) vhlen		= #50
+	PF_vectoangles,		// 51
 
-PF_WriteByte,								//																			= #52
-PF_WriteChar,								//																			= #53
-PF_WriteShort,								//																			= #54
-PF_WriteLong,								//																			= #55
-PF_WriteCoord,								//																			= #56
-PF_WriteAngle,								//																			= #57
-PF_WriteString,							//																			= #58
-PF_WriteEntity,							//																			= #59
+	PF_WriteByte,		// 52
+	PF_WriteChar,		// 53
+	PF_WriteShort,		// 54
+	PF_WriteLong,		// 55
+	PF_WriteCoord,		// 56
+	PF_WriteAngle,		// 57
+	PF_WriteString,		// 58
+	PF_WriteEntity,		// 59
 
-//PF_FindPath,								//																			= #60
-PF_dprintf,									// void(string s1, string s2) dprint										= #60
-PF_Cos,										//																			= #61
-PF_Sin,										//																			= #62
-PF_AdvanceFrame,							//																			= #63
-PF_dprintv,									// void(string s1, string s2) dprint										= #64
-PF_RewindFrame,								//																			= #65
-PF_setclass,
+//	PF_FindPath,		// 60
+	PF_dprintf,		// void(string s1, string s2) dprint	= #60
+	PF_Cos,			// 61
+	PF_Sin,			// 62
+	PF_AdvanceFrame,	// 63
+	PF_dprintv,		// void(string s1, string s2) dprint	= #64
+	PF_RewindFrame,		// 65
+	PF_setclass,
 
-SV_MoveToGoal,
-PF_precache_file,
-PF_makestatic,
+	SV_MoveToGoal,
+	PF_precache_file,
+	PF_makestatic,
 
-PF_changelevel,
+	PF_changelevel,
 
-PF_lightstylevalue,		// 71
+	PF_lightstylevalue,	// 71
 
-PF_cvar_set,
-PF_centerprint,
+	PF_cvar_set,
+	PF_centerprint,
 
-PF_ambientsound,
+	PF_ambientsound,
 
-PF_precache_model2,
-PF_precache_sound2,							// precache_sound2 is different only for qcc
-PF_precache_file,
+	PF_precache_model2,
+	PF_precache_sound2,	// precache_sound2 is different only for qcc
+	PF_precache_file,
 
-PF_setspawnparms,
-PF_plaque_draw,
-PF_rain_go,										//																				=	#80
-PF_particleexplosion,							//																				=	#81
-PF_movestep,
-PF_advanceweaponframe,
-PF_sqrt,
+	PF_setspawnparms,
+	PF_plaque_draw,
+	PF_rain_go,		// 80
+	PF_particleexplosion,	// 81
+	PF_movestep,
+	PF_advanceweaponframe,
+	PF_sqrt,
 
-PF_particle3,								// 85
-PF_particle4,								// 86
-PF_setpuzzlemodel,							// 87
+	PF_particle3,		// 85
+	PF_particle4,		// 86
+	PF_setpuzzlemodel,	// 87
 
-PF_starteffect,								// 88
-PF_endeffect,								// 89
+	PF_starteffect,		// 88
+	PF_endeffect,		// 89
 
-PF_precache_puzzle_model,					// 90
-PF_concatv,									// 91
-PF_GetString,								// 92
-PF_SpawnTemp,								// 93
-PF_v_factor,								// 94
-PF_v_factorrange,							// 95
+	PF_precache_puzzle_model,	// 90
+	PF_concatv,		// 91
+	PF_GetString,		// 92
+	PF_SpawnTemp,		// 93
+	PF_v_factor,		// 94
+	PF_v_factorrange,	// 95
 
-PF_precache_sound3,							// 96
-PF_precache_model3,							// 97
-PF_precache_file,							// 98
-PF_matchAngleToSlope,						// 99
-PF_updateInfoPlaque,						//100
+	PF_precache_sound3,	// 96
+	PF_precache_model3,	// 97
+	PF_precache_file,	// 98
+	PF_matchAngleToSlope,	// 99
+	PF_updateInfoPlaque,	// 100
 
-PF_precache_sound4,							// 101
-PF_precache_model4,							// 102
-PF_precache_file,							// 103
+	PF_precache_sound4,	// 101
+	PF_precache_model4,	// 102
+	PF_precache_file,	// 103
 
-PF_doWhiteFlash,							//104
-PF_UpdateSoundPos,							//105
-PF_StopSound,								//106
+	PF_doWhiteFlash,	// 104
+	PF_UpdateSoundPos,	// 105
+	PF_StopSound,		// 106
 
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme,
-PF_Fixme
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme,
+	PF_Fixme
 
 };
 
