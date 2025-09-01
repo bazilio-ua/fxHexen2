@@ -192,7 +192,7 @@ SV_Accelerate
 ==============
 */
 //cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_SERVER};
-cvar_t	sv_maxspeed = {"sv_maxspeed", "640", CVAR_SERVER};
+cvar_t	sv_maxspeed = {"sv_maxspeed", "640", CVAR_SERVER}; //fixme: 320
 cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
 
 /* Old values before the id 1.07 update

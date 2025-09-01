@@ -72,6 +72,7 @@ SV_CheckVelocity
 void SV_CheckVelocity (edict_t *ent)
 {
 	int		i;
+	float		w;
 
 //
 // bound velocity
@@ -88,10 +89,12 @@ void SV_CheckVelocity (edict_t *ent)
 			Con_DPrintf ("Got a NaN origin on %s\n", PR_GetString(ent->v.classname));
 			ent->v.origin[i] = 0;
 		}
-		if (ent->v.velocity[i] > sv_maxvelocity.value)
-			ent->v.velocity[i] = sv_maxvelocity.value;
-		else if (ent->v.velocity[i] < -sv_maxvelocity.value)
-			ent->v.velocity[i] = -sv_maxvelocity.value;
+	}
+
+	w = VectorLength(ent->v.velocity);
+	if (w > sv_maxvelocity.value)
+	{	// sv_maxvelocity fix by Maddes
+		VectorScale (ent->v.velocity, sv_maxvelocity.value/w, ent->v.velocity);
 	}
 }
 
@@ -395,10 +398,9 @@ SV_FlyExtras
 
 ============
 */
+const float hoverinc = 0.4;
 void SV_FlyExtras (edict_t *ent, float time, trace_t *steptrace)
 {
-const float hoverinc = 0.4;
-
 	ent->v.flags = (int) ent->v.flags | FL_ONGROUND;  // Jumping makes you loose this flag so reset it
 
 	if ((ent->v.velocity[2]<=6) && (ent->v.velocity[2]>=-6))
@@ -466,6 +468,7 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push)
 	edict_t *impact_e;
 
 	VectorCopy (ent->v.origin, start);
+	(void) start; /* variable set but not used */
 	VectorAdd (ent->v.origin, push, end);
 
 	if (ent->v.movetype == MOVETYPE_FLYMISSILE  || ent->v.movetype == MOVETYPE_BOUNCEMISSILE)
@@ -711,6 +714,8 @@ void SV_PushRotate (edict_t *pusher, float movetime)
 // see if any solid entities are inside the final position
 	num_moved = 0;
 	check = NEXT_EDICT(sv.edicts);
+	VectorClear(testmove);	// avoid compiler warning:  testmove is
+				// initialized with case 0 in the switch
 	for (e=1 ; e<sv.num_edicts ; e++, check = NEXT_EDICT(check))
 	{
 		if (check->free)
@@ -1069,7 +1074,9 @@ void SV_CheckStuck (edict_t *ent)
 	}
 	
 	for (z=0 ; z< 18 ; z++)
+	{
 		for (i=-1 ; i <= 1 ; i++)
+		{
 			for (j=-1 ; j <= 1 ; j++)
 			{
 				ent->v.origin[0] = org[0] + i;
@@ -1082,6 +1089,8 @@ void SV_CheckStuck (edict_t *ent)
 					return;
 				}
 			}
+		}
+	}
 			
 	VectorCopy (org, ent->v.origin);
 	if (ent->v.oldorigin!=ent->v.origin)
@@ -1181,14 +1190,38 @@ int SV_TryUnstick (edict_t *ent, vec3_t oldvel)
 // try pushing a little in an axial direction
 		switch (i)
 		{
-			case 0:	dir[0] = 2; dir[1] = 0; break;
-			case 1:	dir[0] = 0; dir[1] = 2; break;
-			case 2:	dir[0] = -2; dir[1] = 0; break;
-			case 3:	dir[0] = 0; dir[1] = -2; break;
-			case 4:	dir[0] = 2; dir[1] = 2; break;
-			case 5:	dir[0] = -2; dir[1] = 2; break;
-			case 6:	dir[0] = 2; dir[1] = -2; break;
-			case 7:	dir[0] = -2; dir[1] = -2; break;
+		case 0:
+			dir[0] = 2;
+			dir[1] = 0;
+			break;
+		case 1:
+			dir[0] = 0;
+			dir[1] = 2;
+			break;
+		case 2:
+			dir[0] = -2;
+			dir[1] = 0;
+			break;
+		case 3:
+			dir[0] = 0;
+			dir[1] = -2;
+			break;
+		case 4:
+			dir[0] = 2;
+			dir[1] = 2;
+			break;
+		case 5:
+			dir[0] = -2;
+			dir[1] = 2;
+			break;
+		case 6:
+			dir[0] = 2;
+			dir[1] = -2;
+			break;
+		case 7:
+			dir[0] = -2;
+			dir[1] = -2;
+			break;
 		}
 		
 		SV_PushEntity (ent, dir);
@@ -1500,7 +1533,6 @@ SV_Physics_Toss
 Toss, bounce, and fly movement.  When onground, do nothing.
 =============
 */
-
 void SV_Physics_Toss (edict_t *ent)
 {
 	trace_t	trace;
@@ -1704,7 +1736,8 @@ void SV_Physics (void)
 
 				for(c=0;c<10;c++)
 				{   // chain a max of 10 objects
-					if (ent2->free) break;
+					if (ent2->free)
+						break;
 
 					VectorAdd(oldOrigin,ent2->v.origin,ent2->v.origin);
 					if ((int)ent2->v.flags & FL_MOVECHAIN_ANGLE)
@@ -1728,8 +1761,8 @@ void SV_Physics (void)
 					}
 
 					ent2 = PROG_TO_EDICT(ent2->v.movechain);
-					if (ent2 == sv.edicts) break;
-
+					if (ent2 == sv.edicts)
+						break;
 				}
 			}
 		}
