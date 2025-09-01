@@ -145,6 +145,7 @@ edict_t *ED_Alloc_Temp (void)
 
 	LeastTime = -1;
 	LeastSet = false;
+	Least = NULL;	// shut up compiler
 	for ( i=svs.maxclients+1,j=0 ; j < max_temp_edicts.value ; i++,j++)
 	{
 		e = EDICT_NUM(i);
@@ -473,7 +474,7 @@ char *PR_GlobalString (int ofs)
 		sprintf (line,"%i(?)", ofs);
 	else
 	{
-		s = PR_ValueString (def->type, val);
+		s = PR_ValueString (def->type, (eval_t *)val);
 		sprintf (line,"%i(%s)%s", ofs, PR_GetString(def->s_name), s);
 	}
 	
@@ -538,8 +539,9 @@ void ED_Print (edict_t *ed)
 	{
 		d = &pr_fielddefs[i];
 		name = PR_GetString(d->s_name);
-		if ((name[strlen(name)-2] == '_') && 
-			((name[strlen(name)-1] == 'x') || (name[strlen(name)-1] == 'y') || (name[strlen(name)-1] == 'z')))
+		l = strlen (name);
+		j = l - 1;
+		if (j > 0 && name[j-1] == '_' && name[j] >= 'x' && name[j] <= 'z')
 			continue;	// skip _x, _y, _z vars
 			
 		v = (int *)((char *)&ed->v + d->ofs*4);
@@ -548,13 +550,14 @@ void ED_Print (edict_t *ed)
 		type = d->type & ~DEF_SAVEGLOBAL;
 		
 		for (j=0 ; j<type_size[type] ; j++)
+		{
 			if (v[j])
 				break;
+		}
 		if (j == type_size[type])
 			continue;
 	
 		Con_SafePrintf ("%s",name); //johnfitz -- was Con_Printf
-		l = strlen (name);
 		while (l++ < 15)
 			Con_SafePrintf (" "); //johnfitz -- was Con_Printf
 
@@ -576,7 +579,6 @@ void ED_Write (FILE *f, edict_t *ed)
 	int		i, j;
 	char	*name;
 	int		type;
-	int		length;
 
 	fprintf (f, "{\n");
 
@@ -597,8 +599,8 @@ void ED_Write (FILE *f, edict_t *ed)
 	{
 		d = &pr_fielddefs[i];
 		name = PR_GetString(d->s_name);
-		length = strlen(name);
-		if (name[length-2] == '_' && name[length-1] >= 'x' && name[length-1] <= 'z')
+		j = strlen(name) - 1;
+		if (j > 0 && name[j-1] == '_' && name[j] >= 'x' && name[j] <= 'z')
 			continue;	// skip _x, _y, _z vars
 			
 		v = (int *)((char *)&ed->v + d->ofs*4);
@@ -606,8 +608,10 @@ void ED_Write (FILE *f, edict_t *ed)
 	// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
 		for (j=0 ; j<type_size[type] ; j++)
+		{
 			if (v[j])
 				break;
+		}
 		if (j == type_size[type])
 			continue;
 
@@ -731,9 +735,7 @@ void ED_WriteGlobals (FILE *f)
 			continue;
 		type &= ~DEF_SAVEGLOBAL;
 
-		if (type != ev_string
-		&& type != ev_float
-		&& type != ev_entity)
+		if (type != ev_string && type != ev_float && type != ev_entity)
 			continue;
 
 		name = PR_GetString(def->s_name);
