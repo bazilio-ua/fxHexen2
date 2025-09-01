@@ -7,6 +7,89 @@
 
 
 
+/* globals structure for Hexen II v1.03 progs: */
+/* found in the cdrom version and the old demo:
+ * randomclass NOT in globalvars_t, hence the CRC
+ * change. the newclass impulses 171 to 174 not
+ * supported. the effect stuff CE_TELEPORTERPUFFS,
+ * CE_TELEPORTERBODY,CE_BONESHARD,CE_BONESHRAPNEL
+ * not supported.  */
+typedef struct
+{	int	pad[28];
+	int	self;
+	int	other;
+	int	world;
+	float	time;
+	float	frametime;
+	float	force_retouch;
+	string_t	mapname;
+	string_t	startspot;
+	float	deathmatch;
+		/* no randomclass in v1.03 */
+	float	coop;
+	float	teamplay;
+		/* no cl_playerclass in v1.03-1.11 */
+	float	serverflags;
+	float	total_secrets;
+	float	total_monsters;
+	float	found_secrets;
+	float	killed_monsters;
+	float	chunk_cnt;
+	float	done_precache;
+	float	parm1;
+	float	parm2;
+	float	parm4;
+	float	parm5;
+	float	parm6;
+	float	parm7;
+	float	parm8;
+	float	parm9;
+	float	parm10;
+	float	parm11;
+	float	parm12;
+	float	parm13;
+	float	parm14;
+	float	parm15;
+	float	parm16;
+	string_t	parm3;
+	vec3_t	v_forward;
+	vec3_t	v_up;
+	vec3_t	v_right;
+	float	trace_allsolid;
+	float	trace_startsolid;
+	float	trace_fraction;
+	vec3_t	trace_endpos;
+	vec3_t	trace_plane_normal;
+	float	trace_plane_dist;
+	int	trace_ent;
+	float	trace_inopen;
+	float	trace_inwater;
+	int	msg_entity;
+	float	cycle_wrapped;
+	float	crouch_cnt;
+	
+	/* modelindex_assassin ... _necromancer
+	 * only in Hexen II v1.03 to 1.11 progs
+	 */
+	float	modelindex_assassin;
+	float	modelindex_crusader;
+	float	modelindex_paladin;
+	float	modelindex_necromancer;
+	
+	float	modelindex_sheep;
+	float	num_players;
+	float	exp_mult;
+	func_t	main;
+	func_t	StartFrame;
+	func_t	PlayerPreThink;
+	func_t	PlayerPostThink;
+	func_t	ClientKill;
+	func_t	ClientConnect;
+	func_t	PutClientInServer;
+	func_t	ClientReEnter;
+	func_t	ClientDisconnect;
+	func_t	ClassChangeWeapon;
+} globalvars_v103_t;
 
 /* globals structure for Hexen II v1.11 progs: */
 typedef struct
@@ -20,10 +103,10 @@ typedef struct
 	string_t	mapname;
 	string_t	startspot;
 	float	deathmatch;
-	float	randomclass;
+	float	randomclass;	/* since v1.09 */
 	float	coop;
 	float	teamplay;
-
+		/* no cl_playerclass in v1.03-1.11 */
 	float	serverflags;
 	float	total_secrets;
 	float	total_monsters;
@@ -63,8 +146,8 @@ typedef struct
 	float	cycle_wrapped;
 	float	crouch_cnt;
 
-	/* these four are only in
-	 * Hexen II v1.11 progs
+	/* these four modelindex_* are only in
+	 * Hexen II v1.03 to 1.11 progs
 	 */
 	float	modelindex_assassin;
 	float	modelindex_crusader;
@@ -98,14 +181,14 @@ typedef struct
 	string_t	mapname;
 	string_t	startspot;
 	float	deathmatch;
-	float	randomclass;
+	float	randomclass;	/* since v1.09 */
 	float	coop;
 	float	teamplay;
 
 	/* cl_playerclass is only in
 	 * Portal of Praevus progs
 	 */
-	float	cl_playerclass;
+	float	cl_playerclass; /* only in mission pack (v1.12) */
 
 	float	serverflags;
 	float	total_secrets;
@@ -145,7 +228,11 @@ typedef struct
 	int	msg_entity;
 	float	cycle_wrapped;
 	float	crouch_cnt;
-
+	
+	/* modelindex_assassin ... _necromancer
+	 * not in Portal of Praevus v1.12 progs
+	 */
+	 
 	float	modelindex_sheep;
 	float	num_players;
 	float	exp_mult;
@@ -303,8 +390,13 @@ typedef struct
 	float	string_index;
 } entvars_t;
 
+/* crc for Hexen II v1.03 progs.dat headers	*/
+#define	PROGS_V103_CRC		14046
+
 /* crc for Hexen II v1.11 progs.dat headers	*/
 #define	PROGS_V111_CRC		38488
+#define	PROGS_V109_CRC		(PROGS_V111_CRC)
+
 /* crc for Mission Pack v1.12 progs.dat headers	*/
 #define	PROGS_V112_CRC		26905
 
