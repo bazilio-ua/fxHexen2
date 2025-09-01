@@ -415,10 +415,11 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		return;	
 
 // find precache number for sound
-    for (sound_num=1 ; sound_num<MAX_SOUNDS
-        && sv.sound_precache[sound_num] ; sound_num++)
-        if (!strcmp(sample, sv.sound_precache[sound_num]))
-            break;
+    for (sound_num=1 ; sound_num<MAX_SOUNDS && sv.sound_precache[sound_num] ; sound_num++)
+	{
+		if (!strcmp(sample, sv.sound_precache[sound_num]))
+			break;
+	}
     
     if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
     {
@@ -506,7 +507,6 @@ void SV_SendServerinfo (client_t *client)
 	}
 	else
 	{
-//		MSG_WriteString (&client->message,"");
 		MSG_WriteString (&client->message, PR_GetString(sv.edicts->v.netname));
 	}
 
@@ -520,8 +520,6 @@ void SV_SendServerinfo (client_t *client)
 
 // send music
 	MSG_WriteByte (&client->message, svc_cdtrack);
-//	MSG_WriteByte (&client->message, sv.edicts->v.soundtype);
-//	MSG_WriteByte (&client->message, sv.edicts->v.soundtype);
 	MSG_WriteByte (&client->message, sv.cd_track);
 	MSG_WriteByte (&client->message, sv.cd_track);
 
@@ -632,8 +630,11 @@ void SV_CheckForNewClients (void)
 	// init a new client structure
 	//	
 		for (i=0 ; i<svs.maxclients ; i++)
+		{
 			if (!svs.clients[i].active)
 				break;
+		}
+		
 		if (i == svs.maxclients)
 			Sys_Error ("Host_CheckForNewClients: no free clients");
 		
@@ -793,7 +794,8 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 //		Con_Printf("SV: Valid SV(%d,%d) CL(%d,%d)\n",client->current_sequence, client->current_frame, client->last_sequence, client->last_frame);
 		*reference = state->frames[client->last_frame];
 
-		for(i=0;i<reference->count;i++)
+		for (i=0;i<reference->count;i++)
+		{
 			if (reference->states[i].flags & ENT_CLEARED)
 			{
 				e = reference->states[i].index;
@@ -808,6 +810,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 					reference->states[i].flags &= ~ENT_CLEARED;
 				}
 			}
+		}
 		client->current_frame = 1;
 		client->current_sequence++;
 	}
@@ -872,8 +875,10 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 			}
 
 			for (i=0 ; i < ent->num_leafs ; i++)
+			{
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
+			}
 				
 			if (i == ent->num_leafs)
 			{
@@ -1049,7 +1054,8 @@ skipA:
 			set_ent->modelindex = temp_index;
 		}
 
-		if (ref_ent->scale != ((int)(ent->v.scale*100.0)&255) || ref_ent->abslight != ((int)(ent->v.abslight*255.0)&255))
+		if (ref_ent->scale != ((int)(ent->v.scale*100.0)&255)
+			|| ref_ent->abslight != ((int)(ent->v.abslight*255.0)&255))
 		{
 			bits |= U_SCALE;
 			set_ent->scale = ((int)(ent->v.scale*100.0)&255);
@@ -1100,7 +1106,7 @@ skipA:
 			MSG_WriteByte (msg, ent->v.frame);
 		if (bits & U_COLORMAP)
 			MSG_WriteByte (msg, ent->v.colormap);
-		if(bits & U_SKIN)
+		if (bits & U_SKIN)
 		{ // Used for skin and drawflags
 			MSG_WriteByte(msg, ent->v.skin);
 			MSG_WriteByte(msg, ent->v.drawflags);
@@ -1119,7 +1125,7 @@ skipA:
 			MSG_WriteCoord (msg, ent->v.origin[2]);
 		if (bits & U_ANGLE3)
 			MSG_WriteAngle(msg, ent->v.angles[2]);
-		if(bits & U_SCALE)
+		if (bits & U_SCALE)
 		{ // Used for scale and abslight
 			MSG_WriteByte(msg, (int)(ent->v.scale*100.0)&255);
 			MSG_WriteByte(msg, (int)(ent->v.abslight*255.0)&255);
@@ -1131,7 +1137,7 @@ skipA:
 
 	MSG_WriteByte(msg, svc_clear_edicts);
 	MSG_WriteByte(msg, NumToRemove);
-	for(i=0;i<NumToRemove;i++)
+	for (i=0;i<NumToRemove;i++)
 		MSG_WriteShort(msg,RemoveList[i]);
 }
 
@@ -1238,7 +1244,6 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	}
 
 // send the data
- 
 
 	//fjm: this wasn't in here b4, and the centerview command requires it.
 	if ( (int)ent->v.flags & FL_ONGROUND) 
@@ -1252,32 +1257,44 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		if (next_update > 11)
 			next_update = 0;
 
-		switch(next_update)
+		switch (next_update)
 		{
-			case 0:bits |= SU_VIEWHEIGHT;
-				break;
-			case 1:bits |= SU_IDEALPITCH;
-				break;
-			case 2:bits |= SU_IDEALROLL;
-				break;
-			case 3:bits |= SU_VELOCITY1;
-				break;
-			case 4:bits |= (SU_VELOCITY1<<1);
-				break;
-			case 5:bits |= (SU_VELOCITY1<<2);
-				break;
-			case 6:bits |= SU_PUNCH1;
-				break;
-			case 7:bits |= (SU_PUNCH1<<1);
-				break;
-			case 8:bits |= (SU_PUNCH1<<2);
-				break;
-			case 9:bits |= SU_WEAPONFRAME;
-				break;
-			case 10:bits |= SU_ARMOR;
-				break;
-			case 11:bits |= SU_WEAPON;
-				break;
+		case 0:
+			bits |= SU_VIEWHEIGHT;
+			break;
+		case 1:
+			bits |= SU_IDEALPITCH;
+			break;
+		case 2:
+			bits |= SU_IDEALROLL;
+			break;
+		case 3:
+			bits |= SU_VELOCITY1;
+			break;
+		case 4:
+			bits |= (SU_VELOCITY1<<1);
+			break;
+		case 5:
+			bits |= (SU_VELOCITY1<<2);
+			break;
+		case 6:
+			bits |= SU_PUNCH1;
+			break;
+		case 7:
+			bits |= (SU_PUNCH1<<1);
+			break;
+		case 8:
+			bits |= (SU_PUNCH1<<2);
+			break;
+		case 9:
+			bits |= SU_WEAPONFRAME;
+			break;
+		case 10:
+			bits |= SU_ARMOR;
+			break;
+		case 11:
+			bits |= SU_WEAPON;
+			break;
 		}
 	}
 
@@ -1319,15 +1336,15 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 
 		if (ent->v.health != host_client->old_v.health)
 			sc1 |= SC1_HEALTH;
-		if(ent->v.level != host_client->old_v.level)
+		if (ent->v.level != host_client->old_v.level)
 			sc1 |= SC1_LEVEL;
-		if(ent->v.intelligence != host_client->old_v.intelligence)
+		if (ent->v.intelligence != host_client->old_v.intelligence)
 			sc1 |= SC1_INTELLIGENCE;
-		if(ent->v.wisdom != host_client->old_v.wisdom)
+		if (ent->v.wisdom != host_client->old_v.wisdom)
 			sc1 |= SC1_WISDOM;
-		if(ent->v.strength != host_client->old_v.strength)
+		if (ent->v.strength != host_client->old_v.strength)
 			sc1 |= SC1_STRENGTH;
-		if(ent->v.dexterity != host_client->old_v.dexterity)
+		if (ent->v.dexterity != host_client->old_v.dexterity)
 			sc1 |= SC1_DEXTERITY;
 		if (ent->v.weapon != host_client->old_v.weapon)
 			sc1 |= SC1_WEAPON;
@@ -1431,9 +1448,9 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		if (sv.protocol > PROTOCOL_RAVEN_111)
 		{
 			if (info_mask != client->info_mask)
-			sc2 |= SC2_OBJ;
+				sc2 |= SC2_OBJ;
 			if (info_mask2 != client->info_mask2)
-			sc2 |= SC2_OBJ2;
+				sc2 |= SC2_OBJ2;
 		}
 	}
 
@@ -1481,15 +1498,15 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	if (sc1 & SC1_HEALTH)
 		MSG_WriteShort (&host_client->message, ent->v.health);
 	if (sc1 & SC1_LEVEL)
-		MSG_WriteByte(&host_client->message, ent->v.level);
+		MSG_WriteByte (&host_client->message, ent->v.level);
 	if (sc1 & SC1_INTELLIGENCE)
-		MSG_WriteByte(&host_client->message, ent->v.intelligence);
+		MSG_WriteByte (&host_client->message, ent->v.intelligence);
 	if (sc1 & SC1_WISDOM)
-		MSG_WriteByte(&host_client->message, ent->v.wisdom);
+		MSG_WriteByte (&host_client->message, ent->v.wisdom);
 	if (sc1 & SC1_STRENGTH)
-		MSG_WriteByte(&host_client->message, ent->v.strength);
+		MSG_WriteByte (&host_client->message, ent->v.strength);
 	if (sc1 & SC1_DEXTERITY)
-		MSG_WriteByte(&host_client->message, ent->v.dexterity);
+		MSG_WriteByte (&host_client->message, ent->v.dexterity);
 	if (sc1 & SC1_WEAPON)
 		MSG_WriteByte (&host_client->message, ent->v.weapon);
 	if (sc1 & SC1_BLUEMANA)
@@ -1546,25 +1563,25 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	if (sc2 & SC2_RINGS_LOW)
 		MSG_WriteFloat (&host_client->message, ent->v.rings_low);
 	if (sc2 & SC2_AMULET)
-		MSG_WriteByte(&host_client->message, ent->v.armor_amulet);
+		MSG_WriteByte (&host_client->message, ent->v.armor_amulet);
 	if (sc2 & SC2_BRACER)
-		MSG_WriteByte(&host_client->message, ent->v.armor_bracer);
+		MSG_WriteByte (&host_client->message, ent->v.armor_bracer);
 	if (sc2 & SC2_BREASTPLATE)
-		MSG_WriteByte(&host_client->message, ent->v.armor_breastplate);
+		MSG_WriteByte (&host_client->message, ent->v.armor_breastplate);
 	if (sc2 & SC2_HELMET)
-		MSG_WriteByte(&host_client->message, ent->v.armor_helmet);
+		MSG_WriteByte (&host_client->message, ent->v.armor_helmet);
 	if (sc2 & SC2_FLIGHT_T)
-		MSG_WriteByte(&host_client->message, ent->v.ring_flight);
+		MSG_WriteByte (&host_client->message, ent->v.ring_flight);
 	if (sc2 & SC2_WATER_T)
-		MSG_WriteByte(&host_client->message, ent->v.ring_water);
+		MSG_WriteByte (&host_client->message, ent->v.ring_water);
 	if (sc2 & SC2_TURNING_T)
-		MSG_WriteByte(&host_client->message, ent->v.ring_turning);
+		MSG_WriteByte (&host_client->message, ent->v.ring_turning);
 	if (sc2 & SC2_REGEN_T)
-		MSG_WriteByte(&host_client->message, ent->v.ring_regeneration);
+		MSG_WriteByte (&host_client->message, ent->v.ring_regeneration);
 	if (sc2 & SC2_HASTE_T)
-		MSG_WriteFloat(&host_client->message, ent->v.haste_time);
+		MSG_WriteFloat (&host_client->message, ent->v.haste_time);
 	if (sc2 & SC2_TOME_T)
-		MSG_WriteFloat(&host_client->message, ent->v.tome_time);
+		MSG_WriteFloat (&host_client->message, ent->v.tome_time);
 	if (sc2 & SC2_PUZZLE1)
 		MSG_WriteString (&host_client->message, PR_GetString(ent->v.puzzle_inv1));
 	if (sc2 & SC2_PUZZLE2)
@@ -1582,11 +1599,11 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	if (sc2 & SC2_PUZZLE8)
 		MSG_WriteString (&host_client->message, PR_GetString(ent->v.puzzle_inv8));
 	if (sc2 & SC2_MAXHEALTH)
-		MSG_WriteShort(&host_client->message, ent->v.max_health);
+		MSG_WriteShort (&host_client->message, ent->v.max_health);
 	if (sc2 & SC2_MAXMANA)
-		MSG_WriteByte(&host_client->message, ent->v.max_mana);
+		MSG_WriteByte (&host_client->message, ent->v.max_mana);
 	if (sc2 & SC2_FLAGS)
-		MSG_WriteFloat(&host_client->message, ent->v.flags);
+		MSG_WriteFloat (&host_client->message, ent->v.flags);
 
 // mission pack, objectives
 	if (sv.protocol > PROTOCOL_RAVEN_111)
@@ -1604,7 +1621,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	}
 
 end:
-	memcpy(&client->old_v,&ent->v,sizeof(client->old_v));
+	memcpy (&client->old_v,&ent->v,sizeof(client->old_v));
 }
 
 /*
@@ -1788,8 +1805,7 @@ void SV_SendClientMessages (void)
 				SV_DropClient (false);	// went to another level
 			else
 			{
-				if (NET_SendMessage (host_client->netconnection
-				, &host_client->message) == -1)
+				if (NET_SendMessage (host_client->netconnection, &host_client->message) == -1)
 					SV_DropClient (true);	// if the message couldn't send, kick off
 				SZ_Clear (&host_client->message);
 				host_client->last_message = realtime;
@@ -1797,7 +1813,6 @@ void SV_SendClientMessages (void)
 			}
 		}
 	}
-	
 	
 // clear muzzle flashes
 	SV_CleanupEnts ();
@@ -1826,8 +1841,11 @@ int SV_ModelIndex (char *name)
 		return 0;
 
 	for (i=0 ; i<MAX_MODELS && sv.model_precache[i] ; i++)
+	{
 		if (!strcmp(sv.model_precache[i], name))
 			return i;
+	}
+	
 	if (i==MAX_MODELS || !sv.model_precache[i])
 	{
 		Con_Printf("SV_ModelIndex: model %s not precached\n", name);
@@ -1879,7 +1897,7 @@ void SV_CreateBaseline (void)
 			svent->baseline.modelindex =
 				SV_ModelIndex(PR_GetString(svent->v.model));
 		}
-		memset(svent->baseline.ClearCount,99,sizeof(svent->baseline.ClearCount));
+		memset (svent->baseline.ClearCount,99,sizeof(svent->baseline.ClearCount));
 		
 	//
 	// add to the message
@@ -1912,7 +1930,7 @@ Tell all the clients that the server is changing levels
 */
 void SV_SendReconnect (void)
 {
-	char	data[128];
+	byte	data[128];
 	sizebuf_t	msg;
 
 	msg.data = data;
@@ -2008,7 +2026,6 @@ void SV_SpawnServer (char *server, char *startspot)
 // set up the new server
 //
 	Host_ClearMemory ();
-
 	//memset (&sv, 0, sizeof(sv));
 
 	strcpy (sv.name, server);
@@ -2035,14 +2052,14 @@ void SV_SpawnServer (char *server, char *startspot)
 	D_ShowLoadingSize();
 
 // allocate server memory
-	memset(sv.Effects,0,sizeof(sv.Effects));
+	/* Host_ClearMemory() called above already cleared the whole sv structure */
+//	memset(sv.Effects,0,sizeof(sv.Effects));
 
-	sv.states = Hunk_AllocName (svs.maxclients * sizeof(client_state2_t), "states");
+	sv.states = (client_state2_t *) Hunk_AllocName (svs.maxclients * sizeof(client_state2_t), "states");
 	memset(sv.states,0,svs.maxclients * sizeof(client_state2_t));
 
 	sv.max_edicts = MAX_EDICTS;
-	
-	sv.edicts = Hunk_AllocName (sv.max_edicts*pr_edict_size, "edicts");
+	sv.edicts = (edict_t *) Hunk_AllocName (sv.max_edicts*pr_edict_size, "edicts");
 
 	sv.datagram.maxsize = sizeof(sv.datagram_buf);
 	sv.datagram.cursize = 0;
@@ -2166,8 +2183,10 @@ void SV_SpawnServer (char *server, char *startspot)
 
 // send serverinfo to all connected clients
 	for (i=0,host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
+	{
 		if (host_client->active)
 			SV_SendServerinfo (host_client);
+	}
 
 	svs.changelevel_issued = false;		// now safe to issue another
 	
