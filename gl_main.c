@@ -700,6 +700,8 @@ void R_DrawAliasModel (entity_t *e)
 			lightcolor[1] += add / 3.0f;
 			lightcolor[2] += add / 3.0f;
 		}
+		
+		cl.light_level = (lightcolor[0] + lightcolor[1] + lightcolor[2]) / 3;
 	}
 
 	if (client_no >= 1 && client_no <= cl.maxclients)
