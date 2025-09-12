@@ -47,6 +47,19 @@ void Host_Quit_f (void)
 }
 
 /*
+==================
+Host_Sys_Error_f
+
+Just throw a system error to
+test error shutdown procedures
+==================
+*/
+void Host_Sys_Error_f (void)
+{
+    Sys_Error (Cmd_Argv(1));
+}
+
+/*
 ===============================================================================
 
 	FILELIST MANAGEMENT
@@ -2660,6 +2673,8 @@ void Host_InitCommands (void)
 	Cmd_AddCommand ("mcache", Mod_Print);
 
 	Cmd_AddCommand ("create", Host_Create_f);
+
+	Cmd_AddCommand ("error", Host_Sys_Error_f); // error console command
 }
 
 /*
