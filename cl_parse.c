@@ -963,12 +963,48 @@ CL_NewTranslation
 */
 void CL_NewTranslation (int slot)
 {
+	int		i, j;
+	int		top, bottom;
+	byte	*dest, *source, *sourceA, *sourceB, *colorA, *colorB;
+	
 	if (slot > cl.maxclients)
-		Sys_Error ("CL_NewTranslation: slot > cl.maxclients");
+		Host_Error ("CL_NewTranslation: invalid slot (%d, max = %d)", slot, cl.maxclients);
 	if (!cl.scores[slot].playerclass)
 		return;
 
 	R_TranslatePlayerSkin (slot);
+
+	dest = cl.scores[slot].translations;
+	source = vid.colormap;
+	memcpy (dest, vid.colormap, sizeof(cl.scores[slot].translations));
+	top = (cl.scores[slot].colors & 0xf0) >> 4;
+	bottom = (cl.scores[slot].colors & 15);
+
+	if (top > 11 || bottom > 11)
+		Con_Printf ("Invalid Player Color: %d,%d\n", top, bottom);
+	if (top > 10)
+		top = 0;
+	if (bottom > 10)
+		bottom = 0;
+
+	top -= 1;
+	bottom -= 1;
+
+//	Con_Printf ("Class is %d for slot %d\n",(int)cl.scores[slot].playerclass,slot);
+	for (i=0 ; i<VID_GRADES ; i++, dest += 256, source+=256)
+	{
+		colorA = playerTranslation + 256 + color_offsets[(int)cl.scores[slot].playerclass-1];
+		colorB = colorA + 256;
+		sourceA = colorB + 256 + (top * 256);
+		sourceB = colorB + 256 + (bottom * 256);
+		for(j=0;j<256;j++,colorA++,colorB++,sourceA++,sourceB++)
+		{
+			if (top >= 0 && (*colorA != 255)) 
+				dest[j] = source[*sourceA];
+			if (bottom >= 0 && (*colorB != 255)) 
+				dest[j] = source[*sourceB];
+		}
+	}
 }
 
 /*
