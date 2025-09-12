@@ -917,9 +917,9 @@ void Host_Init (void)
 	Con_Printf ("Host initialized\n");
 
 	if (cls.state == ca_dedicated)
-		Con_Printf ("\n****** fxHexen II initialized ******\n\n");
+		Con_Printf ("\n****** Hexen II initialized ******\n\n");
 	else
-		Con_Printf ("\n\35\36\36\36\36\37 fxHexen II initialized \35\36\36\36\36\37\n\n");
+		Con_Printf ("\n\35\36\36\36\36\37 Hexen II initialized \35\36\36\36\36\37\n\n");
 
 	if (cls.state != ca_dedicated)
 	{
