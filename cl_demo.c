@@ -256,7 +256,7 @@ int CL_GetMessage (void)
 			char *ch = (char *) (demo_head[0] + demo_head_size[0]);
 
 			*ch++ = svc_print;
-			ch += 1 + sprintf (ch, "\nRecorded on fxQuake %4.2f\n\n", (float)VERSION);
+			ch += 1 + sprintf (ch, "\nRecorded on fxHexen2 %4.2f\n\n", (float)VERSION);
 			demo_head_size[0] = ch - (char *) demo_head[0];
 		}
 	}

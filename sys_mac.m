@@ -312,7 +312,7 @@ void Sys_Error (char *error, ...)
 	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
     
-    Con_Printf ("Quake Error: %s\n", string); // write to console log as well
+    Con_Printf ("Hexen II Error: %s\n", string); // write to console log as well
     
     if (cls.state == ca_dedicated && host_initialized)
     {
@@ -344,12 +344,12 @@ void Sys_Error (char *error, ...)
             in_sys_error1 = 1;
 
             if (!NoMsgBox)
-				NSRunCriticalAlertPanel(@"Quake Error", @"%@", @"OK", nil, nil, msg);
+				NSRunCriticalAlertPanel(@"Hexen II Error", @"%@", @"OK", nil, nil, msg);
         }
         else
         {
             if (!NoMsgBox)
-				NSRunCriticalAlertPanel(@"Double Quake Error", @"%@", @"OK", nil, nil, msg);
+				NSRunCriticalAlertPanel(@"Double Hexen II Error", @"%@", @"OK", nil, nil, msg);
         }
 
         block_drawing = false; // Make sure to restore
