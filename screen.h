@@ -52,6 +52,7 @@ extern	float		scr_centertime_off;
 
 extern	cvar_t		scr_viewsize;
 extern	cvar_t		scr_weaponsize;
+extern	cvar_t		scr_showloading;
 
 extern qboolean		block_drawing;
 

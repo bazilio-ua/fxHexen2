@@ -90,6 +90,7 @@ cvar_t		scr_showturtle = {"showturtle","0", CVAR_NONE};
 cvar_t		scr_showpause = {"showpause","1", CVAR_NONE};
 cvar_t		scr_printspeed = {"scr_printspeed","8", CVAR_NONE};
 cvar_t		gl_triplebuffer = {"gl_triplebuffer", "1", CVAR_ARCHIVE};
+cvar_t		scr_showloading = {"scr_showloading", "1", CVAR_ARCHIVE}; // loading plaque
 
 qboolean	scr_initialized;		// ready to draw
 
@@ -528,6 +529,7 @@ void SCR_Init (void)
 	Cvar_RegisterVariable (&scr_centertime);
 	Cvar_RegisterVariable (&scr_printspeed);
 	Cvar_RegisterVariable (&gl_triplebuffer);
+	Cvar_RegisterVariable (&scr_showloading);
 
 	scr_initialized = true;
 	Con_Printf ("Screen initialized\n");
@@ -784,52 +786,51 @@ SCR_DrawLoading
 */
 void SCR_DrawLoading (void)
 {
-#ifdef RELEASE
 	int		size, count, offset;
 	qpic_t	*pic;
-
+	
+	if (!scr_showloading.value)
+		return;
+	
 	if (!scr_drawloading && loading_stage == 0)
 		return;
-		
-		pic = Draw_CachePic ("gfx/menu/loading.lmp");
-		offset = (vid.width - pic->width)/2;
-		Draw_TransPic (offset , 0, pic);
-
+	
+	pic = Draw_CachePic ("gfx/menu/loading.lmp");
+	offset = (vid.width - pic->width)/2;
+	Draw_TransPic (offset , 0, pic);
+	
 	if (loading_stage == 0)
 		return;
-
+	
 	if (total_loading_size)
 		size = current_loading_size * 106 / total_loading_size;
 	else
 		size = 0;
-
+	
 	offset += 42; //HoT
-		
+	
 	if (loading_stage == 1)
 		count = size;
 	else
 		count = 106;
-
-	if (count) 
+	
+	if (count)
 	{
-/**/
 		Draw_Fill (offset, 87+0, count, 1, 136);
 		Draw_Fill (offset, 87+1, count, 4, 138);
-		Draw_Fill (offset, 87+5, count, 1, 136); 
+		Draw_Fill (offset, 87+5, count, 1, 136);
 	}
 	if (loading_stage == 2)
 		count = size;
 	else
 		count = 0;
-
-	if (count) 
+	
+	if (count)
 	{
-/**/
 		Draw_Fill (offset, 97+0, count, 1, 168);
 		Draw_Fill (offset, 97+1, count, 4, 170);
-		Draw_Fill (offset, 97+5, count, 1, 168); 
+		Draw_Fill (offset, 97+5, count, 1, 168);
 	}
-#endif
 }
 
 //=============================================================================

@@ -1168,29 +1168,29 @@ void Draw_EndDisc (void)
 
 void D_ShowLoadingSize (void)
 {
-#ifdef RELEASE
 	int cur_perc;
-	static int prev_perc; 
+	static int prev_perc;
+	
+	if (!scr_showloading.value)
+		return;
 	
 	if (cls.state == ca_dedicated)
 		return;				// stdout only
-
+	
 	//HoT speedup loading progress
 	cur_perc = loading_stage * 100;
 	if (total_loading_size)
 		cur_perc += current_loading_size * 100 / total_loading_size;
 	if (cur_perc == prev_perc)
 		return;
-	prev_perc = cur_perc; 
-
-	glDrawBuffer  (GL_FRONT);
-
+	prev_perc = cur_perc;
+	
+	glDrawBuffer (GL_FRONT);
+	
 	SCR_DrawLoading();
-
-	glFlush(); //EER1 this is cause very slow map loading, but show loading plaque (updating server/client progress) correctly
-//	glFinish();
-
-	glDrawBuffer  (GL_BACK);
-#endif
+	
+	glFlush (); //EER1 this is cause very slow map loading, but show loading plaque (updating server/client progress) correctly
+	
+	glDrawBuffer (GL_BACK);
 }
 
