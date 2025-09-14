@@ -32,7 +32,7 @@ byte		*draw_menufont; 			// Big Menu Font
 qpic_t		*draw_disc[MAX_DISC] = { NULL }; // make the first one null for sure
 qpic_t		*draw_backtile;
 
-gltexture_t			*translate_texture[MAX_PLAYER_CLASS];
+//gltexture_t			*translate_texture[MAX_PLAYER_CLASS];
 gltexture_t			*char_texture;
 gltexture_t			*char_smalltexture;
 gltexture_t			*char_menufonttexture;
