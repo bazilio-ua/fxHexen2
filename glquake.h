@@ -44,6 +44,7 @@ extern unsigned int d_8to24table_nobright[256];
 extern unsigned int d_8to24table_nobright_holey[256];
 extern unsigned int d_8to24table_conchars[256];
 extern unsigned int d_8to24TranslucentTable[256];
+extern float RTint[256],GTint[256],BTint[256];
 
 extern unsigned int is_fullbright[256/32];
 
@@ -249,6 +250,7 @@ typedef struct gltexture_s {
 	
 	signed char			top_color;					// 0-13 top color, or -1 if never colormapped
 	signed char			bottom_color;				// 0-13 bottom color, or -1 if never colormapped
+	signed char			playerclass;
 	
 	flatcolors_t		colors;
 } gltexture_t;
@@ -366,7 +368,7 @@ void TexMgr_FreeTexture (gltexture_t *texture);
 void TexMgr_FreeTextures (unsigned int flags, unsigned int mask);
 void TexMgr_FreeTexturesForOwner (model_t *owner);
 void TexMgr_ReloadTexture (gltexture_t *glt);
-void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom);
+void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom, int playerclass);
 void TexMgr_ReloadTextures (void);
 void TexMgr_DeleteTextures (void);
 void TexMgr_GenerateTextures (void);
@@ -487,6 +489,8 @@ extern int	indexed_bytes;
 extern int	rgba_bytes;
 extern int	lightmap_bytes;
 
+extern byte *playerTranslation;
+
 #define MAX_EXTRA_TEXTURES 156   // 255-100+1
 extern gltexture_t			*gl_extra_textures[MAX_EXTRA_TEXTURES];   // generic textures for models
 
@@ -576,9 +580,4 @@ extern	cvar_t	gl_bloomintensity;
 extern	cvar_t	gl_bloomdiamondsize;
 extern	cvar_t	gl_bloomsamplesize;
 extern	cvar_t	gl_bloomfastsample;
-
-
-//tmp here
-extern float RTint[256],GTint[256],BTint[256];
-extern byte *playerTranslation;
 

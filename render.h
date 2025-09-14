@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	MAXCLIPPLANES	11
 
+// not used in H2
 #define	TOP_RANGE		16			// soldier uniform colors
 #define	BOTTOM_RANGE	96
 

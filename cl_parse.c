@@ -982,10 +982,9 @@ void CL_NewTranslation (int slot)
 
 	if (top > 11 || bottom > 11)
 		Con_Printf ("Invalid Player Color: %d,%d\n", top, bottom);
-	if (top > 10)
-		top = 0;
-	if (bottom > 10)
-		bottom = 0;
+
+	if (top > 10) top = 0;
+	if (bottom > 10) bottom = 0;
 
 	top -= 1;
 	bottom -= 1;

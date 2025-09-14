@@ -16,7 +16,8 @@ void Draw_IntermissionPic (qpic_t *pic);
 void Draw_PicCropped(int x, int y, qpic_t *pic);
 void Draw_TransPic (int x, int y, qpic_t *pic);
 void Draw_TransPicCropped(int x, int y, qpic_t *pic);
-void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation);
+//void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation);
+void Draw_TransPicTranslate (int x, int y, qpic_t *pic, int top, int bottom, int playerclass); //johnfitz -- more parameters
 void Draw_ConsoleBackground (int lines);
 void Draw_BeginDisc (void);
 void Draw_EndDisc (void);

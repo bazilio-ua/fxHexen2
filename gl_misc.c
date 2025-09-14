@@ -218,12 +218,6 @@ void R_Init (void)
 
 	R_InitPlayerTextures ();
 
-
-	playerTranslation = (byte *)COM_LoadHunkFile ("gfx/player.lmp", NULL);
-	if (!playerTranslation)
-		Sys_Error ("Couldn't load gfx/player.lmp");
-
-
 	R_InitSkyBoxTextures ();
 
 	R_InitBloomTextures();
@@ -243,6 +237,10 @@ void R_InitPlayerTextures (void)
 	// clear playertexture pointers (the textures themselves were freed by texmgr_newgame)
 	for (i = 0; i < MAX_SCOREBOARD; i++)
 		playertextures[i] = NULL;
+	
+	playerTranslation = (byte *)COM_LoadHunkFile ("gfx/player.lmp", NULL);
+	if (!playerTranslation)
+		Sys_Error ("Couldn't load gfx/player.lmp");
 }
 
 /*
@@ -263,7 +261,7 @@ void R_TranslatePlayerSkin (int playernum)
 	playerclass = (int)cl.scores[playernum].playerclass;
 
 	if (playertextures[playernum])
-		TexMgr_ReloadTextureTranslation (playertextures[playernum], top, bottom);
+		TexMgr_ReloadTextureTranslation (playertextures[playernum], top, bottom, playerclass);
 }
 
 /*

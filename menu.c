@@ -228,40 +228,42 @@ void M_DrawTransPicCropped (int x, int y, qpic_t *pic)
 	Draw_TransPicCropped (x + ((vid.width - 320)>>1), y, pic);
 }
 
-byte identityTable[256];
-byte translationTable[256];
+//byte identityTable[256];
+//byte translationTable[256];
 
-void M_BuildTranslationTable(int top, int bottom)
+//void M_BuildTranslationTable(int top, int bottom)
+//{
+//	int		j;
+//	byte	*dest, *source, *sourceA, *sourceB, *colorA, *colorB;
+//
+//	for (j = 0; j < 256; j++)
+//		identityTable[j] = j;
+//	dest = translationTable;
+//	source = identityTable;
+//	memcpy (dest, source, 256);
+//
+//	top -= 1;
+//	bottom -= 1;
+//
+//	colorA = playerTranslation + 256 + color_offsets[(int)setup_class-1];
+//	colorB = colorA + 256;
+//	sourceA = colorB + 256 + (top * 256);
+//	sourceB = colorB + 256 + (bottom * 256);
+//	for(j=0;j<256;j++,colorA++,colorB++,sourceA++,sourceB++)
+//	{
+//		if (top >= 0 && (*colorA != 255)) 
+//			dest[j] = source[*sourceA];
+//		if (bottom >= 0 && (*colorB != 255)) 
+//			dest[j] = source[*sourceB];
+//	}
+//}
+
+
+void M_DrawTransPicTranslate (int x, int y, qpic_t *pic, int top, int bottom, int playerclass) //johnfitz -- more parameters
+//void M_DrawTransPicTranslate (int x, int y, qpic_t *pic)
 {
-	int		j;
-	byte	*dest, *source, *sourceA, *sourceB, *colorA, *colorB;
-
-	for (j = 0; j < 256; j++)
-		identityTable[j] = j;
-	dest = translationTable;
-	source = identityTable;
-	memcpy (dest, source, 256);
-
-	top -= 1;
-	bottom -= 1;
-
-	colorA = playerTranslation + 256 + color_offsets[(int)setup_class-1];
-	colorB = colorA + 256;
-	sourceA = colorB + 256 + (top * 256);
-	sourceB = colorB + 256 + (bottom * 256);
-	for(j=0;j<256;j++,colorA++,colorB++,sourceA++,sourceB++)
-	{
-		if (top >= 0 && (*colorA != 255)) 
-			dest[j] = source[*sourceA];
-		if (bottom >= 0 && (*colorB != 255)) 
-			dest[j] = source[*sourceB];
-	}
-}
-
-
-void M_DrawTransPicTranslate (int x, int y, qpic_t *pic)
-{
-	Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
+//	Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, translationTable);
+	Draw_TransPicTranslate (x + ((vid.width - 320)>>1), y, pic, top, bottom, playerclass);
 }
 
 
@@ -1475,9 +1477,10 @@ void M_Setup_Draw (void)
 	M_Print (64, 176, "Accept Changes");
 
 	p = Draw_CachePic (va("gfx/menu/netp%i.lmp", setup_class));
-	M_BuildTranslationTable(setup_top, setup_bottom);
+//	M_BuildTranslationTable(setup_top, setup_bottom);
 	/* garymct */
-	M_DrawTransPicTranslate (212, 92, p);
+//	M_DrawTransPicTranslate (212, 92, p);
+	M_DrawTransPicTranslate (212, 92, p, setup_top, setup_bottom, setup_class);
 
 	M_DrawCharacter (48, setup_cursor_table [setup_cursor], 12+((int)(realtime*4)&1));
 

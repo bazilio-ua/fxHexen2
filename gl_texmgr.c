@@ -2029,7 +2029,7 @@ void TexMgr_GenerateTextures (void)
 	for (glt = active_gltextures; glt; glt = glt->next)
 	{
 		glGenTextures(1, &glt->texnum);
-		TexMgr_ReloadTextureTranslation (glt, -1, -1);
+		TexMgr_ReloadTextureTranslation (glt, -1, -1, -1);
 	}
 	
 	in_reload_textures = false;
@@ -2102,6 +2102,7 @@ gltexture_t *TexMgr_LoadTexture (model_t *owner, char *name, int width, int heig
 	glt->source_crc = crc;
 	glt->top_color = -1;
 	glt->bottom_color = -1;
+	glt->playerclass = -1;
 	memset (&glt->colors, 0, sizeof(glt->colors));
 
 	//upload it
@@ -2138,13 +2139,14 @@ reloads a texture, and colormaps it if needed
 */
 void TexMgr_ReloadTexture (gltexture_t *glt)
 {
-	TexMgr_ReloadTextureTranslation (glt, -1, -1);
+	TexMgr_ReloadTextureTranslation (glt, -1, -1, -1);
 }
 
-void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom)
+void TexMgr_ReloadTextureTranslation (gltexture_t *glt, int top, int bottom, int playerclass)
 {
 	byte	translation[256];
 	byte	*src, *dst, *data = NULL, *translated;
+	byte	*sourceA, *sourceB, *colorA, *colorB;
 	int	mark, size, i;
 	
 //
@@ -2211,22 +2213,25 @@ retry:
 //
 // if top and bottom are -1,-1, use existing top and bottom colors
 // if existing top and bottom colors are -1,-1, don't bother colormapping
-	if (top > -1 && bottom > -1)
+	if (top > -1 && bottom > -1 && playerclass > -1)
 	{
 		if (glt->source_format == SRC_INDEXED)
 		{
 			glt->top_color = top;
 			glt->bottom_color = bottom;
+			glt->playerclass = playerclass;
 		}
 		else
 			Con_Printf ("TexMgr_ReloadTexture: can't colormap a non SRC_INDEXED texture: %s\n", glt->name);
 	}
-	if (glt->top_color > -1 && glt->bottom_color > -1)
+	if (glt->top_color > -1 && glt->bottom_color > -1 && glt->playerclass > -1)
 	{
 		//create new translation table
 		for (i = 0; i < 256; i++)
 			translation[i] = i;
-		
+	
+
+/*
 		top = glt->top_color * 16;
 		if (top < 128)	// the artists made some backwards ranges.  sigh.
 		{
@@ -2250,6 +2255,36 @@ retry:
 			for (i = 0; i < 16; i++)
 				translation[BOTTOM_RANGE+i] = bottom+15-i;
 		}
+*/
+	
+
+
+
+		top = glt->top_color;
+		bottom = glt->bottom_color;
+		playerclass = glt->playerclass;
+
+		
+		if (top > 10) top = 0;
+		if (bottom > 10) bottom = 0;
+
+		top -= 1;
+		bottom -= 1;
+
+		colorA = playerTranslation + 256 + color_offsets[playerclass-1];
+		colorB = colorA + 256;
+		sourceA = colorB + 256 + (top * 256);
+		sourceB = colorB + 256 + (bottom * 256);
+		for(i=0;i<256;i++,colorA++,colorB++,sourceA++,sourceB++)
+		{
+			if (top >= 0 && (*colorA != 255))
+				translation[i] = *sourceA;
+			if (bottom >= 0 && (*colorB != 255))
+				translation[i] = *sourceB;
+		}
+
+
+
 		
 		//translate texture
 		size = glt->width * glt->height;

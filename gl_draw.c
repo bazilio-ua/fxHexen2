@@ -129,12 +129,12 @@ int			menu_numcachepics;
 /*
  * Geometry for the player/skin selection screen image.
  */
-#define PLAYER_PIC_WIDTH 68
-#define PLAYER_PIC_HEIGHT 114
-#define PLAYER_DEST_WIDTH 128
-#define PLAYER_DEST_HEIGHT 128
+//#define PLAYER_PIC_WIDTH 68
+//#define PLAYER_PIC_HEIGHT 114
+//#define PLAYER_DEST_WIDTH 128
+//#define PLAYER_DEST_HEIGHT 128
 
-byte		menuplyr_pixels[MAX_PLAYER_CLASS][PLAYER_PIC_WIDTH*PLAYER_PIC_HEIGHT];
+//byte		menuplyr_pixels[MAX_PLAYER_CLASS][PLAYER_PIC_WIDTH*PLAYER_PIC_HEIGHT];
 
 
 qpic_t *Draw_PicFromWad (char *name)
@@ -247,16 +247,16 @@ qpic_t	*Draw_CachePic (char *path)
 	// the translatable player picture just for the menu
 	// configuration dialog
 	/* garymct */
-	if (!strcmp (path, "gfx/menu/netp1.lmp"))
-		memcpy (menuplyr_pixels[0], p->data, p->width*p->height);
-	else if (!strcmp (path, "gfx/menu/netp2.lmp"))
-		memcpy (menuplyr_pixels[1], p->data, p->width*p->height);
-	else if (!strcmp (path, "gfx/menu/netp3.lmp"))
-		memcpy (menuplyr_pixels[2], p->data, p->width*p->height);
-	else if (!strcmp (path, "gfx/menu/netp4.lmp"))
-		memcpy (menuplyr_pixels[3], p->data, p->width*p->height);
-	else if (!strcmp (path, "gfx/menu/netp5.lmp"))
-		memcpy (menuplyr_pixels[4], p->data, p->width*p->height);
+//	if (!strcmp (path, "gfx/menu/netp1.lmp"))
+//		memcpy (menuplyr_pixels[0], p->data, p->width*p->height);
+//	else if (!strcmp (path, "gfx/menu/netp2.lmp"))
+//		memcpy (menuplyr_pixels[1], p->data, p->width*p->height);
+//	else if (!strcmp (path, "gfx/menu/netp3.lmp"))
+//		memcpy (menuplyr_pixels[2], p->data, p->width*p->height);
+//	else if (!strcmp (path, "gfx/menu/netp4.lmp"))
+//		memcpy (menuplyr_pixels[3], p->data, p->width*p->height);
+//	else if (!strcmp (path, "gfx/menu/netp5.lmp"))
+//		memcpy (menuplyr_pixels[4], p->data, p->width*p->height);
 
 	cpic->pic.width = p->width;
 	cpic->pic.height = p->height;
@@ -341,17 +341,10 @@ void Draw_LoadPics (void)
 	//
 	// load console charset
 	//
-	// load the console background and the charset
-	// by hand, because we need to write the version
-	// string into the background before turning
-	// it into a texture
 	//draw_chars = W_GetLumpName ("conchars");
 	sprintf (texturepath, "%s", "gfx/menu/conchars.lmp"); // EER1
 	draw_chars = COM_LoadHunkFile (texturepath, NULL);
-/*	for (i=0 ; i<256*128 ; i++)
-		if (draw_chars[i] == 0)
-			draw_chars[i] = 255;	// proper transparent color
-*/
+
 	if (!draw_chars)
 		Sys_Error ("Draw_LoadPics: couldn't load conchars");
 
@@ -364,10 +357,7 @@ void Draw_LoadPics (void)
 	// load sbar small font
 	//
 	draw_smallchars = W_GetLumpName("tinyfont");
-/*	for (i=0 ; i<128*32 ; i++)
-		if (draw_smallchars[i] == 0)
-			draw_smallchars[i] = 255;	// proper transparent color
-*/
+
 	if (!draw_smallchars)
 		Sys_Error ("Draw_LoadPics: couldn't load tinyfont");
 
@@ -381,12 +371,13 @@ void Draw_LoadPics (void)
 	// load menu big font
 	//
 	sprintf (texturepath, "%s", "gfx/menu/bigfont2.lmp"); // EER1 "menufont"
-//	mf = (qpic_t *)COM_LoadTempFile("gfx/menu/bigfont.lmp", NULL);
 	mf = (qpic_t *)COM_LoadTempFile(texturepath, NULL);
-/*	for (i=0 ; i<160*80 ; i++)
-		if (mf->data[i] == 0)
-			mf->data[i] = 255;	// proper transparent color
-*/
+	if (!mf)
+	{	// old version of demo has bigfont.lmp, not bigfont2.lmp
+		sprintf (texturepath, "%s", "gfx/menu/bigfont.lmp"); // EER1 "menufont"
+		mf = (qpic_t *)COM_LoadTempFile(texturepath, NULL);
+	}
+
 	if (!mf)
 		Sys_Error ("Draw_LoadPics: couldn't load menufont");
 
@@ -398,11 +389,9 @@ void Draw_LoadPics (void)
 	// get the other pics we need
 	//
 //	draw_disc = Draw_PicFromWad ("disc");
-	// Do this backwards so we don't try and draw the 
-	// skull as we are loading
 	block_drawing = true;
 	for(i=MAX_DISC-1 ; i>=0 ; i--)
-	{
+	{	// Do this backwards so we don't try and draw the skull as we are loading
 		sprintf(texturepath, "gfx/menu/skull%d.lmp", i);
 		draw_disc[i] = Draw_PicFromFile (texturepath, draw_disc[i]);
 	}
@@ -931,49 +920,66 @@ void Draw_TransPic (int x, int y, qpic_t *pic)
 =============
 Draw_TransPicTranslate
 
+-- johnfitz -- rewritten to use texmgr to do translation
 Only used for the player color selection menu
 =============
 */
-void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
+//void Draw_TransPicTranslate (int x, int y, qpic_t *pic, byte *translation)
+void Draw_TransPicTranslate (int x, int y, qpic_t *pic, int top, int bottom, int playerclass)
 {
-	byte		trans[PLAYER_DEST_WIDTH * PLAYER_DEST_HEIGHT];
-	byte			*src, *dst;
-	byte	*data;
-	char	name[64];
-	int i, j;
-
-
-	data = menuplyr_pixels[setup_class-1];
-	sprintf (name, "gfx/menu/netp%d.lmp", setup_class);
-
-	dst = trans;
-	src = data;
-
-	for( i = 0; i < PLAYER_PIC_WIDTH; i++ )
+	static int oldtop = -2;
+	static int oldbottom = -2;
+	static int oldplayerclass = -2;
+	
+	if (top != oldtop || bottom != oldbottom || playerclass != oldplayerclass)
 	{
-		for( j = 0; j < PLAYER_PIC_HEIGHT; j++ )
-		{
-			dst[j * PLAYER_DEST_WIDTH + i] = translation[src[j * PLAYER_PIC_WIDTH + i]];
-		}
+		glpic_t *glp = (glpic_t *)pic->data;
+		gltexture_t *glt = glp->gltexture;
+		oldtop = top;
+		oldbottom = bottom;
+		oldplayerclass = playerclass;
+		TexMgr_ReloadTextureTranslation (glt, top, bottom, playerclass);
 	}
+	Draw_Pic (x, y, pic);
 
-	data = trans;
-
-
-	translate_texture[setup_class-1] = TexMgr_LoadTexture (NULL, name, PLAYER_DEST_WIDTH, PLAYER_DEST_HEIGHT, SRC_INDEXED, data, "", (uintptr_t)data, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP);
-
-
-	glColor3f (1,1,1);
-	glBegin (GL_QUADS);
-	glTexCoord2f (0, 0);
-	glVertex2f (x, y);
-	glTexCoord2f (( float )PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, 0);
-	glVertex2f (x+pic->width, y);
-	glTexCoord2f (( float )PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, ( float )PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
-	glVertex2f (x+pic->width, y+pic->height);
-	glTexCoord2f (0, ( float )PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
-	glVertex2f (x, y+pic->height);
-	glEnd ();
+//	byte		trans[PLAYER_DEST_WIDTH * PLAYER_DEST_HEIGHT];
+//	byte			*src, *dst;
+//	byte	*data;
+//	char	name[64];
+//	int i, j;
+//
+//
+//	data = menuplyr_pixels[setup_class-1];
+//	sprintf (name, "gfx/menu/netp%d.lmp", setup_class);
+//
+//	dst = trans;
+//	src = data;
+//
+//	for( i = 0; i < PLAYER_PIC_WIDTH; i++ )
+//	{
+//		for( j = 0; j < PLAYER_PIC_HEIGHT; j++ )
+//		{
+//			dst[j * PLAYER_DEST_WIDTH + i] = translation[src[j * PLAYER_PIC_WIDTH + i]];
+//		}
+//	}
+//
+//	data = trans;
+//
+//
+//	translate_texture[setup_class-1] = TexMgr_LoadTexture (NULL, name, PLAYER_DEST_WIDTH, PLAYER_DEST_HEIGHT, SRC_INDEXED, data, "", (uintptr_t)data, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP);
+//
+//
+//	glColor3f (1,1,1);
+//	glBegin (GL_QUADS);
+//	glTexCoord2f (0, 0);
+//	glVertex2f (x, y);
+//	glTexCoord2f (( float )PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, 0);
+//	glVertex2f (x+pic->width, y);
+//	glTexCoord2f (( float )PLAYER_PIC_WIDTH / PLAYER_DEST_WIDTH, ( float )PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
+//	glVertex2f (x+pic->width, y+pic->height);
+//	glTexCoord2f (0, ( float )PLAYER_PIC_HEIGHT / PLAYER_DEST_HEIGHT);
+//	glVertex2f (x, y+pic->height);
+//	glEnd ();
 }
 
 
