@@ -65,7 +65,6 @@ qboolean SV_CheckBottom (edict_t *ent)
 // the corners must be within 16 of the midpoint
 	start[2] = mins[2] - 1;
 	for (x=0 ; x<2 ; x++)
-	{
 		for (y=0 ; y<2 ; y++)
 		{
 			if (x)
@@ -81,7 +80,7 @@ qboolean SV_CheckBottom (edict_t *ent)
 			if (SV_PointContents (start) != CONTENTS_SOLID)
 				goto realcheck;
 		}
-	}
+
 //	c_yes++;
 	return true;		// we got out easy
 
@@ -127,7 +126,6 @@ realcheck:	// check it for real...
 
 	// the corners must be within 16 of the midpoint	
 	for (x=0 ; x<2 ; x++)
-	{
 		for (y=0 ; y<2 ; y++)
 		{
 			//check 4 corners, in this order:
@@ -175,7 +173,6 @@ realcheck:	// check it for real...
 			if (trace.fraction == 1.0 || mid - trace.endpos[2] > STEPSIZE)
 				return false;
 		}
-	}
 
 //	c_yes++;
 	return true;
@@ -310,27 +307,19 @@ qboolean SV_movestep (edict_t *ent, vec3_t move, qboolean relink, qboolean noene
 	trace = SV_Move (neworg, ent->v.mins, ent->v.maxs, end, false, ent);
 
 	if (set_trace)
-	{
 		set_move_trace(&trace);
-	}
 
 	if (trace.allsolid)
-	{
 		return false;
-	}
 
 	if (trace.startsolid)
 	{
 		neworg[2] -= STEPSIZE;
 		trace = SV_Move (neworg, ent->v.mins, ent->v.maxs, end, false, ent);
 		if (set_trace)
-		{
 			set_move_trace(&trace);
-		}
 		if (trace.allsolid || trace.startsolid)
-		{
 			return false;
-		}
 	}
 	if (trace.fraction == 1)
 	{
