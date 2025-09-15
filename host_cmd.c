@@ -507,10 +507,24 @@ void Host_Map_f (void)
 	int		i;
 	char	name[MAX_QPATH];
 
-	if (Cmd_Argc()<2)	//no map name given
+	// Quakespasm: map with no parameter says name
+	if (Cmd_Argc() < 2)	//no map name given
 	{
-		Con_Printf ("map <levelname>: start a new server\nCurrently on: %s\n",cl.levelname);
-		Con_Printf ("%s\n",cls.mapstring);
+		if (cls.state == ca_dedicated)
+		{
+			if (sv.active)
+				Con_Printf ("Current map: %s\n", sv.name);
+			else
+				Con_Printf ("Server not active\n");
+		}
+		else if (cls.state == ca_connected)
+		{
+			Con_Printf ("Current map: %s ( %s )\n", cl.levelname, cl.worldname);
+		}
+		else
+		{
+			Con_Printf ("map <levelname>: start a new server\n");
+		}
 		return;
 	}
 

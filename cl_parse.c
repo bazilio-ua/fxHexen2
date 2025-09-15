@@ -323,6 +323,10 @@ void CL_ParseServerInfo (void)
 		S_TouchSound (str);
 	}
 
+	// Baker: maps/e1m1.bsp ---> e1m1
+	// We need this early for external vis to know if a model is worldmodel or not
+	COM_StripExtension (COM_SkipPath(model_precache[1]), cl.worldname);
+
 //
 // now we try to load everything else until a cache allocation fails
 //
