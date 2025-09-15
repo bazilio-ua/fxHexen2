@@ -1583,8 +1583,11 @@ byte *COM_LoadHunkFile (char *path, unsigned int *path_id)
 	return COM_LoadFile (path, LOADFILE_HUNK, path_id);
 }
 
-byte *COM_LoadZoneFile (char *path, unsigned int *path_id)
+byte *COM_LoadZoneFile (char *path, void *buffer, unsigned int *path_id)
 {
+	if (buffer)
+		Z_Free (buffer);
+
 	return COM_LoadFile (path, LOADFILE_ZONE, path_id);
 }
 

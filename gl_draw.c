@@ -28,7 +28,7 @@ cvar_t		scr_conalpha = {"scr_conalpha", "1", CVAR_ARCHIVE};
 
 byte		*draw_chars;				// 8*8 graphic characters
 byte		*draw_smallchars;			// Small characters for status bar
-byte		*draw_menufont; 			// Big Menu Font
+qpic_t		*draw_menufont; 			// Big Menu Font
 qpic_t		*draw_disc[MAX_DISC] = { NULL }; // make the first one null for sure
 qpic_t		*draw_backtile;
 
@@ -198,11 +198,12 @@ qpic_t *Draw_PicFromFile (char *name, void *buf)
 	glpic_t *glp;
 
 	//johnfitz -- dynamic gamedir loading
-	//johnfitz -- modified to use malloc
-	p = (qpic_t *)COM_LoadMallocFile (name, buf, NULL);
+	//johnfitz -- modified to use zone alloc
+	p = (qpic_t *)COM_LoadZoneFile (name, buf, NULL);
 
 	if (!p)
 		return NULL;
+	SwapPic (p);
 
 	glp = (glpic_t *)p->data;
 	glp->gltexture = TexMgr_LoadTexture (NULL, name, p->width, p->height, SRC_INDEXED, p->data, name, sizeof(int)*2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP);
@@ -333,7 +334,6 @@ Draw_LoadPics
 void Draw_LoadPics (void)
 {
 	int		i;
-	qpic_t	*mf;
 	char texturepath[MAX_QPATH];
 	uintptr_t	offset; // johnfitz
 	char		texturename[64]; //johnfitz
@@ -343,13 +343,13 @@ void Draw_LoadPics (void)
 	//
 	//draw_chars = W_GetLumpName ("conchars");
 	sprintf (texturepath, "%s", "gfx/menu/conchars.lmp"); // EER1
-	draw_chars = COM_LoadHunkFile (texturepath, NULL);
+	draw_chars = COM_LoadZoneFile (texturepath, draw_chars, NULL);
 
 	if (!draw_chars)
 		Sys_Error ("Draw_LoadPics: couldn't load conchars");
 
 	// now turn them into textures
-	offset = (uintptr_t)0; // was sizeof(int)*2, because "gfx/menu/conchars.lmp" is just data we don't need an offset
+	offset = (uintptr_t)0; // was sizeof(int)*2, because "gfx/menu/conchars.lmp" it's just a data, so we don't need an offset
 	char_texture = TexMgr_LoadTexture (NULL, texturepath, 256, 128, SRC_INDEXED, draw_chars, texturepath, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 
@@ -371,20 +371,22 @@ void Draw_LoadPics (void)
 	// load menu big font
 	//
 	sprintf (texturepath, "%s", "gfx/menu/bigfont2.lmp"); // EER1 "menufont"
-	mf = (qpic_t *)COM_LoadTempFile(texturepath, NULL);
-	if (!mf)
+	draw_menufont = (qpic_t *)COM_LoadZoneFile (texturepath, draw_menufont, NULL);
+	if (!draw_menufont)
 	{	// old version of demo has bigfont.lmp, not bigfont2.lmp
 		sprintf (texturepath, "%s", "gfx/menu/bigfont.lmp"); // EER1 "menufont"
-		mf = (qpic_t *)COM_LoadTempFile(texturepath, NULL);
+		draw_menufont = (qpic_t *)COM_LoadZoneFile (texturepath, draw_menufont, NULL);
 	}
 
-	if (!mf)
+	if (!draw_menufont)
 		Sys_Error ("Draw_LoadPics: couldn't load menufont");
+	SwapPic (draw_menufont);
 
 	// now turn them into textures
-	offset = (uintptr_t)sizeof(int)*2;
-	char_menufonttexture = TexMgr_LoadTexture (NULL, texturepath, 160, 80, SRC_INDEXED, mf->data, texturepath, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
-	
+	offset = (uintptr_t)sizeof(int)*2; // offset to data in qpic_t
+	// w*h size MUST be 160*80
+	char_menufonttexture = TexMgr_LoadTexture (NULL, texturepath, draw_menufont->width, draw_menufont->height, SRC_INDEXED, draw_menufont->data, texturepath, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
+
 	//
 	// get the other pics we need
 	//

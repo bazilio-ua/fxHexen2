@@ -272,7 +272,7 @@ struct cache_user_s;
 byte *COM_LoadMallocFile (char *path, void *buffer, unsigned int *path_id);
 byte *COM_LoadStackFile (char *path, void *buffer, int bufsize, unsigned int *path_id);
 byte *COM_LoadTempFile (char *path, unsigned int *path_id);
-byte *COM_LoadZoneFile (char *path, unsigned int *path_id);
+byte *COM_LoadZoneFile (char *path, void *buffer, unsigned int *path_id);
 byte *COM_LoadHunkFile (char *path, unsigned int *path_id);
 void COM_LoadCacheFile (char *path, struct cache_user_s *cu, unsigned int *path_id);
 
