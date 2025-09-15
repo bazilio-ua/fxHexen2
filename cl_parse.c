@@ -388,13 +388,12 @@ void CL_ParseServerInfo (void)
 	if (!sv.active)
 	{
 		PR_LoadStrings();
+		// mission pack, objectives strings
+		if (portals)
+			PR_LoadInfoStrings();
 	}
 
 	puzzle_strings = (char *)COM_LoadHunkFile ("puzzles.txt", NULL);
-
-	// mission pack, objectives strings
-	if (portals)
-		PR_LoadInfoStrings();
 
 	Hunk_Check ();		// make sure nothing is hurt
 }

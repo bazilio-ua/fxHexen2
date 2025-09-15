@@ -2018,6 +2018,7 @@ void COM_Game_f (void)
 		LOG_Init ();
 		History_Init ();
 
+		pr_string_count = 0;
 		
 		// clear out and reload appropriate data
 		Cache_Flush ();
