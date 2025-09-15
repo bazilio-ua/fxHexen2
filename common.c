@@ -2018,6 +2018,8 @@ void COM_Game_f (void)
 			COM_SetGamedirToHomeDirectory (homedir, GAMENAME);
 		}
 
+		strcpy (com_savedir, com_gamedir); // we need update com_savedir
+		
 		LOG_Init ();
 		History_Init ();
 
