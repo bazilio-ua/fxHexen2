@@ -494,10 +494,12 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 		d[2]=tdir;
 	}
 
-	if (d[1]!=DI_NODIR && d[1]!=turnaround && SV_StepDirection(actor, d[1], dist))
+	if (d[1]!=DI_NODIR && d[1]!=turnaround 
+	&& SV_StepDirection(actor, d[1], dist))
 			return;
 
-	if (d[2]!=DI_NODIR && d[2]!=turnaround && SV_StepDirection(actor, d[2], dist))
+	if (d[2]!=DI_NODIR && d[2]!=turnaround
+	&& SV_StepDirection(actor, d[2], dist))
 			return;
 
 /* there is no direct path to the player, so pick another direction */
@@ -508,18 +510,14 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	if (rand()&1) 	/*randomly determine direction of search*/
 	{
 		for (tdir=0 ; tdir<=315 ; tdir += 45)
-		{
 			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist) )
-				return;
-		}
+					return;
 	}
 	else
 	{
 		for (tdir=315 ; tdir >=0 ; tdir -= 45)
-		{
 			if (tdir!=turnaround && SV_StepDirection(actor, tdir, dist) )
-				return;
-		}
+					return;
 	}
 
 	if (turnaround != DI_NODIR && SV_StepDirection(actor, turnaround, dist) )
@@ -532,6 +530,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 
 	if (!SV_CheckBottom (actor))
 		SV_FixCheckBottom (actor);
+
 }
 
 /*
