@@ -238,7 +238,7 @@ void R_InitPlayerTextures (void)
 	for (i = 0; i < MAX_SCOREBOARD; i++)
 		playertextures[i] = NULL;
 	
-	playerTranslation = (byte *)COM_LoadHunkFile ("gfx/player.lmp", NULL);
+	playerTranslation = (byte *)COM_LoadZoneFile ("gfx/player.lmp", playerTranslation, NULL);
 	if (!playerTranslation)
 		Sys_Error ("Couldn't load gfx/player.lmp");
 }
