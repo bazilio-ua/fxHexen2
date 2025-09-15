@@ -416,10 +416,8 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 
 // find precache number for sound
     for (sound_num=1 ; sound_num<MAX_SOUNDS && sv.sound_precache[sound_num] ; sound_num++)
-	{
-		if (!strcmp(sample, sv.sound_precache[sound_num]))
-			break;
-	}
+        if (!strcmp(sample, sv.sound_precache[sound_num]))
+            break;
     
     if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
     {
@@ -630,11 +628,8 @@ void SV_CheckForNewClients (void)
 	// init a new client structure
 	//	
 		for (i=0 ; i<svs.maxclients ; i++)
-		{
 			if (!svs.clients[i].active)
 				break;
-		}
-		
 		if (i == svs.maxclients)
 			Sys_Error ("Host_CheckForNewClients: no free clients");
 		
@@ -875,10 +870,8 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 			}
 
 			for (i=0 ; i < ent->num_leafs ; i++)
-			{
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
-			}
 				
 			if (i == ent->num_leafs)
 			{
@@ -1841,11 +1834,8 @@ int SV_ModelIndex (char *name)
 		return 0;
 
 	for (i=0 ; i<MAX_MODELS && sv.model_precache[i] ; i++)
-	{
 		if (!strcmp(sv.model_precache[i], name))
 			return i;
-	}
-	
 	if (i==MAX_MODELS || !sv.model_precache[i])
 	{
 		Con_Printf("SV_ModelIndex: model %s not precached\n", name);
@@ -2183,10 +2173,8 @@ void SV_SpawnServer (char *server, char *startspot)
 
 // send serverinfo to all connected clients
 	for (i=0,host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
-	{
 		if (host_client->active)
 			SV_SendServerinfo (host_client);
-	}
 
 	svs.changelevel_issued = false;		// now safe to issue another
 	
