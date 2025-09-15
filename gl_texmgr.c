@@ -2229,42 +2229,11 @@ retry:
 		//create new translation table
 		for (i = 0; i < 256; i++)
 			translation[i] = i;
-	
-
-/*
-		top = glt->top_color * 16;
-		if (top < 128)	// the artists made some backwards ranges.  sigh.
-		{
-			for (i = 0; i < 16; i++)
-				translation[TOP_RANGE+i] = top + i;
-		}
-		else
-		{
-			for (i = 0; i < 16; i++)
-				translation[TOP_RANGE+i] = top+15-i;
-		}
-		
-		bottom = glt->bottom_color * 16;
-		if (bottom < 128)
-		{
-			for (i = 0; i < 16; i++)
-				translation[BOTTOM_RANGE+i] = bottom + i;
-		}
-		else
-		{
-			for (i = 0; i < 16; i++)
-				translation[BOTTOM_RANGE+i] = bottom+15-i;
-		}
-*/
-	
-
-
 
 		top = glt->top_color;
 		bottom = glt->bottom_color;
 		playerclass = glt->playerclass;
 
-		
 		if (top > 10) top = 0;
 		if (bottom > 10) bottom = 0;
 
@@ -2283,9 +2252,6 @@ retry:
 				translation[i] = *sourceB;
 		}
 
-
-
-		
 		//translate texture
 		size = glt->width * glt->height;
 		dst = translated = (byte *) Hunk_Alloc (size);
