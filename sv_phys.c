@@ -1074,9 +1074,7 @@ void SV_CheckStuck (edict_t *ent)
 	}
 	
 	for (z=0 ; z< 18 ; z++)
-	{
 		for (i=-1 ; i <= 1 ; i++)
-		{
 			for (j=-1 ; j <= 1 ; j++)
 			{
 				ent->v.origin[0] = org[0] + i;
@@ -1089,8 +1087,6 @@ void SV_CheckStuck (edict_t *ent)
 					return;
 				}
 			}
-		}
-	}
 			
 	VectorCopy (org, ent->v.origin);
 	if (ent->v.oldorigin!=ent->v.origin)
@@ -1190,38 +1186,14 @@ int SV_TryUnstick (edict_t *ent, vec3_t oldvel)
 // try pushing a little in an axial direction
 		switch (i)
 		{
-		case 0:
-			dir[0] = 2;
-			dir[1] = 0;
-			break;
-		case 1:
-			dir[0] = 0;
-			dir[1] = 2;
-			break;
-		case 2:
-			dir[0] = -2;
-			dir[1] = 0;
-			break;
-		case 3:
-			dir[0] = 0;
-			dir[1] = -2;
-			break;
-		case 4:
-			dir[0] = 2;
-			dir[1] = 2;
-			break;
-		case 5:
-			dir[0] = -2;
-			dir[1] = 2;
-			break;
-		case 6:
-			dir[0] = 2;
-			dir[1] = -2;
-			break;
-		case 7:
-			dir[0] = -2;
-			dir[1] = -2;
-			break;
+			case 0:	dir[0] = 2; dir[1] = 0; break;
+			case 1:	dir[0] = 0; dir[1] = 2; break;
+			case 2:	dir[0] = -2; dir[1] = 0; break;
+			case 3:	dir[0] = 0; dir[1] = -2; break;
+			case 4:	dir[0] = 2; dir[1] = 2; break;
+			case 5:	dir[0] = -2; dir[1] = 2; break;
+			case 6:	dir[0] = 2; dir[1] = -2; break;
+			case 7:	dir[0] = -2; dir[1] = -2; break;
 		}
 		
 		SV_PushEntity (ent, dir);
