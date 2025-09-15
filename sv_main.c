@@ -2035,9 +2035,8 @@ void SV_SpawnServer (char *server, char *startspot)
 	current_loading_size += 10;
 	D_ShowLoadingSize();
 	PR_LoadStrings();
-	// mission pack, objectives strings
 	if (portals)
-		PR_LoadInfoStrings(); //EER1 pa3pyx comment this out
+		PR_LoadInfoStrings();	// mission pack, objectives strings
 	current_loading_size += 5;
 	D_ShowLoadingSize();
 

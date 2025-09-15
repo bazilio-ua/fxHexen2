@@ -388,9 +388,8 @@ void CL_ParseServerInfo (void)
 	if (!sv.active)
 	{
 		PR_LoadStrings();
-		// mission pack, objectives strings
 		if (portals)
-			PR_LoadInfoStrings();
+			PR_LoadInfoStrings();	// mission pack, objectives strings
 	}
 
 	puzzle_strings = (char *)COM_LoadHunkFile ("puzzles.txt", NULL);
