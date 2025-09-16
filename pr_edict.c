@@ -550,10 +550,8 @@ void ED_Print (edict_t *ed)
 		type = d->type & ~DEF_SAVEGLOBAL;
 		
 		for (j=0 ; j<type_size[type] ; j++)
-		{
 			if (v[j])
 				break;
-		}
 		if (j == type_size[type])
 			continue;
 	
@@ -608,10 +606,8 @@ void ED_Write (FILE *f, edict_t *ed)
 	// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
 		for (j=0 ; j<type_size[type] ; j++)
-		{
 			if (v[j])
 				break;
-		}
 		if (j == type_size[type])
 			continue;
 
@@ -735,7 +731,9 @@ void ED_WriteGlobals (FILE *f)
 			continue;
 		type &= ~DEF_SAVEGLOBAL;
 
-		if (type != ev_string && type != ev_float && type != ev_entity)
+		if (type != ev_string
+		&& type != ev_float
+		&& type != ev_entity)
 			continue;
 
 		name = PR_GetString(def->s_name);
