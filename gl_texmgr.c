@@ -1737,14 +1737,14 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 	qboolean padw = false, padh = false;
 	byte padbyte;
     
-	// HACK HACK HACK -- taken from tomazquake
-	if (strstr(glt->name, "shot1sid") && glt->width==32 && glt->height==32 && CRC_Block(data, 1024) == 65393)
-	{
-		// This texture in b_shell1.bsp has some of the first 32 pixels painted white.
-		// They are invisible in software, but look really ugly in GL. So we just copy
-		// 32 pixels from the bottom to make it look nice.
-		memcpy (data, data + 32*31, 32);
-	}
+	// HACK HACK HACK -- taken from tomazquake (Q1 related)
+//	if (strstr(glt->name, "shot1sid") && glt->width==32 && glt->height==32 && CRC_Block(data, 1024) == 65393)
+//	{
+//		// This texture in b_shell1.bsp has some of the first 32 pixels painted white.
+//		// They are invisible in software, but look really ugly in GL. So we just copy
+//		// 32 pixels from the bottom to make it look nice.
+//		memcpy (data, data + 32*31, 32);
+//	}
 
 	size = glt->width * glt->height;
 	if (size & 3)
