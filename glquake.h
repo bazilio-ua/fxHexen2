@@ -220,9 +220,9 @@ void (GLAPIENTRY *qglGenerateMipmap) (GLenum type);
 // 1 - color 0 transparent, odd - translucent, even - full value
 // 2 - color 0 transparent
 // 3 - special (particle translucency table)
-#define TEXPREF_TRANSPARENT		0x8000	// EF_TRANSPARENT	(mode 1)
-#define TEXPREF_HOLEY			0x10000	// EF_HOLEY			(mode 2)
-#define TEXPREF_SPECIAL_TRANS	0x20000	// EF_SPECIAL_TRANS	(mode 3)
+#define TEXPREF_TRANSPARENT		0x8000	// EF_TRANSPARENT	(mode 1) Transparent sprite
+#define TEXPREF_HOLEY			0x10000	// EF_HOLEY			(mode 2) Solid model with color 0
+#define TEXPREF_SPECIAL_TRANS	0x20000	// EF_SPECIAL_TRANS	(mode 3) Translucency through the particle table
 
 enum srcformat {SRC_INDEXED, SRC_LIGHTMAP, SRC_RGBA, SRC_BLOOM};
 
