@@ -77,7 +77,6 @@ void R_UpdateWarpTextures (void)
 		glLoadIdentity ();
 
 		glDisable (GL_ALPHA_TEST); //FX new
-		glEnable (GL_BLEND); //FX
 		GL_BindTexture (tx->base);
 		for (x=0.0; x<128.0; x=x2)
 		{
@@ -110,15 +109,18 @@ void R_UpdateWarpTextures (void)
 			}
 		}
 		glEnable (GL_ALPHA_TEST); //FX new
-		glDisable (GL_BLEND); //FX
 
 		// copy to texture
 		GL_BindTexture (tx->warpbase);
 		glCopyTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, glx, gly + glheight - warpimage_size, warpimage_size, warpimage_size);
+		if (qglGenerateMipmap)
+			qglGenerateMipmap (GL_TEXTURE_2D);
 		if (tx->glow)
 		{
 			GL_BindTexture (tx->warpglow);
 			glCopyTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0, glx + warpimage_size, gly + glheight - warpimage_size, warpimage_size, warpimage_size);
+			if (qglGenerateMipmap)
+				qglGenerateMipmap (GL_TEXTURE_2D);
 		}
 		
 		tx->update_warp = false;
