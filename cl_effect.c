@@ -1469,7 +1469,7 @@ static int NewEffectEntity(void)
 	EffectEntityCount++;
 	ent = &EffectEntities[counter];
 	memset(ent, 0, sizeof(*ent));
-	ent->colormap = 0; //vid.colormap;
+	ent->colormap = vid.colormap;
 
 	return counter;
 }

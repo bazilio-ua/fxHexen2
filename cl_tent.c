@@ -675,6 +675,6 @@ static entity_t *NewStreamEntity(void)
 	ent = &StreamEntities[StreamEntityCount++];
 	memset(ent, 0, sizeof(*ent));
 	cl_visedicts[cl_numvisedicts++] = ent;
-	ent->colormap = 0; //vid.colormap;
+	ent->colormap = vid.colormap;
 	return ent;
 }

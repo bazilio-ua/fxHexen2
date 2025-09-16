@@ -1146,13 +1146,9 @@ void V_CalcRefdef (void)
 	view->frame = cl.stats[STAT_WEAPONFRAME];
 
 	if (!view->colorshade)
-	{
-		view->colormap = vid.colormap; //vid.colormap;
-	}
-	else
-	{
-		view->colormap = vid.colormap; //vid.colormap;
-	}
+		view->colormap = vid.colormap;
+	else // fixme: what diff?
+		view->colormap = vid.colormap;
 
 	// Place weapon in powered up mode
 	if ((ent->drawflags & MLS_MASKIN) == MLS_POWERMODE)

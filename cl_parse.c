@@ -118,7 +118,7 @@ entity_t	*CL_EntityNum (int num)
 			Host_Error ("CL_EntityNum: %i is an invalid number",num);
 		while (cl.num_entities<=num)
 		{
-			cl_entities[cl.num_entities].colormap = 0; //vid.colormap;
+			cl_entities[cl.num_entities].colormap = vid.colormap;
 			cl_entities[cl.num_entities].lerpflags |= LERP_RESETMOVE|LERP_RESETANIM; //johnfitz
 			cl.num_entities++;
 		}
@@ -528,26 +528,21 @@ void CL_ParseUpdate (int bits)
 		i = ref_ent->colormap;
 
 	if (num && num <= cl.maxclients)
-		ent->colormap = ent->sourcecolormap = (byte *)num; //cl.scores[num-1].translations;
+		ent->colormap = ent->sourcecolormap = cl.scores[num-1].translations;
 	else
-		ent->sourcecolormap = 0; //vid.colormap;
-
+		ent->sourcecolormap = vid.colormap;
 
 //	ent->colormap = vid.colormap;
 
-
 	if (!i)
 	{
-//		ent->colorshade = i;
+		ent->colorshade = i;
 		ent->colormap = ent->sourcecolormap;
 	}
 	else
 	{
 		ent->colorshade = i;
-
-//		ent->colormap = vid.colormap;
-//		ent->colormap = globalcolormap;
-
+		ent->colormap = vid.colormap;
 	}
 
 	if(bits & U_SKIN)
@@ -1028,7 +1023,7 @@ void CL_ParseStatic (void)
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
 	ent->frame = ent->baseline.frame;
-	ent->colormap = 0; //vid.colormap;
+	ent->colormap = vid.colormap;
 	ent->skinnum = ent->baseline.skin;
 	ent->scale = ent->baseline.scale;
 	ent->effects = ent->baseline.effects;
