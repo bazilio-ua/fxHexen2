@@ -157,7 +157,6 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_drawentities);
 	Cvar_RegisterVariable (&r_drawworld);
 	Cvar_RegisterVariable (&r_drawviewmodel);
-	Cvar_RegisterVariable (&r_flatturb);
 	Cvar_RegisterVariable (&r_waterquality);
 	Cvar_RegisterVariableCallback (&r_wateralpha, R_WaterAlpha);
 	Cvar_RegisterVariable (&r_lockalpha);
@@ -174,15 +173,11 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_speeds);
 	Cvar_RegisterVariable (&r_waterwarp);
 	Cvar_RegisterVariableCallback (&r_clearcolor, R_ClearColor);
-	Cvar_RegisterVariableCallback (&r_fastsky, R_FastSkyColor);
-	Cvar_RegisterVariableCallback (&r_fastskycolor, R_FastSkyColor);
 	Cvar_RegisterVariable (&r_skyquality);
 	Cvar_RegisterVariableCallback (&r_skyalpha, R_SkyAlpha);
 	Cvar_RegisterVariableCallback (&r_skyfog, R_Skyfog);
 	Cvar_RegisterVariable (&r_oldsky);
-	Cvar_RegisterVariable (&r_flatworld);
-	Cvar_RegisterVariable (&r_flatmodels);
-//	Cvar_RegisterVariable (&r_flatlightstyles);
+	Cvar_RegisterVariable (&r_flatlightstyles);
 
 	Cvar_RegisterVariable (&gl_finish);
 	Cvar_RegisterVariable (&gl_clear);
