@@ -147,10 +147,8 @@ void SetMinMaxSize (edict_t *e, float *minvec, float *maxvec, qboolean rotate)
 	int		i, j, k, l;
 	
 	for (i=0 ; i<3 ; i++)
-	{
 		if (minvec[i] > maxvec[i])
 			PR_RunError ("SetMinMaxSize: backwards mins/maxs (%c, %g/%g)", 'x' + i, minvec[i], maxvec[i]);
-	}
 
 	rotate = false;		// FIXME: implement rotation properly again
 
@@ -252,11 +250,9 @@ void PF_setmodel (void)
 
 // check to see if model was properly precached
 	for (i=0, check = sv.model_precache ; *check ; i++, check++)
-	{
 		if (!strcmp(*check, m))
 			break;
-	}
-
+			
 	if (!*check)
 		PR_RunError ("PF_setmodel: no precache: %s\n", m);
 
@@ -285,11 +281,9 @@ void PF_setpuzzlemodel (void)
 	sprintf(NewName,"models/puzzle/%s.mdl",m);
 // check to see if model was properly precached
 	for (i=0, check = sv.model_precache ; *check ; i++, check++)
-	{
 		if (!strcmp(*check, NewName))
 			break;
-	}
-
+			
 	e->v.model = PR_SetString(ED_NewString(NewName));
 
 	if (!*check)
@@ -1880,7 +1874,8 @@ void PF_aim (void)
 		if (teamplay.value && ent->v.team > 0 && ent->v.team == check->v.team)
 			continue;	// don't aim at teammate
 		for (j=0 ; j<3 ; j++)
-			end[j] = check->v.origin[j] + 0.5*(check->v.mins[j] + check->v.maxs[j]);
+			end[j] = check->v.origin[j]
+			+ 0.5*(check->v.mins[j] + check->v.maxs[j]);
 		VectorSubtract (end, start, dir);
 		VectorNormalize (dir);
 		dist = DotProduct (dir, PR_GLOBAL_STRUCT(v_forward));
