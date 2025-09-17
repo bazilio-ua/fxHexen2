@@ -1050,7 +1050,10 @@ void generate_colormap(const unsigned char palette[768], unsigned char out_color
 		for (y = 0; y < 64; y++)
 		{
 //			if (x < 256 - num_fullbrights) //Q1
-			if ((x < 128 || x > 143) && (x < 160 || x > 175) && (x < 256 - num_fullbrights)) //H2 128-143 lava, 160-175 fire, 239-254 custom fullbrights and 255 white
+//			if ((x < 128 || x > 143) && (x < 160 || x > 175) && (x < 256 - num_fullbrights)) //H2 128-143 lava, 160-175 fire, 239-254 custom fullbrights and 255 white
+//			if ((x < 139 || x > 143) && (x < 171 || x > 175) && (x < 256 - num_fullbrights)) // good balance
+			if ((x < 136 || x > 143) && (x < 168 || x > 175) && (x < 256 - num_fullbrights)) // excellent
+//			if ((x < 132 || x > 143) && (x < 164 || x > 175) && (x < 256 - num_fullbrights)) // test
 			{
 				int rgb[3];
 				
