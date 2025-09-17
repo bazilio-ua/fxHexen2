@@ -1009,6 +1009,89 @@ void TexMgr_UploadWarpImage (void)
 	Hunk_FreeToLowMark (mark);
 }
 
+// by metlslime
+/* sample a 24-bit RGB value to one of the colours on the existing 8-bit palette */
+unsigned char convert_24_to_8(const unsigned char palette[768], const int rgb[3])
+{
+	int i, j;
+	int best_index = -1;
+	int best_dist = 0;
+	
+	for (i = 0; i < 256; i++)
+	{
+		int dist = 0;
+		
+		for (j = 0; j < 3; j++)
+		{
+			/* note that we could use RGB luminosity bias for greater accuracy, but quake's colormap apparently didn't do this */
+			int d = abs(rgb[j] - palette[i*3+j]);
+			dist += d * d;
+		}
+		
+		if (best_index == -1 || dist < best_dist)
+		{
+			best_index = i;
+			best_dist = dist;
+		}
+	}
+	
+	return (unsigned char)best_index;
+}
+
+void generate_colormap(const unsigned char palette[768], unsigned char out_colormap[16384])
+{
+//	int num_fullbrights = 32; /* the last 32 colours will be full bright */ //(Q1)
+	int num_fullbrights = 17; /* the last 17 colours will be full bright */ //(H2) 239-254 custom fullbrights and 255 white
+	int x, y, i;
+	int numfb = 0;
+
+	for (x = 0; x < 256; x++)
+	{
+		for (y = 0; y < 64; y++)
+		{
+//			if (x < 256 - num_fullbrights) //Q1
+			if ((x < 128 || x > 143) && (x < 160 || x > 175) && (x < 256 - num_fullbrights)) //H2 128-143 lava, 160-175 fire, 239-254 custom fullbrights and 255 white
+			{
+				int rgb[3];
+				
+				for (i = 0; i < 3; i++)
+				{
+					rgb[i] = (palette[x*3+i] * (63 - y) + 16) >> 5; /* divide by 32, rounding to nearest integer */
+					if (rgb[i] > 255)
+						rgb[i] = 255;
+				}
+				
+				out_colormap[y*256+x] = convert_24_to_8(palette, rgb);
+			}
+			else
+			{
+				/* this colour is a fullbright, just keep the original colour */
+				out_colormap[y*256+x] = x;
+				numfb++;
+			}
+		}
+	}
+	
+	Con_Printf ("%d fullbright colors was written in colormap\n", numfb/64);
+
+}
+
+void V_CreateColormapWithFullbrightColors (void)
+{
+	byte *pal;
+	unsigned char colormap[16384];
+	char path[MAX_OSPATH];
+	FILE		*file;
+	
+	pal = host_basepal;
+	
+	generate_colormap(pal, colormap);
+	
+	sprintf (path,"%s/gfx/fbcolormap.lmp", com_gamedir);
+	file = fopen (path, "wb");
+	fwrite (colormap, 1, sizeof(colormap), file);
+	fclose (file);
+}
 
 /*
 =================
@@ -1017,6 +1100,8 @@ TexMgr_LoadPalette
 */
 void TexMgr_LoadPalette (void)
 {
+	V_CreateColormapWithFullbrightColors (); // experimental
+	
 	V_FindFullbrightColors ();
 	V_SetOriginalPalette ();
 	V_SetPalette (host_basepal);
