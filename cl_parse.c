@@ -107,15 +107,16 @@ extern cvar_t precache;
 ===============
 CL_EntityNum
 
-This error checks and tracks the total number of entities
+This function checks and tracks the total number of entities
 ===============
 */
 entity_t	*CL_EntityNum (int num)
 {
-	if (num >= cl.num_entities)
+	if (num < 0 || num >= cl.num_entities)
 	{
-		if (num >= MAX_EDICTS)
-			Host_Error ("CL_EntityNum: %i is an invalid number",num);
+		if (num < 0 || num >= MAX_EDICTS)
+			Host_Error ("CL_EntityNum: invalid edict number (%d, max = %d)", num, MAX_EDICTS);
+
 		while (cl.num_entities<=num)
 		{
 			cl_entities[cl.num_entities].colormap = vid.colormap;
@@ -506,6 +507,11 @@ void CL_ParseUpdate (int bits)
 	else
 		forcelink = false;
 
+	//johnfitz -- lerping
+	if (ent->msgtime + 0.2 < cl.mtime[0]) //more than 0.2 seconds since the last message (most entities think every 0.1 sec)
+		ent->lerpflags |= LERP_RESETANIM; //if we missed a think, we'd be lerping from the wrong frame
+	//johnfitz
+
 	ent->msgtime = cl.mtime[0];
 	
 	if (bits & U_MODEL)
@@ -604,7 +610,7 @@ void CL_ParseUpdate (int bits)
 	else
 		ent->msg_angles[0][2] = ref_ent->angles[2];
 
-	if(bits&U_SCALE)
+	if (bits & U_SCALE)
 	{
 		set_ent->scale = ent->scale = MSG_ReadByte(net_message);
 		set_ent->abslight = ent->abslight = MSG_ReadByte(net_message);
@@ -616,7 +622,7 @@ void CL_ParseUpdate (int bits)
 	}
 
 	//johnfitz -- lerping for movetype_step entities
-	if ( bits & U_STEP )
+	if (bits & U_STEP)
 	{
 		ent->lerpflags |= LERP_MOVESTEP;
 		ent->forcelink = true;
@@ -632,9 +638,9 @@ void CL_ParseUpdate (int bits)
 	if (model != ent->model)
 	{
 		ent->model = model;
-
-	// automatic animation (torches, etc) can be either all together
-	// or randomized
+		
+		// automatic animation (torches, etc) can be either all together
+		// or randomized
 		if (model)
 		{
 			if (model->synctype == ST_RAND)
@@ -646,11 +652,13 @@ void CL_ParseUpdate (int bits)
 			forcelink = true;	// hack to make null model players work
 
 		if (num > 0 && num <= cl.maxclients)
-			R_TranslateNewPlayerSkin (num - 1);
+			R_TranslateNewPlayerSkin (num - 1); //johnfitz -- was R_TranslatePlayerSkin
 
+		ent->lerpflags |= LERP_RESETANIM; //johnfitz -- don't lerp animation across model changes
 	}
+	//johnfitz
 
-	if ( forcelink )
+	if (forcelink)
 	{	// didn't have an update last message
 		VectorCopy (ent->msg_origins[0], ent->msg_origins[1]);
 		VectorCopy (ent->msg_origins[0], ent->origin);
@@ -720,7 +728,7 @@ void CL_ParseUpdate2 (int bits)
 	if (bits & U_ANGLE3)
 		MSG_ReadAngle (net_message);
 
-	if(bits&U_SCALE)
+	if (bits & U_SCALE)
 	{
 		MSG_ReadByte (net_message);
 		MSG_ReadByte (net_message);
@@ -827,6 +835,11 @@ void CL_ParseClientdata (int bits)
 	{
 		cl.stats[STAT_WEAPON] = MSG_ReadShort (net_message);
 		Sbar_Changed();
+		
+		//johnfitz -- lerping
+		if (cl.viewent.model != cl.model_precache[cl.stats[STAT_WEAPON]])
+			cl.viewent.lerpflags |= LERP_RESETANIM; //don't lerp animation across model changes
+		//johnfitz
 	}
 
 /*	sc1 = sc2 = 0;
@@ -1015,14 +1028,16 @@ void CL_ParseStatic (void)
 		
 	i = cl.num_statics;
 	if (i >= MAX_STATIC_ENTITIES)
-		Host_Error ("Too many static entities");
+		Host_Error ("CL_ParseStatic: too many (%d) static entities, max = %d", i, MAX_STATIC_ENTITIES);
 	ent = &cl_static_entities[i];
 	cl.num_statics++;
 	CL_ParseBaseline (ent);
 
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
+	ent->lerpflags |= LERP_RESETANIM; //johnfitz -- lerping
 	ent->frame = ent->baseline.frame;
+	ent->syncbase = (float)rand() / RAND_MAX; // Hack to make flames unsynchronized
 	ent->colormap = vid.colormap;
 	ent->skinnum = ent->baseline.skin;
 	ent->scale = ent->baseline.scale;

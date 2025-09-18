@@ -31,6 +31,7 @@ cvar_t	cl_playerclass = {"_cl_playerclass", "1", CVAR_ARCHIVE};
 
 cvar_t	cl_shownet = {"cl_shownet","0", CVAR_NONE};	// can be 0, 1, or 2
 cvar_t	cl_nolerp = {"cl_nolerp","0", CVAR_NONE};
+cvar_t	cl_lerpmuzzleflash = {"cl_lerpmuzzleflash","0", CVAR_NONE};
 
 cvar_t	lookspring = {"lookspring","0", CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0", CVAR_ARCHIVE};
@@ -523,6 +524,9 @@ void CL_RelinkEntities (void)
 	{
 		if (!ent->model)
 		{	// empty slot
+            
+			// ericw -- efrags are only used for static entities in GLQuake
+			// ent can't be static, so this is a no-op.
 //			if (ent->forcelink)
 //				R_RemoveEfrags (ent);	// just became empty
 			continue;
@@ -532,6 +536,8 @@ void CL_RelinkEntities (void)
 		if (ent->msgtime != cl.mtime[0] && !(ent->baseline.flags & BE_ON))
 		{
 			ent->model = NULL;
+			ent->lerpflags |= LERP_RESETMOVE|LERP_RESETANIM; //johnfitz -- next time this entity slot is reused, the lerp will need to be reset
+
 			continue;
 		}
 
@@ -549,10 +555,16 @@ void CL_RelinkEntities (void)
 			for (j=0 ; j<3 ; j++)
 			{
 				delta[j] = ent->msg_origins[0][j] - ent->msg_origins[1][j];
-
 				if (delta[j] > 100 || delta[j] < -100)
+				{
 					f = 1;		// assume a teleportation, not a motion
+					ent->lerpflags |= LERP_RESETMOVE; //johnfitz -- don't lerp teleports
+				}
 			}
+
+			//johnfitz -- don't cl_lerp entities that will be r_lerped
+			if (ent->lerpflags & LERP_MOVESTEP)
+				f = 1;
 
 		// interpolate the origin and angles
 			for (j=0 ; j<3 ; j++)
@@ -566,7 +578,6 @@ void CL_RelinkEntities (void)
 					d += 360;
 				ent->angles[j] = ent->msg_angles[1][j] + f*d;
 			}
-			
 		}
 
 	//objrotate = anglemod(100*cl.time);
@@ -598,6 +609,16 @@ void CL_RelinkEntities (void)
 				dl->minlight = 32;
 				dl->die = cl.time + 0.1;
 			}
+			
+			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
+			if (!cl_lerpmuzzleflash.value)
+			{
+				if (i == cl.viewentity)
+					cl.viewent.lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
+				else
+					ent->lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
+			}
+			
 		}
 		if (ent->effects & EF_BRIGHTLIGHT)
 		{			
@@ -898,6 +919,7 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&cl_anglespeedkey);
 	Cvar_RegisterVariable (&cl_shownet);
 	Cvar_RegisterVariable (&cl_nolerp);
+	Cvar_RegisterVariable (&cl_lerpmuzzleflash);
 	Cvar_RegisterVariable (&lookspring);
 	Cvar_RegisterVariable (&lookstrafe);
 	Cvar_RegisterVariable (&sensitivity);
