@@ -713,8 +713,6 @@ void SetPaletteColor (unsigned int *dst, byte r, byte g, byte b, byte a)
 	((byte *)dst)[3] = a;
 }
 
-float RTint[256], GTint[256], BTint[256];
-
 int ColorIndex[16] = {
 	0, 31, 47, 63, 79, 95, 111, 127, 143, 159, 175, 191, 199, 207, 223, 231
 };

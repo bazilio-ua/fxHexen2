@@ -79,6 +79,7 @@ unsigned int d_8to24table_nobright[256];		//nobright palette, 224-255 are black 
 unsigned int d_8to24table_nobright_holey[256];	//nobright palette, for holey textures (fence)
 unsigned int d_8to24table_conchars[256];		//conchars palette, 0 and 255 are transparent
 unsigned int d_8to24TranslucentTable[256];
+float RTint[256], GTint[256], BTint[256];
 
 unsigned int is_fullbright[256/32];
 
