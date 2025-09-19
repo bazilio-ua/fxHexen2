@@ -661,7 +661,10 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// set up lighting
 	//
-	R_LightPoint (e->origin, lightcolor);
+	VectorCopy (e->origin, adjust_origin);
+	adjust_origin[2] += (e->model->mins[2] + e->model->maxs[2]) / 2;
+	R_LightPoint (adjust_origin, lightcolor);
+//	R_LightPoint (e->origin, lightcolor);
 
 	// add dlights
 	if (r_dynamic.value) // EER1
@@ -721,6 +724,31 @@ void R_DrawAliasModel (entity_t *e)
 	if (add < 1.0f)
 		VectorScale (lightcolor, add, lightcolor);
 
+	
+	mls = e->drawflags & MLS_MASKIN;
+	if (e->model->flags & EF_ROTATE)
+	{
+		lightcolor[0] =
+		lightcolor[1] =
+		lightcolor[2] =
+				60 + 34 + sin(e->origin[0] + e->origin[1] + (cl.time*3.8)) * 34;
+	}
+	else if (mls == MLS_ABSLIGHT)
+	{
+		lightcolor[0] =
+		lightcolor[1] =
+		lightcolor[2] =
+				e->abslight;
+	}
+	else if (mls != MLS_NONE)
+	{	// Use a model light style (25-30)
+		lightcolor[0] =
+		lightcolor[1] =
+		lightcolor[2] =
+				d_lightstyle[24+mls]/2;
+	}
+	
+	
 	shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 	VectorScale (lightcolor, 1.0f / 200.0f, lightcolor);
 
