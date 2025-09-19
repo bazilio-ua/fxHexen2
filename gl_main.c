@@ -1297,13 +1297,62 @@ R_RotateForEntity renamed and modified to take lerpdata instead of pointer to en
 */
 void GL_EntityTransform (lerpdata_t lerpdata, entity_t *e)
 {
+	float	forward;
+	float	yaw, pitch;
+	vec3_t			angles;
+
 	float scale = (e->scale != 0 && e->scale != 100) ? (float)e->scale / 100.0f : 1.0f;
 //	float scale = ENTSCALE_DECODE(e->scale);
 	
 	glTranslatef (lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
-	glRotatef (lerpdata.angles[1],  0, 0, 1);
-	glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  0, 1, 0);
-	glRotatef (lerpdata.angles[2],  1, 0, 0);
+	
+	if (e->model->flags & EF_FACE_VIEW)
+	{
+		VectorSubtract(lerpdata.origin,r_origin,angles);
+		VectorSubtract(r_origin,lerpdata.origin,angles);
+		VectorNormalize(angles);
+
+		if (angles[1] == 0 && angles[0] == 0)
+		{
+			yaw = 0;
+			if (angles[2] > 0)
+				pitch = stupidquakebugfix ? 270 : 90;
+			else
+				pitch = stupidquakebugfix ? 90 : 270;
+		}
+		else
+		{
+			yaw = (atan2(angles[1], angles[0]) * 180 / M_PI);
+			if (yaw < 0)
+				yaw += 360;
+
+			forward = sqrt (angles[0]*angles[0] + angles[1]*angles[1]);
+			pitch = (atan2(stupidquakebugfix ? -angles[2] : angles[2], forward) * 180 / M_PI);
+			if (pitch < 0)
+				pitch += 360;
+		}
+
+		angles[0] = pitch;
+		angles[1] = yaw;
+		angles[2] = 0;
+
+		glRotatef (angles[1],   								0, 0, 1);
+		glRotatef (stupidquakebugfix ? angles[0] : -angles[0],  0, 1, 0);
+		glRotatef (lerpdata.angles[2],  						1, 0, 0);
+	}
+	else
+	{
+		if (e->model->flags & EF_ROTATE)
+			glRotatef (anglemod((lerpdata.origin[0] + lerpdata.origin[1])*0.8 + (108*cl.time)),  0, 0, 1);
+		else
+			glRotatef (lerpdata.angles[1],  									  				 0, 0, 1);
+		glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  				 0, 1, 0);
+		glRotatef (lerpdata.angles[2],  										  				 1, 0, 0);
+	}
+	
+//	glRotatef (lerpdata.angles[1],  										  0, 0, 1);
+//	glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  0, 1, 0);
+//	glRotatef (lerpdata.angles[2],  										  1, 0, 0);
 	
 	if (scale != 1.0f)
 		glScalef(scale, scale, scale);
