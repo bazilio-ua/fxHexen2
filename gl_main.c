@@ -688,6 +688,7 @@ void R_DrawAliasModel (entity_t *e)
 		if (e->model->flags&EF_ROTATE)
 		{ // Floating motion
 			tmatrix[2][3] += sin(e->origin[0]+e->origin[1]+(cl.time*3))*5.5;
+//			tmatrix[2][3] += sin(lerpdata.origin[0]+lerpdata.origin[1]+(cl.time*3))*5.5;
 		}
 
 	// [0][3] [1][3] [2][3]
