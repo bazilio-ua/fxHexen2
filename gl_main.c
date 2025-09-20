@@ -807,27 +807,27 @@ void R_DrawAliasModel (entity_t *e)
 		VectorScale (lightcolor, add, lightcolor);
 
 	
-	mls = e->drawflags & MLS_MASKIN;
-	if (e->model->flags & EF_ROTATE)
+	mls = e->drawflags&MLS_MASKIN;
+	if (e->model->flags&EF_ROTATE)
 	{
 		lightcolor[0] =
 		lightcolor[1] =
 		lightcolor[2] =
-				60 + 34 + sin(e->origin[0] + e->origin[1] + (cl.time*3.8)) * 34;
+			60+34+sin(e->origin[0]+e->origin[1]+(cl.time*3.8))*34;
 	}
 	else if (mls == MLS_ABSLIGHT)
 	{
 		lightcolor[0] =
 		lightcolor[1] =
 		lightcolor[2] =
-				e->abslight;
+			e->abslight;
 	}
 	else if (mls != MLS_NONE)
-	{	// Use a model light style (25-30)
+	{ // Use a model light style (25-30)
 		lightcolor[0] =
 		lightcolor[1] =
 		lightcolor[2] =
-				d_lightstyle[24+mls]/2;
+			d_lightstyle[24+mls]/2;
 	}
 	
 	
