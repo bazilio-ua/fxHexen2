@@ -621,11 +621,93 @@ void R_DrawAliasModel (entity_t *e)
 
 	// special handling of view model to keep FOV from altering look.
 	if (e == &cl.viewent)
+	{
 		fovscale = 1.0f / tan( DEG2RAD (r_fovx / 2.0f) ) * r_refdef.weaponfov_x / 90.0f; // reverse out fov and do fov we want
+		
+		glTranslatef (paliashdr->scale_origin[0] * fovscale, paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glScalef (paliashdr->scale[0] * fovscale, paliashdr->scale[1], paliashdr->scale[2]);
+	}
+	else
+	{
+		
+		if (e->scale != 0 && e->scale != 100)
+		{
+			entScale = (float)e->scale/100.0;
+			switch (e->drawflags&SCALE_TYPE_MASKIN)
+			{
+			case SCALE_TYPE_UNIFORM:
+				tmatrix[0][0] = paliashdr->scale[0]*entScale;
+				tmatrix[1][1] = paliashdr->scale[1]*entScale;
+				tmatrix[2][2] = paliashdr->scale[2]*entScale;
+				xyfact = zfact = (entScale-1.0)*127.95;
+				break;
+			case SCALE_TYPE_XYONLY:
+				tmatrix[0][0] = paliashdr->scale[0]*entScale;
+				tmatrix[1][1] = paliashdr->scale[1]*entScale;
+				tmatrix[2][2] = paliashdr->scale[2];
+				xyfact = (entScale-1.0)*127.95;
+				zfact = 1.0;
+				break;
+			case SCALE_TYPE_ZONLY:
+				tmatrix[0][0] = paliashdr->scale[0];
+				tmatrix[1][1] = paliashdr->scale[1];
+				tmatrix[2][2] = paliashdr->scale[2]*entScale;
+				xyfact = 1.0;
+				zfact = (entScale-1.0)*127.95;
+				break;
+			}
+			switch (e->drawflags&SCALE_ORIGIN_MASKIN)
+			{
+			case SCALE_ORIGIN_CENTER:
+				tmatrix[0][3] = paliashdr->scale_origin[0]-paliashdr->scale[0]*xyfact;
+				tmatrix[1][3] = paliashdr->scale_origin[1]-paliashdr->scale[1]*xyfact;
+				tmatrix[2][3] = paliashdr->scale_origin[2]-paliashdr->scale[2]*zfact;
+				break;
+			case SCALE_ORIGIN_BOTTOM:
+				tmatrix[0][3] = paliashdr->scale_origin[0]-paliashdr->scale[0]*xyfact;
+				tmatrix[1][3] = paliashdr->scale_origin[1]-paliashdr->scale[1]*xyfact;
+				tmatrix[2][3] = paliashdr->scale_origin[2];
+				break;
+			case SCALE_ORIGIN_TOP:
+				tmatrix[0][3] = paliashdr->scale_origin[0]-paliashdr->scale[0]*xyfact;
+				tmatrix[1][3] = paliashdr->scale_origin[1]-paliashdr->scale[1]*xyfact;
+				tmatrix[2][3] = paliashdr->scale_origin[2]-paliashdr->scale[2]*zfact*2.0;
+				break;
+			}
+		}
+		else
+		{
+			tmatrix[0][0] = paliashdr->scale[0];
+			tmatrix[1][1] = paliashdr->scale[1];
+			tmatrix[2][2] = paliashdr->scale[2];
+			tmatrix[0][3] = paliashdr->scale_origin[0];
+			tmatrix[1][3] = paliashdr->scale_origin[1];
+			tmatrix[2][3] = paliashdr->scale_origin[2];
+		}
 
-	glTranslatef (paliashdr->scale_origin[0] * fovscale, paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-	glScalef (paliashdr->scale[0] * fovscale, paliashdr->scale[1], paliashdr->scale[2]);
+		if (e->model->flags&EF_ROTATE)
+		{ // Floating motion
+			tmatrix[2][3] += sin(e->origin[0]+e->origin[1]+(cl.time*3))*5.5;
+		}
 
+	// [0][3] [1][3] [2][3]
+	//	glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glTranslatef (tmatrix[0][3],tmatrix[1][3],tmatrix[2][3]);
+	// [0][0] [1][1] [2][2]
+	//	glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+		glScalef (tmatrix[0][0],tmatrix[1][1],tmatrix[2][2]);
+
+
+//		scale = ENTSCALE_DECODE(e->scale);
+//		if (scale != 1.0f)
+//			glScalef (scale, scale, scale);
+//
+//		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+//		glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+
+
+	}
+	
 	//
 	// model rendering stuff
 	//
@@ -1300,9 +1382,6 @@ void GL_EntityTransform (lerpdata_t lerpdata, entity_t *e)
 	float	forward;
 	float	yaw, pitch;
 	vec3_t			angles;
-
-	float scale = (e->scale != 0 && e->scale != 100) ? (float)e->scale / 100.0f : 1.0f;
-//	float scale = ENTSCALE_DECODE(e->scale);
 	
 	glTranslatef (lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
 	
@@ -1336,26 +1415,23 @@ void GL_EntityTransform (lerpdata_t lerpdata, entity_t *e)
 		angles[1] = yaw;
 		angles[2] = 0;
 
-		glRotatef (angles[1],   								0, 0, 1);
+		glRotatef (angles[1],                                   0, 0, 1);
 		glRotatef (stupidquakebugfix ? angles[0] : -angles[0],  0, 1, 0);
-		glRotatef (lerpdata.angles[2],  						1, 0, 0);
+		glRotatef (lerpdata.angles[2],                          1, 0, 0);
 	}
 	else
 	{
 		if (e->model->flags & EF_ROTATE)
 			glRotatef (anglemod((lerpdata.origin[0] + lerpdata.origin[1])*0.8 + (108*cl.time)),  0, 0, 1);
 		else
-			glRotatef (lerpdata.angles[1],  									  				 0, 0, 1);
-		glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  				 0, 1, 0);
-		glRotatef (lerpdata.angles[2],  										  				 1, 0, 0);
+			glRotatef (lerpdata.angles[1],                                                       0, 0, 1);
+		glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],                 0, 1, 0);
+		glRotatef (lerpdata.angles[2],                                                           1, 0, 0);
 	}
 	
-//	glRotatef (lerpdata.angles[1],  										  0, 0, 1);
+//	glRotatef (lerpdata.angles[1],                                            0, 0, 1);
 //	glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  0, 1, 0);
-//	glRotatef (lerpdata.angles[2],  										  1, 0, 0);
-	
-	if (scale != 1.0f)
-		glScalef(scale, scale, scale);
+//	glRotatef (lerpdata.angles[2],                                            1, 0, 0);
 }
 
 /*
