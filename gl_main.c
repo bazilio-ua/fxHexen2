@@ -741,6 +741,51 @@ void R_DrawAliasModel (entity_t *e)
 	if (alphatest)
 		glEnable (GL_ALPHA_TEST);
 
+/*
+	// H II
+	if ((e->model->flags & EF_SPECIAL_TRANS))
+	{
+		// rjr
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+//		glColor3f( 1,1,1);
+		aliasalpha = 1.0f;
+		glDisable( GL_CULL_FACE );
+	}
+	else if (e->drawflags & DRF_TRANSLUCENT)
+	{
+		// rjr
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//		glColor4f( 1,1,1,r_wateralpha.value);
+		aliasalpha = 0.5f;
+	}
+	else if ((e->model->flags & EF_TRANSPARENT))
+	{
+		// rjr
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//		glColor3f( 1,1,1);
+		aliasalpha = 1.0f;
+	}
+	else if ((e->model->flags & EF_HOLEY))
+	{
+		// rjr
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+//		glColor3f( 1,1,1);
+		aliasalpha = 1.0f;
+	}
+	else
+	{
+		// rjr
+		glColor3f( 1,1,1);
+		aliasalpha = 1.0f;
+	}
+*/
+	
+	
 	//
 	// set up lighting
 	//
@@ -926,6 +971,26 @@ cleanup:
 	else
 	if (alphatest)
 		glDisable (GL_ALPHA_TEST);
+	
+	
+/*
+	// H II
+	if ((e->drawflags & DRF_TRANSLUCENT) ||
+		(e->model->flags & EF_SPECIAL_TRANS))
+		glDisable (GL_BLEND);
+
+	if ((e->model->flags & EF_TRANSPARENT))
+		glDisable (GL_BLEND);
+
+	if ((e->model->flags & EF_HOLEY))
+		glDisable (GL_BLEND);
+
+	if ((e->model->flags & EF_SPECIAL_TRANS))
+	{
+		// rjr
+		glEnable( GL_CULL_FACE );
+	}
+*/
 	
 	
 	glPopMatrix ();

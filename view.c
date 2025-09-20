@@ -756,11 +756,13 @@ void V_SetPalette (byte *palette)
 	
 	// fullbright palette, for holey textures (fence)
 	memcpy (d_8to24table_fullbright_holey, d_8to24table_fullbright, 256*4);
-	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
+//	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
+	d_8to24table_fullbright_holey[0] = 0; // Alpha of zero.
 	
 	// nobright palette, for holey textures (fence)
 	memcpy (d_8to24table_nobright_holey, d_8to24table_nobright, 256*4);
-	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
+//	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
+	d_8to24table_nobright_holey[0] = 0; // Alpha of zero.
 	
 	// conchars palette, 0 and 255 are transparent
 	memcpy (d_8to24table_conchars, d_8to24table, 256*4);

@@ -1756,7 +1756,8 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 
 	
 	// detect false alpha cases
-	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
+//	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
+	if (glt->flags & (TEXPREF_ALPHA|TEXPREF_TRANSPARENT|TEXPREF_HOLEY|TEXPREF_SPECIAL_TRANS) && !(glt->flags & TEXPREF_CONCHARS))
 	{
 		for (i=0 ; i<size ; i++)
 		{
@@ -1766,6 +1767,8 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 		}
 		if (i == size)
 			glt->flags &= ~TEXPREF_ALPHA;
+		if (glt->flags & (TEXPREF_TRANSPARENT|TEXPREF_HOLEY|TEXPREF_SPECIAL_TRANS))
+			glt->flags |= TEXPREF_ALPHA;
 	}
 
 	// choose palette and padbyte
