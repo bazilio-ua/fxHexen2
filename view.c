@@ -739,12 +739,12 @@ void V_SetPalette (byte *palette)
 		if (GetBit (is_fullbright, i))
 		{
 			SetPaletteColor (&d_8to24table_fullbright[i], src[0], src[1], src[2], 255);
-			// nobright palette, fullbright indices (224-255) are black (for additive blending)
+			// nobright palette, fullbright indices  are black (for additive blending)
 			SetPaletteColor (&d_8to24table_nobright[i], 0, 0, 0, 255);
 		}
 		else
 		{
-			// fullbright palette, nobright indices (0-223) are black (for additive blending)
+			// fullbright palette, nobright indices  are black (for additive blending)
 			SetPaletteColor (&d_8to24table_fullbright[i], 0, 0, 0, 255);
 			SetPaletteColor (&d_8to24table_nobright[i], src[0], src[1], src[2], 255);
 		}
@@ -753,6 +753,10 @@ void V_SetPalette (byte *palette)
 	// standard palette, 255 is transparent
 	memcpy (d_8to24table, d_8to24table_opaque, 256*4);
 	((byte *)&d_8to24table[255])[3] = 0;
+	
+	// Unlike Quake palette, Hexen II palette has only transparent value at index 0
+	// looks like standard, built-in Hexen II colormap doesn't have fullbright colors at all,
+	// except one, full-white at palette index 255
 	
 	// fullbright palette, for holey textures (fence)
 	memcpy (d_8to24table_fullbright_holey, d_8to24table_fullbright, 256*4);
