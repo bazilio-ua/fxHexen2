@@ -2791,10 +2791,12 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 
 	//ybounds will be used when entity has nonzero yaw
 	yawradius = sqrt(yawradius);
-	loadmodel->ymins[0] = loadmodel->ymins[1] = -yawradius;
-	loadmodel->ymaxs[0] = loadmodel->ymaxs[1] = yawradius;
-	loadmodel->ymins[2] = loadmodel->mins[2];
-	loadmodel->ymaxs[2] = loadmodel->maxs[2];
+	loadmodel->ymins[0] = loadmodel->ymins[1] = loadmodel->ymins[2] = -yawradius;
+	loadmodel->ymaxs[0] = loadmodel->ymaxs[1] = loadmodel->ymaxs[2] = yawradius;
+//	loadmodel->ymins[0] = loadmodel->ymins[1] = -yawradius;
+//	loadmodel->ymaxs[0] = loadmodel->ymaxs[1] = yawradius;
+//	loadmodel->ymins[2] = loadmodel->mins[2];
+//	loadmodel->ymaxs[2] = loadmodel->maxs[2];
 }
 
 
