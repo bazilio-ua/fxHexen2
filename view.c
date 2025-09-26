@@ -815,7 +815,7 @@ void V_SetPalette (byte *palette)
 			// h2 part special d_8to24TranslucentTable, used for rain effect in castle4 and eidolon map
 			SetPaletteColor (&d_8to24TranslucentTable[i*16+p], src[c], src[c+1], src[c+2], ColorPercent[15-p]);
 			
-			// tint part, FIXME not used?
+			// tint part
 			RTint[i*16+p] = ((float)src[c]  ) / ((float)ColorPercent[15-p]);
 			GTint[i*16+p] = ((float)src[c+1]) / ((float)ColorPercent[15-p]);
 			BTint[i*16+p] = ((float)src[c+2]) / ((float)ColorPercent[15-p]);

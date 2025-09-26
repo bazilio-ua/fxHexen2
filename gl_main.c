@@ -541,6 +541,8 @@ qboolean shading = true; // if false, disable vertex shading for various reasons
 float	aliasalpha;
 qboolean	aliasglow;
 
+vec3_t			tintcolor;
+
 /*
 =================
 R_DrawAliasModel
@@ -556,7 +558,6 @@ void R_DrawAliasModel (entity_t *e)
 	model_t		*clmodel;
 	aliashdr_t	*paliashdr;
 	int			anim;
-	float		an;
 	static float	tmatrix[3][4];
 	float entScale;
 	float xyfact;
@@ -785,6 +786,17 @@ void R_DrawAliasModel (entity_t *e)
 	}
 */
 	
+	//
+	// set up tint color
+	//
+	if (e->colorshade)
+	{
+		tintcolor[0] = RTint[e->colorshade];
+		tintcolor[1] = GTint[e->colorshade];
+		tintcolor[2] = BTint[e->colorshade];
+	}
+	else
+		tintcolor[0] = tintcolor[1] = tintcolor[2] = 1;
 	
 	//
 	// set up lighting
@@ -1592,6 +1604,10 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, lerpdata_t lerpdata)
 					vertcolor[2] = shadedots[verts1->lightnormalindex] * lightcolor[2];
 				}
 				
+				// h2 tint
+				vertcolor[0] *= tintcolor[0];
+				vertcolor[1] *= tintcolor[1];
+				vertcolor[2] *= tintcolor[2];
 				
 				glColor4fv (vertcolor);
 			}
