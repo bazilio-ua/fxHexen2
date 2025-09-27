@@ -723,10 +723,12 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// set up for alpha blending
 	//
-	aliasalpha = ENTALPHA_DECODE(e->alpha);
+	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? 0.5f : 1.0f;
+	
+//	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test
 	
-	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
+	alphatest = !!(e->model->flags & (EF_HOLEY|EF_TRANSPARENT)); // MF_HOLEY
 
 	if (aliasalpha == 0)
 		goto cleanup;
@@ -735,8 +737,11 @@ void R_DrawAliasModel (entity_t *e)
 	alphablend = (aliasalpha < 1.0);
 	if (alphablend)
 	{
-		glDepthMask (GL_FALSE);
+		glDepthMask (GL_FALSE); // don't bother writing Z
 		glEnable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable (GL_ALPHA_TEST);
+		glAlphaFunc (GL_GEQUAL, 0.5);
 	}
 	else
 	if (alphatest)
@@ -976,8 +981,10 @@ cleanup:
 	
 	if (alphablend)
 	{
-		glDepthMask (GL_TRUE);
+		glDepthMask (GL_TRUE); // back to normal Z buffering
 		glDisable (GL_BLEND);
+		glDisable (GL_ALPHA_TEST);
+		glAlphaFunc (GL_GREATER, 0.666);
 		glColor4f (1, 1, 1, 1);
 	}
 	else

@@ -72,6 +72,10 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "+playerclass 1 +map demo1"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-portals"
             isEnabled = "YES">
          </CommandLineArgument>
@@ -100,7 +104,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-developer 2"
+            argument = "-developer 1"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument

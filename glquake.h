@@ -46,6 +46,9 @@ extern unsigned int d_8to24table_conchars[256];
 extern unsigned int d_8to24TranslucentTable[256];
 extern float RTint[256], GTint[256], BTint[256];
 
+extern unsigned int d_8to24table_fullbright_transparent[256];
+extern unsigned int d_8to24table_nobright_transparent[256];
+
 extern unsigned int is_fullbright[256/32];
 
 // wgl uses APIENTRY

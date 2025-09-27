@@ -741,12 +741,20 @@ void V_SetPalette (byte *palette)
 			SetPaletteColor (&d_8to24table_fullbright[i], src[0], src[1], src[2], 255);
 			// nobright palette, fullbright indices  are black (for additive blending)
 			SetPaletteColor (&d_8to24table_nobright[i], 0, 0, 0, 255);
+			
+			// odd - translucent (alpha 0.5), even - full value (alpha 1.0)
+			SetPaletteColor (&d_8to24table_fullbright_transparent[i], src[0], src[1], src[2], (i & 1) ? 127 : 255);
+			SetPaletteColor (&d_8to24table_nobright_transparent[i], 0, 0, 0, 255);
 		}
 		else
 		{
 			// fullbright palette, nobright indices  are black (for additive blending)
 			SetPaletteColor (&d_8to24table_fullbright[i], 0, 0, 0, 255);
 			SetPaletteColor (&d_8to24table_nobright[i], src[0], src[1], src[2], 255);
+			
+			// odd - translucent (alpha 0.5), even - full value (alpha 1.0)
+			SetPaletteColor (&d_8to24table_fullbright_transparent[i], 0, 0, 0, 255);
+			SetPaletteColor (&d_8to24table_nobright_transparent[i], src[0], src[1], src[2], (i & 1) ? 127 : 255);
 		}
 	}
 	
@@ -767,6 +775,9 @@ void V_SetPalette (byte *palette)
 	memcpy (d_8to24table_nobright_holey, d_8to24table_nobright, 256*4);
 //	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
 	d_8to24table_nobright_holey[0] = 0; // Alpha of zero.
+	
+	d_8to24table_fullbright_transparent[0] = 0;
+	d_8to24table_nobright_transparent[0] = 0;
 	
 	// conchars palette, 0 and 255 are transparent
 	memcpy (d_8to24table_conchars, d_8to24table, 256*4);
