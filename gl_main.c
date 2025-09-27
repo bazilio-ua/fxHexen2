@@ -735,6 +735,15 @@ void R_DrawAliasModel (entity_t *e)
 
 	
 	alphablend = (aliasalpha < 1.0);
+	
+	if (e->model->flags & EF_SPECIAL_TRANS)
+	{
+		// rjr
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+		glDisable (GL_CULL_FACE);
+	}
+	else
 	if (alphablend)
 	{
 		glDepthMask (GL_FALSE); // don't bother writing Z
@@ -979,6 +988,13 @@ cleanup:
 	glShadeModel (GL_FLAT); // gl_smoothmodels
 	
 	
+	if (e->model->flags & EF_SPECIAL_TRANS)
+	{
+		// rjr
+		glDisable (GL_BLEND);
+		glEnable (GL_CULL_FACE);
+	}
+	else
 	if (alphablend)
 	{
 		glDepthMask (GL_TRUE); // back to normal Z buffering
@@ -1049,9 +1065,10 @@ void R_DrawEntities (void)
 			break;
 			
 		case mod_alias:
-			if (ENTALPHA_DECODE(e->alpha) < 1)
+			if ((e->drawflags & DRF_TRANSLUCENT) || (e->model->flags & (EF_TRANSPARENT|EF_HOLEY|EF_SPECIAL_TRANS)))
+//			if (ENTALPHA_DECODE(e->alpha) < 1)
 				R_AddToAlpha (ALPHA_ALIAS, R_GetAlphaDist(e->origin), e, NULL, NULL, 0);
-			else	
+			else
 				R_DrawAliasModel (e);
 			break;
 			

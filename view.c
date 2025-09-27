@@ -834,6 +834,16 @@ void V_SetPalette (byte *palette)
 	}
 	
 	
+	src = pal;
+	for (p = 0; p < 256; p++)
+	{
+		c = ColorIndex[p>>4]*3;
+
+		// Translucency through the particle table
+		SetPaletteColor (&d_8to24table_special_trans[p], src[c], src[c+1], src[c+2], ColorPercent[p&15]);
+	}
+	
+	
 }
 
 void V_SetOriginalPalette (void)

@@ -84,6 +84,8 @@ float RTint[256], GTint[256], BTint[256];
 unsigned int d_8to24table_fullbright_transparent[256];	//fullbright palette, for transparent textures
 unsigned int d_8to24table_nobright_transparent[256];	//nobright palette, for transparent textures
 
+unsigned int d_8to24table_special_trans[256];
+
 unsigned int is_fullbright[256/32];
 
 char *gl_vendor;
@@ -1795,6 +1797,11 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 			pal = d_8to24table_nobright_transparent;
 		else
 			pal = d_8to24table_nobright;
+		padbyte = 0;
+	}
+	else if (glt->flags & TEXPREF_SPECIAL_TRANS)
+	{
+		pal = d_8to24table_special_trans;
 		padbyte = 0;
 	}
 	else if (glt->flags & TEXPREF_CONCHARS)
