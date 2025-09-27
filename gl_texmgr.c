@@ -1028,6 +1028,7 @@ void TexMgr_LoadPalette (void)
 	V_SetPalette (host_basepal);
 }
 
+void TexMgr_Imagedump_f (void);
 /*
 ===============
 TexMgr_Init
@@ -1061,6 +1062,8 @@ void TexMgr_Init (void)
 
 	Cmd_AddCommand ("gl_texturemode", &GL_TextureMode_f);
 	Cmd_AddCommand ("gl_texture_anisotropy", &GL_Texture_Anisotropy_f);
+
+	Cmd_AddCommand ("imagedump", &TexMgr_Imagedump_f);
 
 	// load notexture images
 	notexture = TexMgr_LoadTexture (NULL, "notexture", 2, 2, SRC_RGBA, notexture_data, "", (uintptr_t)notexture_data, TEXPREF_NEAREST | TEXPREF_PERSIST | TEXPREF_NOPICMIP);
@@ -2310,3 +2313,48 @@ void TexMgr_ReloadTextures (void)
 	Hunk_FreeToLowMark (mark);
 }
 
+/*
+===============
+TexMgr_Imagedump_f -- dump all current textures to TGA files
+===============
+*/
+void TexMgr_Imagedump_f (void)
+{
+	char tganame[MAX_OSPATH], tempname[MAX_OSPATH], dirname[MAX_OSPATH];
+	gltexture_t	*glt;
+	byte *buffer;
+	char *c;
+
+	//create directory
+	sprintf(dirname, "%s/imagedump", com_gamedir);
+	Sys_mkdir (dirname);
+
+	//loop through textures
+	for (glt=active_gltextures; glt; glt=glt->next)
+	{
+		strcpy(tempname, glt->name);
+		while ((c = strchr(tempname, ':')) != NULL) *c = '_';
+		while ((c = strchr(tempname, '/')) != NULL) *c = '_';
+		while ((c = strchr(tempname, '*')) != NULL) *c = '_';
+		sprintf(tganame, "imagedump/%s.tga", tempname);
+
+		GL_BindTexture (glt);
+		glPixelStorei (GL_PACK_ALIGNMENT, 1);/* for widths that aren't a multiple of 4 */
+		
+		if (glt->flags & TEXPREF_ALPHA)
+		{
+			buffer = malloc(glt->width*glt->height*4);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+			Image_WriteTGA (tganame, buffer, glt->width, glt->height, 32, true);
+		}
+		else
+		{
+			buffer = malloc(glt->width*glt->height*3);
+			glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+			Image_WriteTGA (tganame, buffer, glt->width, glt->height, 24, true);
+		}
+		free (buffer);
+	}
+
+	Con_Printf ("dumped %i textures to %s\n", numgltextures, dirname);
+}
