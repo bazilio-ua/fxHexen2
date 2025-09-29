@@ -2707,7 +2707,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		}
 
 		offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
-		if (Mod_HasFullbrights ((byte *)(pskintype + 1), size))
+		if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
 		{
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
 			pheader->base[i][0] =
@@ -2793,8 +2793,8 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 	yawradius = sqrt(yawradius);
 	loadmodel->ymins[0] = loadmodel->ymins[1] = -yawradius;
 	loadmodel->ymaxs[0] = loadmodel->ymaxs[1] = yawradius;
-	loadmodel->ymins[2] = loadmodel->mins[2];
-	loadmodel->ymaxs[2] = loadmodel->maxs[2];
+	loadmodel->ymins[2] = min (loadmodel->mins[2], -yawradius);
+	loadmodel->ymaxs[2] = max (loadmodel->maxs[2], yawradius);
 }
 
 

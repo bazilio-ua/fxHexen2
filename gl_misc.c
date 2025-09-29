@@ -99,6 +99,18 @@ void GL_Overbright (void)
 
 /*
 ====================
+R_TransAlpha
+====================
+*/
+void R_TransAlpha (void)
+{
+	map_transalpha = CLAMP(0.0, r_transalpha.value, 1.0);
+	
+	V_ReloadPalette ();
+}
+
+/*
+====================
 R_WaterAlpha -- ericw
 ====================
 */
@@ -159,6 +171,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_drawviewmodel);
 	Cvar_RegisterVariable (&r_waterquality);
 	Cvar_RegisterVariableCallback (&r_wateralpha, R_WaterAlpha);
+	Cvar_RegisterVariableCallback (&r_transalpha, R_TransAlpha);
 	Cvar_RegisterVariable (&r_lockalpha);
 	Cvar_RegisterVariableCallback (&r_lavaalpha, R_LavaAlpha);
 	Cvar_RegisterVariableCallback (&r_slimealpha, R_SlimeAlpha);
@@ -329,6 +342,7 @@ void R_InitSkyBoxTextures (void)
 }
 
 float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha;
+float	map_transalpha = 0.5f;
 
 /*
 =================

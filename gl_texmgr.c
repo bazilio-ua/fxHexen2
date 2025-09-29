@@ -79,6 +79,12 @@ unsigned int d_8to24table_nobright[256];		//nobright palette, 224-255 are black 
 unsigned int d_8to24table_nobright_holey[256];	//nobright palette, for holey textures (fence)
 unsigned int d_8to24table_conchars[256];		//conchars palette, 0 and 255 are transparent
 unsigned int d_8to24TranslucentTable[256];
+float RTint[256], GTint[256], BTint[256];
+
+unsigned int d_8to24table_fullbright_transparent[256];	//fullbright palette, for transparent textures
+unsigned int d_8to24table_nobright_transparent[256];	//nobright palette, for transparent textures
+
+unsigned int d_8to24table_special_trans[256];
 
 unsigned int is_fullbright[256/32];
 
@@ -1848,7 +1854,8 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 
 	
 	// detect false alpha cases
-	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
+//	if (glt->flags & TEXPREF_ALPHA && !(glt->flags & TEXPREF_CONCHARS))
+	if (glt->flags & (TEXPREF_ALPHA|TEXPREF_TRANSPARENT|TEXPREF_HOLEY|TEXPREF_SPECIAL_TRANS) && !(glt->flags & TEXPREF_CONCHARS))
 	{
 		for (i=0 ; i<size ; i++)
 		{
@@ -1858,23 +1865,36 @@ void TexMgr_Upload8 (gltexture_t *glt, byte *data)
 		}
 		if (i == size)
 			glt->flags &= ~TEXPREF_ALPHA;
+		if (glt->flags & (TEXPREF_TRANSPARENT|TEXPREF_HOLEY|TEXPREF_SPECIAL_TRANS))
+			glt->flags |= TEXPREF_ALPHA;
 	}
 
 	// choose palette and padbyte
 	if (glt->flags & TEXPREF_FULLBRIGHT)
 	{
-		if (glt->flags & TEXPREF_ALPHA)
+//		if (glt->flags & TEXPREF_ALPHA)
+		if (glt->flags & TEXPREF_HOLEY)
 			pal = d_8to24table_fullbright_holey;
+		else if (glt->flags & TEXPREF_TRANSPARENT)
+			pal = d_8to24table_fullbright_transparent;
 		else
 			pal = d_8to24table_fullbright;
 		padbyte = 0;
 	}
 	else if (glt->flags & TEXPREF_NOBRIGHT)
 	{
-		if (glt->flags & TEXPREF_ALPHA)
+//		if (glt->flags & TEXPREF_ALPHA)
+		if (glt->flags & TEXPREF_HOLEY)
 			pal = d_8to24table_nobright_holey;
+		else if (glt->flags & TEXPREF_TRANSPARENT)
+			pal = d_8to24table_nobright_transparent;
 		else
 			pal = d_8to24table_nobright;
+		padbyte = 0;
+	}
+	else if (glt->flags & TEXPREF_SPECIAL_TRANS)
+	{
+		pal = d_8to24table_special_trans;
 		padbyte = 0;
 	}
 	else if (glt->flags & TEXPREF_CONCHARS)

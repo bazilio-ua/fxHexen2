@@ -44,7 +44,12 @@ extern unsigned int d_8to24table_nobright[256];
 extern unsigned int d_8to24table_nobright_holey[256];
 extern unsigned int d_8to24table_conchars[256];
 extern unsigned int d_8to24TranslucentTable[256];
-extern float RTint[256],GTint[256],BTint[256];
+extern float RTint[256], GTint[256], BTint[256];
+
+extern unsigned int d_8to24table_fullbright_transparent[256];
+extern unsigned int d_8to24table_nobright_transparent[256];
+
+extern unsigned int d_8to24table_special_trans[256];
 
 extern unsigned int is_fullbright[256/32];
 
@@ -504,6 +509,7 @@ extern	char	skybox_name[MAX_OSPATH];
 extern	float	skyfog; // ericw
 extern	float	skyalpha;
 extern	float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha; //ericw
+extern	float	map_transalpha;
 
 #define	OVERBRIGHT_SCALE	2.0
 extern	int		d_overbright;
@@ -524,6 +530,7 @@ extern	cvar_t	r_fullbright;
 extern	cvar_t	r_ambient;
 extern	cvar_t	r_waterquality;
 extern	cvar_t	r_wateralpha;
+extern	cvar_t	r_transalpha;
 extern	cvar_t	r_lockalpha;
 extern	cvar_t	r_lavaalpha;
 extern	cvar_t	r_slimealpha;

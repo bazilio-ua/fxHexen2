@@ -326,7 +326,7 @@ void Draw_LoadPics (void)
 		Sys_Error ("Draw_LoadPics: couldn't load conchars");
 
 	// now turn them into textures
-	offset = (uintptr_t)0; // was sizeof(int)*2, because "gfx/menu/conchars.lmp" it's just a data, so we don't need an offset
+	offset = (uintptr_t)0; // was sizeof(int)*2, because "gfx/menu/conchars.lmp" is not a lump (miptex), it's just a data with no qpic header, so we don't need an offset
 	char_texture = TexMgr_LoadTexture (NULL, texturepath, 256, 128, SRC_INDEXED, draw_chars, texturepath, offset, TEXPREF_ALPHA | TEXPREF_NEAREST | TEXPREF_NOPICMIP | TEXPREF_CONCHARS);
 
 

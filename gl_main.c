@@ -75,6 +75,7 @@ cvar_t	r_speeds = {"r_speeds","0", CVAR_NONE};
 cvar_t	r_fullbright = {"r_fullbright","0", CVAR_NONE};
 cvar_t	r_ambient = { "r_ambient","0", CVAR_NONE};
 cvar_t	r_wateralpha = {"r_wateralpha","1", CVAR_ARCHIVE};
+cvar_t	r_transalpha = {"r_transalpha","0.5", CVAR_NONE};
 cvar_t	r_lockalpha = {"r_lockalpha","0", CVAR_ARCHIVE};
 cvar_t	r_lavaalpha = {"r_lavaalpha","1", CVAR_NONE};
 cvar_t	r_slimealpha = {"r_slimealpha","1", CVAR_NONE};
@@ -541,6 +542,8 @@ qboolean shading = true; // if false, disable vertex shading for various reasons
 float	aliasalpha;
 qboolean	aliasglow;
 
+vec3_t			tintcolor;
+
 /*
 =================
 R_DrawAliasModel
@@ -556,7 +559,6 @@ void R_DrawAliasModel (entity_t *e)
 	model_t		*clmodel;
 	aliashdr_t	*paliashdr;
 	int			anim;
-	float		an;
 	static float	tmatrix[3][4];
 	float entScale;
 	float xyfact;
@@ -621,11 +623,94 @@ void R_DrawAliasModel (entity_t *e)
 
 	// special handling of view model to keep FOV from altering look.
 	if (e == &cl.viewent)
+	{
 		fovscale = 1.0f / tan( DEG2RAD (r_fovx / 2.0f) ) * r_refdef.weaponfov_x / 90.0f; // reverse out fov and do fov we want
+		
+		glTranslatef (paliashdr->scale_origin[0] * fovscale, paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glScalef (paliashdr->scale[0] * fovscale, paliashdr->scale[1], paliashdr->scale[2]);
+	}
+	else
+	{
+		
+		if (e->scale != 0 && e->scale != 100)
+		{
+			entScale = (float)e->scale/100.0;
+			switch (e->drawflags&SCALE_TYPE_MASKIN)
+			{
+			case SCALE_TYPE_UNIFORM:
+				tmatrix[0][0] = paliashdr->scale[0]*entScale;
+				tmatrix[1][1] = paliashdr->scale[1]*entScale;
+				tmatrix[2][2] = paliashdr->scale[2]*entScale;
+				xyfact = zfact = (entScale-1.0)*127.95;
+				break;
+			case SCALE_TYPE_XYONLY:
+				tmatrix[0][0] = paliashdr->scale[0]*entScale;
+				tmatrix[1][1] = paliashdr->scale[1]*entScale;
+				tmatrix[2][2] = paliashdr->scale[2];
+				xyfact = (entScale-1.0)*127.95;
+				zfact = 1.0;
+				break;
+			case SCALE_TYPE_ZONLY:
+				tmatrix[0][0] = paliashdr->scale[0];
+				tmatrix[1][1] = paliashdr->scale[1];
+				tmatrix[2][2] = paliashdr->scale[2]*entScale;
+				xyfact = 1.0;
+				zfact = (entScale-1.0)*127.95;
+				break;
+			}
+			switch (e->drawflags&SCALE_ORIGIN_MASKIN)
+			{
+			case SCALE_ORIGIN_CENTER:
+				tmatrix[0][3] = paliashdr->scale_origin[0]-paliashdr->scale[0]*xyfact;
+				tmatrix[1][3] = paliashdr->scale_origin[1]-paliashdr->scale[1]*xyfact;
+				tmatrix[2][3] = paliashdr->scale_origin[2]-paliashdr->scale[2]*zfact;
+				break;
+			case SCALE_ORIGIN_BOTTOM:
+				tmatrix[0][3] = paliashdr->scale_origin[0]-paliashdr->scale[0]*xyfact;
+				tmatrix[1][3] = paliashdr->scale_origin[1]-paliashdr->scale[1]*xyfact;
+				tmatrix[2][3] = paliashdr->scale_origin[2];
+				break;
+			case SCALE_ORIGIN_TOP:
+				tmatrix[0][3] = paliashdr->scale_origin[0]-paliashdr->scale[0]*xyfact;
+				tmatrix[1][3] = paliashdr->scale_origin[1]-paliashdr->scale[1]*xyfact;
+				tmatrix[2][3] = paliashdr->scale_origin[2]-paliashdr->scale[2]*zfact*2.0;
+				break;
+			}
+		}
+		else
+		{
+			tmatrix[0][0] = paliashdr->scale[0];
+			tmatrix[1][1] = paliashdr->scale[1];
+			tmatrix[2][2] = paliashdr->scale[2];
+			tmatrix[0][3] = paliashdr->scale_origin[0];
+			tmatrix[1][3] = paliashdr->scale_origin[1];
+			tmatrix[2][3] = paliashdr->scale_origin[2];
+		}
 
-	glTranslatef (paliashdr->scale_origin[0] * fovscale, paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-	glScalef (paliashdr->scale[0] * fovscale, paliashdr->scale[1], paliashdr->scale[2]);
+		if (e->model->flags&EF_ROTATE)
+		{ // Floating motion
+			tmatrix[2][3] += sin(e->origin[0]+e->origin[1]+(cl.time*3))*5.5;
+//			tmatrix[2][3] += sin(lerpdata.origin[0]+lerpdata.origin[1]+(cl.time*3))*5.5;
+		}
 
+	// [0][3] [1][3] [2][3]
+	//	glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+		glTranslatef (tmatrix[0][3],tmatrix[1][3],tmatrix[2][3]);
+	// [0][0] [1][1] [2][2]
+	//	glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+		glScalef (tmatrix[0][0],tmatrix[1][1],tmatrix[2][2]);
+
+
+//		scale = ENTSCALE_DECODE(e->scale);
+//		if (scale != 1.0f)
+//			glScalef (scale, scale, scale);
+//
+//		glTranslatef (paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+//		glScalef (paliashdr->scale[0], paliashdr->scale[1], paliashdr->scale[2]);
+
+
+	}
+	
 	//
 	// model rendering stuff
 	//
@@ -639,16 +724,30 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// set up for alpha blending
 	//
-	aliasalpha = ENTALPHA_DECODE(e->alpha);
+	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
+	
+//	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test
 	
 	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
+//	alphatest = !!(e->model->flags & (EF_HOLEY|EF_TRANSPARENT)); // MF_HOLEY
 
 	if (aliasalpha == 0)
 		goto cleanup;
 
 	
-	alphablend = (aliasalpha < 1.0);
+//	alphablend = (aliasalpha < 1.0);
+	alphablend = (aliasalpha < 1.0) || !!(e->model->flags & EF_TRANSPARENT);
+	
+	if (e->model->flags & EF_SPECIAL_TRANS)
+	{
+		// rjr
+		glEnable (GL_BLEND);
+		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+//		glBlendFunc (paliashdr->glow ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+		glDisable (GL_CULL_FACE);
+	}
+	else
 	if (alphablend)
 	{
 		glDepthMask (GL_FALSE);
@@ -659,9 +758,24 @@ void R_DrawAliasModel (entity_t *e)
 		glEnable (GL_ALPHA_TEST);
 
 	//
+	// set up tint color
+	//
+	if (e->colorshade)
+	{
+		tintcolor[0] = RTint[e->colorshade];
+		tintcolor[1] = GTint[e->colorshade];
+		tintcolor[2] = BTint[e->colorshade];
+	}
+	else
+		tintcolor[0] = tintcolor[1] = tintcolor[2] = 1;
+	
+	//
 	// set up lighting
 	//
-	R_LightPoint (e->origin, lightcolor);
+	VectorCopy (e->origin, adjust_origin);
+	adjust_origin[2] += (e->model->mins[2] + e->model->maxs[2]) / 2;
+	R_LightPoint (adjust_origin, lightcolor);
+//	R_LightPoint (e->origin, lightcolor);
 
 	// add dlights
 	if (r_dynamic.value) // EER1
@@ -710,6 +824,10 @@ void R_DrawAliasModel (entity_t *e)
 			lightcolor[1] += add / 3.0f;
 			lightcolor[2] += add / 3.0f;
 		}
+		
+		// take light_level when chase_active
+		if (e == &cl_entities[cl.viewentity])
+			cl.light_level = (lightcolor[0] + lightcolor[1] + lightcolor[2]) / 3;
 	}
 
 	// clamp lighting so it doesn't overbright as much (96)
@@ -717,6 +835,31 @@ void R_DrawAliasModel (entity_t *e)
 	if (add < 1.0f)
 		VectorScale (lightcolor, add, lightcolor);
 
+	
+	mls = e->drawflags&MLS_MASKIN;
+	if (e->model->flags&EF_ROTATE)
+	{
+		lightcolor[0] =
+		lightcolor[1] =
+		lightcolor[2] =
+			60+34+sin(e->origin[0]+e->origin[1]+(cl.time*3.8))*34;
+	}
+	else if (mls == MLS_ABSLIGHT)
+	{
+		lightcolor[0] =
+		lightcolor[1] =
+		lightcolor[2] =
+			e->abslight;
+	}
+	else if (mls != MLS_NONE)
+	{ // Use a model light style (25-30)
+		lightcolor[0] =
+		lightcolor[1] =
+		lightcolor[2] =
+			d_lightstyle[24+mls]/2;
+	}
+	
+	
 	shadedots = r_avertexnormal_dots[((int)(e->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 	VectorScale (lightcolor, 1.0f / 200.0f, lightcolor);
 
@@ -802,6 +945,14 @@ cleanup:
 	glShadeModel (GL_FLAT); // gl_smoothmodels
 	
 	
+	if (e->model->flags & EF_SPECIAL_TRANS)
+	{
+		// rjr
+		glDisable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable (GL_CULL_FACE);
+	}
+	else
 	if (alphablend)
 	{
 		glDepthMask (GL_TRUE);
@@ -850,9 +1001,10 @@ void R_DrawEntities (void)
 			break;
 			
 		case mod_alias:
-			if (ENTALPHA_DECODE(e->alpha) < 1)
+			if ((e->drawflags & DRF_TRANSLUCENT) || (e->model->flags & (EF_TRANSPARENT|EF_HOLEY|EF_SPECIAL_TRANS)))
+//			if (ENTALPHA_DECODE(e->alpha) < 1)
 				R_AddToAlpha (ALPHA_ALIAS, R_GetAlphaDist(e->origin), e, NULL, NULL, 0);
-			else	
+			else
 				R_DrawAliasModel (e);
 			break;
 			
@@ -1265,16 +1417,59 @@ R_RotateForEntity renamed and modified to take lerpdata instead of pointer to en
 */
 void GL_EntityTransform (lerpdata_t lerpdata, entity_t *e)
 {
-	float scale = (e->scale != 0 && e->scale != 100) ? (float)e->scale / 100.0f : 1.0f;
-//	float scale = ENTSCALE_DECODE(e->scale);
+	float	forward;
+	float	yaw, pitch;
+	vec3_t			angles;
 	
 	glTranslatef (lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
-	glRotatef (lerpdata.angles[1],  0, 0, 1);
-	glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  0, 1, 0);
-	glRotatef (lerpdata.angles[2],  1, 0, 0);
 	
-	if (scale != 1.0f)
-		glScalef(scale, scale, scale);
+	if (e->model->flags & EF_FACE_VIEW)
+	{
+		VectorSubtract(lerpdata.origin,r_origin,angles);
+		VectorSubtract(r_origin,lerpdata.origin,angles);
+		VectorNormalize(angles);
+
+		if (angles[1] == 0 && angles[0] == 0)
+		{
+			yaw = 0;
+			if (angles[2] > 0)
+				pitch = stupidquakebugfix ? 270 : 90;
+			else
+				pitch = stupidquakebugfix ? 90 : 270;
+		}
+		else
+		{
+			yaw = (atan2(angles[1], angles[0]) * 180 / M_PI);
+			if (yaw < 0)
+				yaw += 360;
+
+			forward = sqrt (angles[0]*angles[0] + angles[1]*angles[1]);
+			pitch = (atan2(stupidquakebugfix ? -angles[2] : angles[2], forward) * 180 / M_PI);
+			if (pitch < 0)
+				pitch += 360;
+		}
+
+		angles[0] = pitch;
+		angles[1] = yaw;
+		angles[2] = 0;
+
+		glRotatef (angles[1],                                   0, 0, 1);
+		glRotatef (stupidquakebugfix ? angles[0] : -angles[0],  0, 1, 0);
+		glRotatef (lerpdata.angles[2],                          1, 0, 0);
+	}
+	else
+	{
+		if (e->model->flags & EF_ROTATE)
+			glRotatef (anglemod((lerpdata.origin[0] + lerpdata.origin[1])*0.8 + (108*cl.time)),  0, 0, 1);
+		else
+			glRotatef (lerpdata.angles[1],                                                       0, 0, 1);
+		glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],                 0, 1, 0);
+		glRotatef (lerpdata.angles[2],                                                           1, 0, 0);
+	}
+	
+//	glRotatef (lerpdata.angles[1],                                            0, 0, 1);
+//	glRotatef (stupidquakebugfix ? lerpdata.angles[0] : -lerpdata.angles[0],  0, 1, 0);
+//	glRotatef (lerpdata.angles[2],                                            1, 0, 0);
 }
 
 /*
@@ -1369,6 +1564,10 @@ void GL_DrawAliasFrame (aliashdr_t *paliashdr, lerpdata_t lerpdata)
 					vertcolor[2] = shadedots[verts1->lightnormalindex] * lightcolor[2];
 				}
 				
+				// h2 tint
+				vertcolor[0] *= tintcolor[0];
+				vertcolor[1] *= tintcolor[1];
+				vertcolor[2] *= tintcolor[2];
 				
 				glColor4fv (vertcolor);
 			}

@@ -661,6 +661,37 @@ void V_UpdateBlend (void)
 
 /*
 ================
+V_ReloadPalette
+================
+*/
+void V_ReloadPalette (void)
+{
+	int		i;
+	byte	*basepal, *newpal;
+	byte	pal[768];
+	int		ir, ig, ib;
+
+	basepal = host_basepal;
+	newpal = pal;
+	
+	for (i=0 ; i<256 ; i++)
+	{
+		ir = basepal[0];
+		ig = basepal[1];
+		ib = basepal[2];
+		basepal += 3;
+		
+		newpal[0] = gammatable[ir];
+		newpal[1] = gammatable[ig];
+		newpal[2] = gammatable[ib];
+		newpal += 3;
+	}
+
+	V_ShiftPalette (pal);
+}
+
+/*
+================
 V_UpdateGamma
 
 callback when the gamma/contrast cvar changes
@@ -713,8 +744,6 @@ void SetPaletteColor (unsigned int *dst, byte r, byte g, byte b, byte a)
 	((byte *)dst)[3] = a;
 }
 
-float RTint[256], GTint[256], BTint[256];
-
 int ColorIndex[16] = {
 	0, 31, 47, 63, 79, 95, 111, 127, 143, 159, 175, 191, 199, 207, 223, 231
 };
@@ -727,6 +756,7 @@ void V_SetPalette (byte *palette)
 {
 	byte *pal, *src;
 	int i;
+	int a = (int)(255 * map_transalpha);
 
 	pal = palette;
 	
@@ -741,14 +771,22 @@ void V_SetPalette (byte *palette)
 		if (GetBit (is_fullbright, i))
 		{
 			SetPaletteColor (&d_8to24table_fullbright[i], src[0], src[1], src[2], 255);
-			// nobright palette, fullbright indices (224-255) are black (for additive blending)
+			// nobright palette, fullbright indices  are black (for additive blending)
 			SetPaletteColor (&d_8to24table_nobright[i], 0, 0, 0, 255);
+			
+			// odd - translucent (alpha 0.5), even - full value (alpha 1.0)
+			SetPaletteColor (&d_8to24table_fullbright_transparent[i], src[0], src[1], src[2], (i & 1) ? a : 255);
+			SetPaletteColor (&d_8to24table_nobright_transparent[i], 0, 0, 0, 255);
 		}
 		else
 		{
-			// fullbright palette, nobright indices (0-223) are black (for additive blending)
+			// fullbright palette, nobright indices  are black (for additive blending)
 			SetPaletteColor (&d_8to24table_fullbright[i], 0, 0, 0, 255);
 			SetPaletteColor (&d_8to24table_nobright[i], src[0], src[1], src[2], 255);
+			
+			// odd - translucent (alpha 0.5), even - full value (alpha 1.0)
+			SetPaletteColor (&d_8to24table_fullbright_transparent[i], 0, 0, 0, 255);
+			SetPaletteColor (&d_8to24table_nobright_transparent[i], src[0], src[1], src[2], (i & 1) ? a : 255);
 		}
 	}
 	
@@ -756,13 +794,22 @@ void V_SetPalette (byte *palette)
 	memcpy (d_8to24table, d_8to24table_opaque, 256*4);
 	((byte *)&d_8to24table[255])[3] = 0;
 	
+	// Unlike Quake palette, Hexen II palette has only transparent value at index 0
+	// looks like standard, built-in Hexen II colormap doesn't have fullbright colors at all,
+	// except one, full-white at palette index 255
+	
 	// fullbright palette, for holey textures (fence)
 	memcpy (d_8to24table_fullbright_holey, d_8to24table_fullbright, 256*4);
-	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
+//	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
+	d_8to24table_fullbright_holey[0] = 0; // Alpha of zero.
 	
 	// nobright palette, for holey textures (fence)
 	memcpy (d_8to24table_nobright_holey, d_8to24table_nobright, 256*4);
-	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
+//	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
+	d_8to24table_nobright_holey[0] = 0; // Alpha of zero.
+	
+	d_8to24table_fullbright_transparent[0] = 0;
+	d_8to24table_nobright_transparent[0] = 0;
 	
 	// conchars palette, 0 and 255 are transparent
 	memcpy (d_8to24table_conchars, d_8to24table, 256*4);
@@ -811,11 +858,21 @@ void V_SetPalette (byte *palette)
 			// h2 part special d_8to24TranslucentTable, used for rain effect in castle4 and eidolon map
 			SetPaletteColor (&d_8to24TranslucentTable[i*16+p], src[c], src[c+1], src[c+2], ColorPercent[15-p]);
 			
-			// tint part, FIXME not used?
+			// tint part
 			RTint[i*16+p] = ((float)src[c]  ) / ((float)ColorPercent[15-p]);
 			GTint[i*16+p] = ((float)src[c+1]) / ((float)ColorPercent[15-p]);
 			BTint[i*16+p] = ((float)src[c+2]) / ((float)ColorPercent[15-p]);
 		}
+	}
+	
+	
+	src = pal;
+	for (p = 0; p < 256; p++)
+	{
+		c = ColorIndex[p>>4]*3;
+
+		// Translucency through the particle table
+		SetPaletteColor (&d_8to24table_special_trans[p], src[c], src[c+1], src[c+2], ColorPercent[p&15]);
 	}
 	
 	
@@ -881,7 +938,7 @@ void V_FindFullbrightColors (void)
 		}
 	}
 	
-	Con_DPrintf ("Colormap has %d fullbright colors\n", numfb);
+	Con_Printf ("Colormap has %d fullbright color%s\n", numfb, numfb > 1 ? "s" : "");
 }
 
 /* 
