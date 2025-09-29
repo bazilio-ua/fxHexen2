@@ -1085,14 +1085,18 @@ void V_CreateColormapWithFullbrightColors (void)
 	byte *pal;
 	unsigned char colormap[16384];
 	char path[MAX_OSPATH];
+	char name[MAX_OSPATH];
 	FILE		*file;
 	
 	pal = host_basepal;
 	
 	generate_colormap(pal, colormap);
 	
-	sprintf (path,"%s/gfx/fbcolormap.lmp", com_gamedir);
-	file = fopen (path, "wb");
+	//create directory
+	sprintf (path,"%s/gfx", com_gamedir);
+	Sys_mkdir (path);
+	sprintf(name, "%s/fbcolormap.lmp", path);
+	file = fopen (name, "wb");
 	fwrite (colormap, 1, sizeof(colormap), file);
 	fclose (file);
 }
