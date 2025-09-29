@@ -661,6 +661,37 @@ void V_UpdateBlend (void)
 
 /*
 ================
+V_ReloadPalette
+================
+*/
+void V_ReloadPalette (void)
+{
+	int		i;
+	byte	*basepal, *newpal;
+	byte	pal[768];
+	int		ir, ig, ib;
+
+	basepal = host_basepal;
+	newpal = pal;
+	
+	for (i=0 ; i<256 ; i++)
+	{
+		ir = basepal[0];
+		ig = basepal[1];
+		ib = basepal[2];
+		basepal += 3;
+		
+		newpal[0] = gammatable[ir];
+		newpal[1] = gammatable[ig];
+		newpal[2] = gammatable[ib];
+		newpal += 3;
+	}
+
+	V_ShiftPalette (pal);
+}
+
+/*
+================
 V_UpdateGamma
 
 callback when the gamma/contrast cvar changes
@@ -725,6 +756,7 @@ void V_SetPalette (byte *palette)
 {
 	byte *pal, *src;
 	int i;
+	int a = (int)(255 * map_transalpha);
 
 	pal = palette;
 	
@@ -743,7 +775,7 @@ void V_SetPalette (byte *palette)
 			SetPaletteColor (&d_8to24table_nobright[i], 0, 0, 0, 255);
 			
 			// odd - translucent (alpha 0.5), even - full value (alpha 1.0)
-			SetPaletteColor (&d_8to24table_fullbright_transparent[i], src[0], src[1], src[2], (i & 1) ? 127 : 255);
+			SetPaletteColor (&d_8to24table_fullbright_transparent[i], src[0], src[1], src[2], (i & 1) ? a : 255);
 			SetPaletteColor (&d_8to24table_nobright_transparent[i], 0, 0, 0, 255);
 		}
 		else
@@ -754,7 +786,7 @@ void V_SetPalette (byte *palette)
 			
 			// odd - translucent (alpha 0.5), even - full value (alpha 1.0)
 			SetPaletteColor (&d_8to24table_fullbright_transparent[i], 0, 0, 0, 255);
-			SetPaletteColor (&d_8to24table_nobright_transparent[i], src[0], src[1], src[2], (i & 1) ? 127 : 255);
+			SetPaletteColor (&d_8to24table_nobright_transparent[i], src[0], src[1], src[2], (i & 1) ? a : 255);
 		}
 	}
 	
@@ -906,7 +938,7 @@ void V_FindFullbrightColors (void)
 		}
 	}
 	
-	Con_DPrintf ("Colormap has %d fullbright colors\n", numfb);
+	Con_Printf ("Colormap has %d fullbright colors\n", numfb);
 }
 
 /* 
