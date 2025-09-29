@@ -2709,6 +2709,8 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
 		if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
 		{
+			if (texflags & TEXPREF_SPECIAL_TRANS) goto special;
+			
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
 			pheader->base[i][0] =
 			pheader->base[i][1] =
@@ -2723,6 +2725,8 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		}
 		else
 		{
+			special:
+			
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
 			pheader->base[i][0] =
 			pheader->base[i][1] =

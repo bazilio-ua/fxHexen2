@@ -741,10 +741,8 @@ void R_DrawAliasModel (entity_t *e)
 	
 	if (e->model->flags & EF_SPECIAL_TRANS)
 	{
-		// rjr
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-//		glBlendFunc (paliashdr->glow ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 		glDisable (GL_CULL_FACE);
 	}
 	else
@@ -947,7 +945,6 @@ cleanup:
 	
 	if (e->model->flags & EF_SPECIAL_TRANS)
 	{
-		// rjr
 		glDisable (GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable (GL_CULL_FACE);
