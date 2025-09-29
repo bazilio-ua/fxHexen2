@@ -75,6 +75,7 @@ cvar_t	r_speeds = {"r_speeds","0", CVAR_NONE};
 cvar_t	r_fullbright = {"r_fullbright","0", CVAR_NONE};
 cvar_t	r_ambient = { "r_ambient","0", CVAR_NONE};
 cvar_t	r_wateralpha = {"r_wateralpha","1", CVAR_ARCHIVE};
+cvar_t	r_transalpha = {"r_transalpha","0.5", CVAR_NONE};
 cvar_t	r_lockalpha = {"r_lockalpha","0", CVAR_ARCHIVE};
 cvar_t	r_lavaalpha = {"r_lavaalpha","1", CVAR_NONE};
 cvar_t	r_slimealpha = {"r_slimealpha","1", CVAR_NONE};
@@ -723,83 +724,39 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// set up for alpha blending
 	//
-	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? 0.5f : 1.0f;
+	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
 	
 //	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test
 	
-	alphatest = !!(e->model->flags & (EF_HOLEY|EF_TRANSPARENT)); // MF_HOLEY
+	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
+//	alphatest = !!(e->model->flags & (EF_HOLEY|EF_TRANSPARENT)); // MF_HOLEY
 
 	if (aliasalpha == 0)
 		goto cleanup;
 
 	
-	alphablend = (aliasalpha < 1.0);
+//	alphablend = (aliasalpha < 1.0);
+	alphablend = (aliasalpha < 1.0) || !!(e->model->flags & EF_TRANSPARENT);
 	
 	if (e->model->flags & EF_SPECIAL_TRANS)
 	{
 		// rjr
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+//		glBlendFunc (paliashdr->glow ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 		glDisable (GL_CULL_FACE);
 	}
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_FALSE); // don't bother writing Z
+		glDepthMask (GL_FALSE);
 		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable (GL_ALPHA_TEST);
-		glAlphaFunc (GL_GEQUAL, 0.5);
 	}
 	else
 	if (alphatest)
 		glEnable (GL_ALPHA_TEST);
 
-/*
-	// H II
-	if ((e->model->flags & EF_SPECIAL_TRANS))
-	{
-		// rjr
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-//		glColor3f( 1,1,1);
-		aliasalpha = 1.0f;
-		glDisable( GL_CULL_FACE );
-	}
-	else if (e->drawflags & DRF_TRANSLUCENT)
-	{
-		// rjr
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//		glColor4f( 1,1,1,r_wateralpha.value);
-		aliasalpha = 0.5f;
-	}
-	else if ((e->model->flags & EF_TRANSPARENT))
-	{
-		// rjr
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//		glColor3f( 1,1,1);
-		aliasalpha = 1.0f;
-	}
-	else if ((e->model->flags & EF_HOLEY))
-	{
-		// rjr
-		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-//		glColor3f( 1,1,1);
-		aliasalpha = 1.0f;
-	}
-	else
-	{
-		// rjr
-		glColor3f( 1,1,1);
-		aliasalpha = 1.0f;
-	}
-*/
-	
 	//
 	// set up tint color
 	//
@@ -992,40 +949,19 @@ cleanup:
 	{
 		// rjr
 		glDisable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable (GL_CULL_FACE);
 	}
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_TRUE); // back to normal Z buffering
+		glDepthMask (GL_TRUE);
 		glDisable (GL_BLEND);
-		glDisable (GL_ALPHA_TEST);
-		glAlphaFunc (GL_GREATER, 0.666);
 		glColor4f (1, 1, 1, 1);
 	}
 	else
 	if (alphatest)
 		glDisable (GL_ALPHA_TEST);
-	
-	
-/*
-	// H II
-	if ((e->drawflags & DRF_TRANSLUCENT) ||
-		(e->model->flags & EF_SPECIAL_TRANS))
-		glDisable (GL_BLEND);
-
-	if ((e->model->flags & EF_TRANSPARENT))
-		glDisable (GL_BLEND);
-
-	if ((e->model->flags & EF_HOLEY))
-		glDisable (GL_BLEND);
-
-	if ((e->model->flags & EF_SPECIAL_TRANS))
-	{
-		// rjr
-		glEnable( GL_CULL_FACE );
-	}
-*/
 	
 	
 	glPopMatrix ();
