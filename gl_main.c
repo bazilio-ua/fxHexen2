@@ -744,16 +744,14 @@ void R_DrawAliasModel (entity_t *e)
 		// rjr
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+//		glBlendFunc (paliashdr->glow ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 		glDisable (GL_CULL_FACE);
 	}
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_FALSE); // don't bother writing Z
+		glDepthMask (GL_FALSE);
 		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable (GL_ALPHA_TEST);
-		glAlphaFunc (GL_GEQUAL, map_transalpha/*0.5*/);//map_transalpha
 	}
 	else
 	if (alphatest)
@@ -951,15 +949,14 @@ cleanup:
 	{
 		// rjr
 		glDisable (GL_BLEND);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable (GL_CULL_FACE);
 	}
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_TRUE); // back to normal Z buffering
+		glDepthMask (GL_TRUE);
 		glDisable (GL_BLEND);
-		glDisable (GL_ALPHA_TEST);
-		glAlphaFunc (GL_GREATER, 0.666);
 		glColor4f (1, 1, 1, 1);
 	}
 	else
