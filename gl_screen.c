@@ -135,13 +135,13 @@ CENTER PRINTING
 char		scr_centerstring[1024];
 float		scr_centertime_start;	// for slow victory printing
 float		scr_centertime_off;
-int			scr_center_lines;
-int			scr_erase_lines;
-int			scr_erase_center;
+//int			scr_center_lines;
+//int			scr_erase_lines;
+//int			scr_erase_center;
 
-static int lines;
-#define MAXLINES 27
-static int StartC[MAXLINES],EndC[MAXLINES];
+int lines;
+//#define MAXLINES 27
+int StartC[MAXLINES],EndC[MAXLINES];
 
 #define MAX_INFO 1024
 char infomessage[MAX_INFO];
@@ -255,8 +255,8 @@ void SCR_CenterPrint (char *str)
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
-	FindTextBreaks(scr_centerstring, 38);
-	scr_center_lines = lines;
+//	FindTextBreaks(scr_centerstring, 38);
+//	scr_center_lines = lines;
 }
 
 
@@ -273,7 +273,7 @@ void SCR_DrawCenterString (void)
 	else
 		remaining = 9999;
 
-	scr_erase_center = 0;
+//	scr_erase_center = 0;
 
 	FindTextBreaks(scr_centerstring, 38);
 
@@ -289,8 +289,8 @@ void SCR_DrawCenterString (void)
 
 void SCR_CheckDrawCenterString (void)
 {
-	if (scr_center_lines > scr_erase_lines)
-		scr_erase_lines = scr_center_lines;
+//	if (scr_center_lines > scr_erase_lines)
+//		scr_erase_lines = scr_center_lines;
 
 	scr_centertime_off -= host_frametime;
 	

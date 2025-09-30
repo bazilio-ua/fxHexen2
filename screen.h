@@ -29,6 +29,8 @@ void SCR_SizeDown (void);
 void SCR_BringDownConsole (void);
 void SCR_CenterPrint (char *str);
 
+void FindTextBreaks (char *message, int Width);
+
 void SCR_SetTimeout (float timeout);
 void SCR_BeginLoadingPlaque (void);
 void SCR_EndLoadingPlaque (void);
@@ -49,6 +51,10 @@ extern	int			sb_lines;
 extern	qboolean	scr_disabled_for_loading;
 extern	char		scr_centerstring[1024];
 extern	float		scr_centertime_off;
+
+extern	int lines;
+#define MAXLINES 27
+extern	int StartC[MAXLINES],EndC[MAXLINES];
 
 extern	cvar_t		scr_viewsize;
 extern	cvar_t		scr_weaponsize;

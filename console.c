@@ -747,6 +747,9 @@ echo centerprint message to the console
 */
 void Con_LogCenterPrint (char *str)
 {
+	int		i;
+	char	temp[80];
+
 	if (!strcmp(str, con_lastcenterstring))
 		return; //ignore duplicates
 
@@ -757,8 +760,18 @@ void Con_LogCenterPrint (char *str)
 
 	if (con_logcenterprint.value)
 	{
+		FindTextBreaks(con_lastcenterstring, 38);
+
 		Con_Printf ("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
-		Con_CenterPrintf ("%s\n", str);
+//		Con_CenterPrintf ("%s\n", str);
+
+		for(i=0;i<lines;i++)
+		{
+			strncpy(temp,&con_lastcenterstring[StartC[i]],EndC[i]-StartC[i]);
+			temp[EndC[i]-StartC[i]] = 0;
+			Con_CenterPrintf ("%s\n", temp);
+		}
+
 		Con_Printf ("\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n");
 		Con_ClearNotify ();
 	}
