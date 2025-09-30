@@ -2725,8 +2725,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		}
 		else
 		{
-			special:
-			
+special:
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
 			pheader->base[i][0] =
 			pheader->base[i][1] =
