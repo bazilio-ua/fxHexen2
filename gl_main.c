@@ -748,7 +748,8 @@ void R_DrawAliasModel (entity_t *e)
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_FALSE);
+		if (e != &cl.viewent)
+			glDepthMask (GL_FALSE);
 		glEnable (GL_BLEND);
 	}
 	else
@@ -952,7 +953,8 @@ cleanup:
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_TRUE);
+		if (e != &cl.viewent)
+			glDepthMask (GL_TRUE);
 		glDisable (GL_BLEND);
 		glColor4f (1, 1, 1, 1);
 	}
