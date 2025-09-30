@@ -2692,6 +2692,9 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 	else
 		texflags |= TEXPREF_NONE; // 0
 
+	if (loadmodel->flags & EF_MAGICMISSILE) // for some reason there is no any transparent flag here
+		texflags |= TEXPREF_HOLEY;
+
 	for (i=0 ; i<numskins ; i++)
 	{
 		// save 8 bit texels for the player model to remap
