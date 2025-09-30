@@ -52,7 +52,6 @@ extern	char		scr_centerstring[1024];
 extern	float		scr_centertime_off;
 extern	int			scr_center_lines;
 
-//extern	int scr_center_lines;
 #define MAXLINES 27
 extern	int StartC[MAXLINES],EndC[MAXLINES];
 

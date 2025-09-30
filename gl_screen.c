@@ -139,8 +139,6 @@ int			scr_center_lines;
 //int			scr_erase_lines;
 //int			scr_erase_center;
 
-//int scr_center_lines;
-//#define MAXLINES 27
 int StartC[MAXLINES],EndC[MAXLINES];
 
 #define MAX_INFO 1024
