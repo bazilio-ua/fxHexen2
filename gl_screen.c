@@ -428,7 +428,17 @@ static void SCR_CalcRefdef (void)
 		sb_lines = 36;
 	}
 
-	size = scr_viewsize.value > 100 ? 100 : scr_viewsize.value;
+//	if (scr_overdrawsbar.value)
+//		sb_lines = 0;
+
+	if (scr_viewsize.value > 100.0)
+	{
+		size = 100.0;
+	}
+	else
+	{
+		size = scr_viewsize.value;
+	}
 	
 	if (cl.intermission)
 	{
