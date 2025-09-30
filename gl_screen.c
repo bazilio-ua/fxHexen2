@@ -183,6 +183,9 @@ void UpdateInfoMessage(void)
 			strcat(infomessage, newmessage);
 		}
 	}
+
+	if (strlen(infomessage)>11)
+		Con_LogCenterPrint (infomessage);
 }
 
 void SCR_FindTextBreaks(char *message, int Width)
