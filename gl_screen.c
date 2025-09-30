@@ -135,11 +135,11 @@ CENTER PRINTING
 char		scr_centerstring[1024];
 float		scr_centertime_start;	// for slow victory printing
 float		scr_centertime_off;
-//int			scr_center_lines;
+int			scr_center_lines;
 //int			scr_erase_lines;
 //int			scr_erase_center;
 
-int lines;
+//int scr_center_lines;
 //#define MAXLINES 27
 int StartC[MAXLINES],EndC[MAXLINES];
 
@@ -187,12 +187,12 @@ void UpdateInfoMessage(void)
 	}
 }
 
-void FindTextBreaks(char *message, int Width)
+void SCR_FindTextBreaks(char *message, int Width)
 {
 	int length,pos,start,lastspace,oldlast;
 
 	length = strlen(message);
-	lines = pos = start = 0;
+	scr_center_lines = pos = start = 0;
 	lastspace = -1;
 
 	while(1)
@@ -204,10 +204,10 @@ void FindTextBreaks(char *message, int Width)
 			if (message[pos] == '@' || lastspace == -1 || message[pos] == 0)
 				lastspace = pos;
 
-			StartC[lines] = start;
-			EndC[lines] = lastspace;
-			lines++;
-			if (lines == MAXLINES)
+			StartC[scr_center_lines] = start;
+			EndC[scr_center_lines] = lastspace;
+			scr_center_lines++;
+			if (scr_center_lines == MAXLINES)
 				return;
 			if (message[pos] == '@')
 				start = pos + 1;
@@ -275,10 +275,10 @@ void SCR_DrawCenterString (void)
 
 //	scr_erase_center = 0;
 
-	FindTextBreaks(scr_centerstring, 38);
+	SCR_FindTextBreaks(scr_centerstring, 38);
 
-	by = ((25-lines) * 8) / 2;
-	for(i=0;i<lines;i++,by+=8)
+	by = ((25-scr_center_lines) * 8) / 2;
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&scr_centerstring[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1148,12 +1148,12 @@ void Plaque_Draw (char *message, qboolean AlwaysDraw)
 	if (!*message) 
 		return;
 
-	FindTextBreaks(message, PLAQUE_WIDTH);
+	SCR_FindTextBreaks(message, PLAQUE_WIDTH);
 
-	by = ((25-lines) * 8) / 2;
-	M_DrawTextBox2 (32, by-16, 30, lines+2,false);
+	by = ((25-scr_center_lines) * 8) / 2;
+	M_DrawTextBox2 (32, by-16, 30, scr_center_lines+2,false);
 
-	for(i=0;i<lines;i++,by+=8)
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&message[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1175,18 +1175,18 @@ void Info_Plaque_Draw (char *message)
 		return;
 
 
-	FindTextBreaks(message, PLAQUE_WIDTH+4);
+	SCR_FindTextBreaks(message, PLAQUE_WIDTH+4);
 
-	if (lines == MAXLINES) 
+	if (scr_center_lines == MAXLINES) 
 	{
 		Con_DPrintf("Info_Plaque_Draw: line overflow error\n");
-		lines = MAXLINES-1;
+		scr_center_lines = MAXLINES-1;
 	}
 
-	by = ((25-lines) * 8) / 2;
-	M_DrawTextBox2 (15, by-16, PLAQUE_WIDTH+4+4, lines+2,false);
+	by = ((25-scr_center_lines) * 8) / 2;
+	M_DrawTextBox2 (15, by-16, PLAQUE_WIDTH+4+4, scr_center_lines+2,false);
 
-	for(i=0;i<lines;i++,by+=8)
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&message[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1219,13 +1219,13 @@ void Bottom_Plaque_Draw (char *message)
 		return;
 
 
-	FindTextBreaks(message, PLAQUE_WIDTH);
+	SCR_FindTextBreaks(message, PLAQUE_WIDTH);
 
-	by = (((vid.height)/8)-lines-2) * 8;
+	by = (((vid.height)/8)-scr_center_lines-2) * 8;
 
-	M_DrawTextBox2 (32, by-16, 30, lines+2,true);
+	M_DrawTextBox2 (32, by-16, 30, scr_center_lines+2,true);
 
-	for(i=0;i<lines;i++,by+=8)
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&message[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1345,7 +1345,7 @@ void Sbar_IntermissionOverlay(void)
 	else
 		message = "";
 
-	FindTextBreaks(message, 38);
+	SCR_FindTextBreaks(message, 38);
 
 	// hacks to print the final messages centered: "by" is the y offset
 	// in pixels to begin printing at. each line is 8 pixels - S.A
@@ -1353,14 +1353,14 @@ void Sbar_IntermissionOverlay(void)
 	//	by = 16;
 	if (cl.intermission >= 6 && cl.intermission <= 8)
 		// eidolon, endings. num == 6,7,8
-		by = (vid.height/2 - lines*4);
+		by = (vid.height/2 - scr_center_lines*4);
 	else if (cl.intermission == 10)
 		// mission pack: tibet10. num == 10
 		by = 33;
 	else
-		by = ((25-lines) * 8) / 2;
+		by = ((25-scr_center_lines) * 8) / 2;
 
-	for (i = 0; i < lines; i++, by += 8)
+	for (i = 0; i < scr_center_lines; i++, by += 8)
 	{
 		size = EndC[i] - StartC[i];
 		strncpy (temp, &message[StartC[i]], size);
@@ -1380,7 +1380,7 @@ void Sbar_IntermissionOverlay(void)
 			break;
 	}
 
-	if (i == lines && elapsed >= 300 && cl.intermission >= 6 && cl.intermission <= 7)
+	if (i == scr_center_lines && elapsed >= 300 && cl.intermission >= 6 && cl.intermission <= 7)
 	{
 		cl.intermission++;
 		cl.completed_time = cl.time;
