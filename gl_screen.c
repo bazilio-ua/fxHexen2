@@ -1343,6 +1343,9 @@ void Sbar_IntermissionOverlay(void)
 	else
 		message = "";
 
+	if (message[0])
+		Con_LogCenterPrint (message);
+
 	SCR_FindTextBreaks(message, 38);
 
 	// hacks to print the final messages centered: "by" is the y offset
