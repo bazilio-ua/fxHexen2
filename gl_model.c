@@ -2844,9 +2844,6 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pheader = Hunk_AllocName (size, loadname);
 	
 	mod->flags = LittleLong (pinmodel->flags);
-	
-	if (mod->flags & EF_FACE_VIEW) //FIXME: temp debug
-		Con_Printf ("model %s has EF_FACE_VIEW flag\n", mod->name);
 
 //
 // endian-adjust and copy the data, starting with the alias model header
@@ -3030,9 +3027,6 @@ void Mod_LoadAliasModelNew (model_t *mod, void *buffer)
 	pheader = Hunk_AllocName (size, loadname);
 	
 	mod->flags = LittleLong (pinmodel->flags);
-
-	if (mod->flags & EF_FACE_VIEW) //FIXME: temp debug
-		Con_Printf ("model %s has EF_FACE_VIEW flag\n", mod->name);
 
 //
 // endian-adjust and copy the data, starting with the alias model header
