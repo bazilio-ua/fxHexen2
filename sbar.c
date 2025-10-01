@@ -222,15 +222,109 @@ void Sbar_Init(void)
 
 /*
 ===============
+Sbar_DrawNormal
+===============
+*/
+void Sbar_DrawNormal (void)
+{
+	char tempStr[80];
+	int mana;
+	int maxMana;
+
+	//Sbar_DrawPic(0, 0, Draw_CachePic("gfx/topbar.lmp"));
+	Sbar_DrawPic(0, 0, Draw_CachePic("gfx/topbar1.lmp"));
+	Sbar_DrawPic(160, 0, Draw_CachePic("gfx/topbar2.lmp"));
+	Sbar_DrawTransPic(0, -23, Draw_CachePic("gfx/topbumpl.lmp"));
+	Sbar_DrawTransPic(138, -8, Draw_CachePic("gfx/topbumpm.lmp"));
+	Sbar_DrawTransPic(269, -23, Draw_CachePic("gfx/topbumpr.lmp"));
+
+	maxMana = (int)cl.v.max_mana;
+	
+	// Blue mana
+	mana = (int)cl.v.bluemana;
+	if(mana < 0)
+	{
+		mana = 0;
+	}
+	if(mana > maxMana)
+	{
+		mana = maxMana;
+	}
+	sprintf(tempStr, "%03d", mana);
+	Sbar_DrawSmallString(201, 22, tempStr);
+	if(mana)
+	{
+		Sbar_DrawPic(190, 26-(int)((mana*18.0)/(float)maxMana+0.5),
+			Draw_CachePic("gfx/bmana.lmp"));
+		Sbar_DrawPic(190, 27, Draw_CachePic("gfx/bmanacov.lmp"));
+	}
+
+	// Green mana
+	mana = (int)cl.v.greenmana;
+	if(mana < 0)
+	{
+		mana = 0;
+	}
+	if(mana > maxMana)
+	{
+		mana = maxMana;
+	}
+	sprintf(tempStr, "%03d", mana);
+	Sbar_DrawSmallString(243, 22, tempStr);
+	if(mana)
+	{
+		Sbar_DrawPic(232, 26-(int)((mana*18.0)/(float)maxMana+0.5),
+			Draw_CachePic("gfx/gmana.lmp"));
+		Sbar_DrawPic(232, 27, Draw_CachePic("gfx/gmanacov.lmp"));
+	}
+
+	// HP
+	if (cl.v.health < -99)
+		Sbar_DrawNum(58, 14, -99, 3);
+	else
+		Sbar_DrawNum(58, 14, cl.v.health, 3);
+	SetChainPosition(cl.v.health, cl.v.max_health);
+	Sbar_DrawTransPic(45+((int)ChainPosition&7), 38,
+		Draw_CachePic("gfx/hpchain.lmp"));
+	Sbar_DrawTransPic(45+(int)ChainPosition, 36,
+		Draw_CachePic("gfx/hpgem.lmp"));
+	Sbar_DrawPic(43, 36, Draw_CachePic("gfx/chnlcov.lmp"));
+	Sbar_DrawPic(267, 36, Draw_CachePic("gfx/chnrcov.lmp"));
+
+	// AC - Armor Class
+	Sbar_DrawNum(105, 14, CalcAC(), 2);
+
+	if(BarHeight > BAR_TOP_HEIGHT)
+	{
+		DrawLowerBar();
+	}
+
+	// Current inventory item
+	if(cl.inv_selected >= 0)
+	{
+		DrawBarArtifactIcon(144, 3, cl.inv_order[cl.inv_selected]);
+
+		//Sbar_DrawTransPic(144, 3, Draw_CachePic(va("gfx/arti%02d.lmp",
+		//	cl.inv_order[cl.inv_selected])));
+	}
+
+	// FIXME: Check for deathmatch and draw frags
+	// if(cl.maxclients != 1) Sbar_Draw
+
+	DrawArtifactInventory();
+
+	DrawActiveRings();
+	DrawActiveArtifacts();
+}
+
+/*
+===============
 Sbar_Draw
 ===============
 */
 void Sbar_Draw (void)
 {
 	float delta;
-	char tempStr[80];
-	int mana;
-	int maxMana;
 	qboolean	headsup;
 
 	headsup = !(scr_sbar.value || scr_overdrawsbar.value || scr_viewsize.value < 100);
@@ -289,102 +383,23 @@ void Sbar_Draw (void)
 	sb_updates++;
 
 
-	if(BarHeight < 0)
-		DrawFullScreenInfo();
-
-	//Sbar_DrawPic(0, 0, Draw_CachePic("gfx/topbar.lmp"));
-	Sbar_DrawPic(0, 0, Draw_CachePic("gfx/topbar1.lmp"));
-	Sbar_DrawPic(160, 0, Draw_CachePic("gfx/topbar2.lmp"));
-	Sbar_DrawTransPic(0, -23, Draw_CachePic("gfx/topbumpl.lmp"));
-	Sbar_DrawTransPic(138, -8, Draw_CachePic("gfx/topbumpm.lmp"));
-	Sbar_DrawTransPic(269, -23, Draw_CachePic("gfx/topbumpr.lmp"));
-
-	maxMana = (int)cl.v.max_mana;
-	// Blue mana
-	mana = (int)cl.v.bluemana;
-	if(mana < 0)
+	if (scr_viewsize.value < 120)
 	{
-		mana = 0;
-	}
-	if(mana > maxMana)
-	{
-		mana = maxMana;
-	}
-	sprintf(tempStr, "%03d", mana);
-	Sbar_DrawSmallString(201, 22, tempStr);
-	if(mana)
-	{
-		Sbar_DrawPic(190, 26-(int)((mana*18.0)/(float)maxMana+0.5),
-			Draw_CachePic("gfx/bmana.lmp"));
-		Sbar_DrawPic(190, 27, Draw_CachePic("gfx/bmanacov.lmp"));
-	}
-
-	// Green mana
-	mana = (int)cl.v.greenmana;
-	if(mana < 0)
-	{
-		mana = 0;
-	}
-	if(mana > maxMana)
-	{
-		mana = maxMana;
-	}
-	sprintf(tempStr, "%03d", mana);
-	Sbar_DrawSmallString(243, 22, tempStr);
-	if(mana)
-	{
-		Sbar_DrawPic(232, 26-(int)((mana*18.0)/(float)maxMana+0.5),
-			Draw_CachePic("gfx/gmana.lmp"));
-		Sbar_DrawPic(232, 27, Draw_CachePic("gfx/gmanacov.lmp"));
-	}
-
-	// HP
-	if (cl.v.health < -99)
-		Sbar_DrawNum(58, 14, -99, 3);
-	else
-		Sbar_DrawNum(58, 14, cl.v.health, 3);
-	SetChainPosition(cl.v.health, cl.v.max_health);
-	Sbar_DrawTransPic(45+((int)ChainPosition&7), 38,
-		Draw_CachePic("gfx/hpchain.lmp"));
-	Sbar_DrawTransPic(45+(int)ChainPosition, 36,
-		Draw_CachePic("gfx/hpgem.lmp"));
-	Sbar_DrawPic(43, 36, Draw_CachePic("gfx/chnlcov.lmp"));
-	Sbar_DrawPic(267, 36, Draw_CachePic("gfx/chnrcov.lmp"));
-
-	// AC
-	Sbar_DrawNum(105, 14, CalcAC(), 2);
-
-	if(BarHeight > BAR_TOP_HEIGHT)
-	{
-		DrawLowerBar();
-	}
-
-	// Current inventory item
-	if(cl.inv_selected >= 0)
-	{
-		DrawBarArtifactIcon(144, 3, cl.inv_order[cl.inv_selected]);
-
-		//Sbar_DrawTransPic(144, 3, Draw_CachePic(va("gfx/arti%02d.lmp",
-		//	cl.inv_order[cl.inv_selected])));
-	}
-
-	// FIXME: Check for deathmatch and draw frags
-	// if(cl.maxclients != 1) Sbar_Draw
-
-	DrawArtifactInventory();
-
-	DrawActiveRings();
-	DrawActiveArtifacts();
-
-	if (sb_ShowDM)
-	{
-		if (cl.gametype == GAME_DEATHMATCH)
-			Sbar_DeathmatchOverlay();
+		if (BarHeight < 0)
+			DrawFullScreenInfo();
 		else
-			Sbar_NormalOverlay();
+			Sbar_DrawNormal ();
+		
+		if (sb_ShowDM)
+		{
+			if (cl.gametype == GAME_DEATHMATCH || cls.demoplayback)
+				Sbar_DeathmatchOverlay();
+			else
+				Sbar_NormalOverlay();
+		}
+		else if ((cl.gametype == GAME_DEATHMATCH || cls.demoplayback) && DMMode.value)
+			Sbar_SmallDeathmatchOverlay();
 	}
-	else if (cl.gametype == GAME_DEATHMATCH && DMMode.value)
-		Sbar_SmallDeathmatchOverlay();
 
 }
 
@@ -459,6 +474,7 @@ static void DrawFullScreenInfo(void)
 	Sbar_DrawPic(3, y+18, Draw_CachePic("gfx/gmmana.lmp"));
 
 	maxMana = (int)cl.v.max_mana;
+
 	// Blue mana
 	mana = (int)cl.v.bluemana;
 	if(mana < 0)
