@@ -729,8 +729,7 @@ void R_DrawAliasModel (entity_t *e)
 //	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test
 	
-//	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
-	alphatest = !!(e->model->flags & (EF_HOLEY|EF_MAGICMISSILE)); // MF_HOLEY
+	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
 
 	if (aliasalpha == 0)
 		goto cleanup;
@@ -1422,8 +1421,7 @@ void GL_EntityTransform (lerpdata_t lerpdata, entity_t *e)
 	
 	glTranslatef (lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
 	
-//	if (e->model->flags & EF_FACE_VIEW)
-	if (e->model->flags & (EF_FACE_VIEW|EF_MAGICMISSILE))
+	if (e->model->flags & EF_FACE_VIEW)
 	{
 		VectorSubtract(lerpdata.origin,r_origin,angles);
 		VectorSubtract(r_origin,lerpdata.origin,angles);

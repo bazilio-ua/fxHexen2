@@ -2683,8 +2683,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 	size = pheader->skinwidth * pheader->skinheight;
 
-//	if ( loadmodel->flags & EF_HOLEY )
-	if ( loadmodel->flags & (EF_HOLEY|EF_MAGICMISSILE) )
+	if ( loadmodel->flags & EF_HOLEY )
 		texflags |= TEXPREF_HOLEY; // was 2
 	else if ( loadmodel->flags & EF_TRANSPARENT )
 		texflags |= TEXPREF_TRANSPARENT; // was 1
@@ -2749,7 +2748,7 @@ special:
 
 /*
 =================
-Mod_CalcAliasBounds
+Mod_CalcAliasBounds -- johnfitz
 
 calculate bounds of alias model for nonrotated, yawrotated, and fullrotated cases
 =================
@@ -2801,6 +2800,21 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 	loadmodel->ymaxs[2] = max (loadmodel->maxs[2], yawradius);
 }
 
+/*
+=================
+Mod_SetExtraFlags -- johnfitz
+
+set up extra flags that aren't in the mdl
+=================
+*/
+void Mod_SetExtraFlags (model_t *mod)
+{
+	// In mission pack, for model EF_MAGICMISSILE (ball.mdl)
+	// we have an EF_HOLEY flag, but EF_FACE_VIEW flag is absent,
+	// and visa verse for standard hexen2. So we set it both
+	if (mod->flags & EF_MAGICMISSILE)
+		mod->flags |= (EF_HOLEY|EF_FACE_VIEW);
+}
 
 /*
 =================
@@ -2842,6 +2856,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pheader = Hunk_AllocName (size, loadname);
 	
 	mod->flags = LittleLong (pinmodel->flags);
+
+	Mod_SetExtraFlags (mod); //johnfitz -- set up extra mdl flags
 
 //
 // endian-adjust and copy the data, starting with the alias model header
@@ -2958,8 +2974,7 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 	pheader->numposes = posenum;
 
-	
-	Mod_CalcAliasBounds (pheader); // calc correct bounds
+	Mod_CalcAliasBounds (pheader); //johnfitz -- calc correct bounds
 
 //
 // build the draw lists
@@ -3025,6 +3040,8 @@ void Mod_LoadAliasModelNew (model_t *mod, void *buffer)
 	pheader = Hunk_AllocName (size, loadname);
 	
 	mod->flags = LittleLong (pinmodel->flags);
+
+	Mod_SetExtraFlags (mod); //johnfitz -- set up extra mdl flags
 
 //
 // endian-adjust and copy the data, starting with the alias model header
@@ -3141,8 +3158,7 @@ void Mod_LoadAliasModelNew (model_t *mod, void *buffer)
 
 	pheader->numposes = posenum;
 
-
-	Mod_CalcAliasBounds (pheader); // calc correct bounds
+	Mod_CalcAliasBounds (pheader); //johnfitz -- calc correct bounds
 
 //
 // build the draw lists
