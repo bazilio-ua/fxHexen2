@@ -96,6 +96,12 @@ cvar_t BarSpeed = { "barspeed", "5", CVAR_NONE };
 cvar_t sbtemp = { "sbtemp", "5", CVAR_NONE };
 cvar_t DMMode = { "dm_mode", "1", CVAR_ARCHIVE };
 
+int	sbar_xofs;
+cvar_t	scr_sbar = {"scr_sbar", "0", CVAR_ARCHIVE};
+cvar_t	scr_centersbar = {"scr_centersbar", "1", CVAR_ARCHIVE};
+cvar_t	scr_overdrawsbar = {"scr_overdrawsbar", "1", CVAR_ARCHIVE};
+cvar_t	scr_sbaralpha = {"scr_sbaralpha", "1", CVAR_ARCHIVE};
+
 static qpic_t *sb_nums[11];
 static qpic_t *sb_colon, *sb_slash;
 

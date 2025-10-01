@@ -374,6 +374,7 @@ static void SCR_CalcRefdef (void)
 {
 	float		size;
 	int		h;
+	qboolean		full = false;
 
 	vid.recalc_refdef = false;
 
@@ -408,7 +409,7 @@ static void SCR_CalcRefdef (void)
 
 // intermission is always full screen	
 	if (cl.intermission)
-		size = 110;
+		size = 120;
 	else
 		size = scr_viewsize.value;
 
@@ -420,50 +421,61 @@ static void SCR_CalcRefdef (void)
 		sb_lines = 24+16+8;*/
 
 	if (size >= 110)
-	{ // No status bar
-		sb_lines = 0;
-	}
+		sb_lines = 0;		// No status bar
 	else
-	{
 		sb_lines = 36;
-	}
 
-//	if (scr_overdrawsbar.value)
-//		sb_lines = 0;
+	if (scr_overdrawsbar.value)
+		sb_lines = 0;
 
-	if (scr_viewsize.value > 100.0)
+	if (scr_viewsize.value >= 100.0)
 	{
+		full = true;
 		size = 100.0;
 	}
 	else
 	{
+		full = false;
 		size = scr_viewsize.value;
 	}
 	
 	if (cl.intermission)
 	{
+		full = true;
 		size = 100;
 		sb_lines = 0;
 	}
 	
 	size /= 100.0;
 
-	h = vid.height - sb_lines;
+	h = (!scr_sbar.value && full) ? vid.height : vid.height - sb_lines;
 
 	r_refdef.vrect.width = vid.width * size;
 
 	if (r_refdef.vrect.width < 96)
 	{
-		size = 96.0 / r_refdef.vrect.width; // was vid.width (H2)
+		size = 96.0 / r_refdef.vrect.width;
 		r_refdef.vrect.width = 96;	// min for icons
 	}
 
 	r_refdef.vrect.height = vid.height * size;
-	if (r_refdef.vrect.height > (int)vid.height - sb_lines)
-		r_refdef.vrect.height = vid.height - sb_lines;
+
+	if (scr_sbar.value || !full)
+	{
+		if (r_refdef.vrect.height > (int)vid.height - sb_lines)
+			r_refdef.vrect.height = vid.height - sb_lines;
+	}
+	else if (r_refdef.vrect.height > (int)vid.height)
+	{
+		r_refdef.vrect.height = vid.height;
+	} 
 
 	r_refdef.vrect.x = (vid.width - r_refdef.vrect.width)/2;
-	r_refdef.vrect.y = (h - r_refdef.vrect.height)/2;
+
+	if (full)
+		r_refdef.vrect.y = 0;
+	else 
+		r_refdef.vrect.y = (h - r_refdef.vrect.height)/2;
 
 	r_refdef.fov_x = AdaptFovx (scr_fov.value, vid.width, vid.height);
 	r_refdef.fov_y = CalcFovy (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
@@ -1466,7 +1478,7 @@ void SCR_UpdateScreen (void)
 		SCR_CalcRefdef ();
 	}
 
-	if (/*scr_overdrawsbar.value || */gl_clear.value || isIntel) // intel video workaround
+	if (scr_overdrawsbar.value || gl_clear.value || isIntel) // intel video workaround
 		Sbar_Changed ();
 
 //
@@ -1486,7 +1498,11 @@ void SCR_UpdateScreen (void)
 	//
 	// draw any areas not covered by the refresh
 	//
-	SCR_TileClear ();
+	if (scr_sbar.value || scr_viewsize.value < 100)
+	{
+		SCR_TileClear ();
+		Sbar_Changed ();
+	}
 
 	if (scr_drawdialog) //new game confirm
 	{
