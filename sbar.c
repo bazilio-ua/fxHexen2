@@ -231,6 +231,9 @@ void Sbar_Draw (void)
 	char tempStr[80];
 	int mana;
 	int maxMana;
+	qboolean	headsup;
+
+	headsup = !(scr_sbar.value || scr_overdrawsbar.value || scr_viewsize.value < 100);
 
 	if (intro_playing)
 	{
@@ -238,14 +241,14 @@ void Sbar_Draw (void)
 	}
 
 	// Draw always until we fix things
-	//if (sb_updates >= vid.numpages)
-	//	return;
+	if ((sb_updates >= vid.numpages) && !headsup)
+		return;
 
 	if (scr_con_current == vid.height)
-	{ // console is full screen
-		return;
-	}
+		return; // console is full screen
 
+	if (cl.intermission)
+		return; // never draw sbar during intermission
 
 /*	if(BarHeight == BarTargetHeight)
 	{
