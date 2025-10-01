@@ -102,7 +102,7 @@ cvar_t	scr_centersbar = {"scr_centersbar", "1", CVAR_ARCHIVE};
 cvar_t	scr_overdrawsbar = {"scr_overdrawsbar", "1", CVAR_ARCHIVE};
 cvar_t	scr_sbaralpha = {"scr_sbaralpha", "1", CVAR_ARCHIVE};
 
-extern void SCR_RefdefChanged (void);
+//extern void SCR_RefdefChanged (void);
 
 static qpic_t *sb_nums[11];
 static qpic_t *sb_colon, *sb_slash;
@@ -171,6 +171,17 @@ static int HelmetAC[MAX_PLAYER_CLASS] =
 //==========================================================================
 
 /*
+=================
+SCR_SbarChanged
+=================
+*/
+void SCR_SbarChanged (void)
+{
+	Sbar_ViewSizeChanged ();
+	vid.recalc_refdef = true;
+}
+
+/*
 ===============
 Sbar_LoadPics -- johnfitz -- load all the sbar pics
 ===============
@@ -195,9 +206,9 @@ Sbar_Init
 */
 void Sbar_Init(void)
 {
-	Cvar_RegisterVariableCallback (&scr_sbar, SCR_RefdefChanged);
+	Cvar_RegisterVariableCallback (&scr_sbar, SCR_SbarChanged);
 	Cvar_RegisterVariable (&scr_centersbar);
-	Cvar_RegisterVariableCallback (&scr_overdrawsbar, SCR_RefdefChanged);
+	Cvar_RegisterVariableCallback (&scr_overdrawsbar, SCR_SbarChanged);
 	Cvar_RegisterVariable (&scr_sbaralpha);
 
 	Sbar_LoadPics ();
@@ -1544,7 +1555,12 @@ static void ShowInfoDown_f(void)
 
 static void ShowInfoUp_f(void)
 {
-	if(cl.intermission || scr_viewsize.value >= 110.0)
+	qboolean	headsup;
+
+	headsup = !(scr_sbar.value || scr_overdrawsbar.value || scr_viewsize.value < 100);
+
+	if (cl.intermission || headsup)
+//	if(cl.intermission || scr_viewsize.value >= 110.0)
 	{
 		BarTargetHeight = 0.0-BAR_BUMP_HEIGHT;
 	}
@@ -1750,9 +1766,14 @@ void Sbar_InvReset(void)
 //
 //==========================================================================
 
-void Sbar_ViewSizeChanged(void)
+void Sbar_ViewSizeChanged (void)
 {
-	if(cl.intermission || scr_viewsize.value >= 110.0)
+	qboolean	headsup;
+
+	headsup = !(scr_sbar.value || scr_overdrawsbar.value || scr_viewsize.value < 100);
+
+	if (cl.intermission || headsup)
+//	if(cl.intermission || scr_viewsize.value >= 110.0)
 	{
 		BarTargetHeight = 0.0-BAR_BUMP_HEIGHT;
 	}
