@@ -220,13 +220,12 @@ void Sbar_Init(void)
 	BarHeight = BarTargetHeight = BAR_TOP_HEIGHT;
 }
 
-//==========================================================================
-//
-// Sbar_Draw
-//
-//==========================================================================
-
-void Sbar_Draw(void)
+/*
+===============
+Sbar_Draw
+===============
+*/
+void Sbar_Draw (void)
 {
 	float delta;
 	char tempStr[80];
@@ -235,19 +234,18 @@ void Sbar_Draw(void)
 
 	if (intro_playing)
 	{
-//		scr_fullupdate = 0;
-//		scr_copyeverything = 1;
-		return;
-	}
-
-	if (scr_con_current == vid.height)
-	{ // console is full screen
 		return;
 	}
 
 	// Draw always until we fix things
 	//if (sb_updates >= vid.numpages)
 	//	return;
+
+	if (scr_con_current == vid.height)
+	{ // console is full screen
+		return;
+	}
+
 
 /*	if(BarHeight == BarTargetHeight)
 	{
@@ -268,7 +266,6 @@ void Sbar_Draw(void)
 		{
 			BarHeight = BarTargetHeight;
 		}
-//		scr_fullupdate = 0;
 	}
 	else if(BarHeight > BarTargetHeight)
 	{
@@ -283,11 +280,9 @@ void Sbar_Draw(void)
 		{
 			BarHeight = BarTargetHeight;
 		}
-//		scr_fullupdate = 0;
 	}
 
 
-//	scr_copyeverything = 1;
 	sb_updates++;
 
 
@@ -861,7 +856,7 @@ void Sbar_SoloScoreboard (void)
 //==========================================================================
 //
 // Sbar_DrawScoreboard
-//
+// fixme: unused in hexen2?
 //==========================================================================
 
 void Sbar_DrawScoreboard (void)
@@ -1038,8 +1033,6 @@ void Sbar_DeathmatchOverlay(void)
 	char			num[12];
 	scoreboard_t	*s;
 
-//	scr_copyeverything = 1;
-//	scr_fullupdate = 0;
 
 	pic = Draw_CachePic ("gfx/menu/title8.lmp");
 	M_DrawTransPic ((320-pic->width)/2, 0, pic);
@@ -1148,8 +1141,6 @@ void Sbar_NormalOverlay(void)
 	int				i,y,piece;
 	char			Name[40];
 
-//	scr_copyeverything = 1;
-//	scr_fullupdate = 0;
 
 	piece = 0;
 	y = 40;
@@ -1199,8 +1190,6 @@ void Sbar_SmallDeathmatchOverlay(void)
 	if (DMMode.value == 2 && BarHeight != BAR_TOP_HEIGHT)
 		return;
 
-//	scr_copyeverything = 1;
-//	scr_fullupdate = 0;
 
 // scores	
 	Sbar_SortFrags ();
@@ -1346,11 +1335,10 @@ static void DrawActiveArtifacts(void)
 		sprintf(tempStr, "gfx/pwrbook%d.lmp", frame);
 		Draw_TransPic(vid.width-art_col, 1, Draw_CachePic(tempStr));
 		art_col += 50;
-//		scr_topupdate = 0;
 	}
 	else if (oldflags & ART_TOMEOFPOWER)
 	{
-//		scr_topupdate = 0;
+		// top update
 	}
 
 	if (flag & ART_HASTE)
@@ -1359,11 +1347,10 @@ static void DrawActiveArtifacts(void)
 		sprintf(tempStr, "gfx/durhst%d.lmp", frame);
 		Draw_TransPic(vid.width-art_col,1, Draw_CachePic(tempStr));
 		art_col += 50;
-//		scr_topupdate = 0;
 	}
 	else if (oldflags & ART_HASTE)
 	{
-//		scr_topupdate = 0;
+		// top update
 	}
 
 	if (flag & ART_INVINCIBILITY)
@@ -1372,11 +1359,10 @@ static void DrawActiveArtifacts(void)
 		sprintf(tempStr, "gfx/durshd%d.lmp", frame);
 		Draw_TransPic(vid.width-art_col, 1, Draw_CachePic(tempStr));
 		art_col += 50;
-//		scr_topupdate = 0;
 	}
 	else if (oldflags & ART_INVINCIBILITY)
 	{
-//		scr_topupdate = 0;
+		// top update
 	}
 
 	oldflags = flag;
@@ -1397,7 +1383,6 @@ void Inv_Update(qboolean force)
 
 		if (!force) 
 		{
-//			scr_fullupdate = 0;
 			inv_flg = false;  // Toggle menu off
 		}
 
@@ -1575,7 +1560,6 @@ static void InvLeft_f(void)
 			{
 				cl.inv_startpos = cl.inv_selected;
 			}
-//			scr_fullupdate = 0;
 		}
 	}
 	else
@@ -1609,7 +1593,6 @@ static void InvRight_f(void)
 				// could probably be just a cl.inv_startpos++, but just in case
 				cl.inv_startpos = cl.inv_selected - INV_MAX_ICON + 1;
 			}
-//			scr_fullupdate = 0;
 		}
 	}
 	else
@@ -1636,7 +1619,6 @@ static void InvUse_f(void)
 	//Inv_Update(false);
 	Inv_Update(true);
 	inv_flg = false;
-//	scr_fullupdate = 0;
 	in_impulse = 23;
 }
 
@@ -1649,7 +1631,6 @@ static void InvUse_f(void)
 static void InvOff_f(void)
 {
 	inv_flg = false;
-//	scr_fullupdate = 0;
 }
 
 //==========================================================================
@@ -1742,7 +1723,6 @@ void Sbar_InvReset(void)
 	cl.inv_count = cl.inv_startpos = 0;
 	cl.inv_selected = -1;
 	inv_flg = false;
-//	scr_fullupdate = 0;
 }
 
 //==========================================================================
