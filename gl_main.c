@@ -729,8 +729,8 @@ void R_DrawAliasModel (entity_t *e)
 //	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test
 	
-	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
-//	alphatest = !!(e->model->flags & (EF_HOLEY|EF_TRANSPARENT)); // MF_HOLEY
+//	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
+	alphatest = !!(e->model->flags & (EF_HOLEY|EF_MAGICMISSILE)); // MF_HOLEY
 
 	if (aliasalpha == 0)
 		goto cleanup;
