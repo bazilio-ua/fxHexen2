@@ -2683,7 +2683,8 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 	size = pheader->skinwidth * pheader->skinheight;
 
-	if ( loadmodel->flags & EF_HOLEY )
+//	if ( loadmodel->flags & EF_HOLEY )
+	if ( loadmodel->flags & (EF_HOLEY|EF_MAGICMISSILE) )
 		texflags |= TEXPREF_HOLEY; // was 2
 	else if ( loadmodel->flags & EF_TRANSPARENT )
 		texflags |= TEXPREF_TRANSPARENT; // was 1
@@ -2691,9 +2692,6 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		texflags |= TEXPREF_SPECIAL_TRANS; // was 3
 	else
 		texflags |= TEXPREF_NONE; // 0
-
-	if (loadmodel->flags & EF_MAGICMISSILE) // for some reason there is no any transparent flag here
-		texflags |= TEXPREF_HOLEY;
 
 	for (i=0 ; i<numskins ; i++)
 	{

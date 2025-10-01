@@ -1422,7 +1422,8 @@ void GL_EntityTransform (lerpdata_t lerpdata, entity_t *e)
 	
 	glTranslatef (lerpdata.origin[0], lerpdata.origin[1], lerpdata.origin[2]);
 	
-	if (e->model->flags & EF_FACE_VIEW)
+//	if (e->model->flags & EF_FACE_VIEW)
+	if (e->model->flags & (EF_FACE_VIEW|EF_MAGICMISSILE))
 	{
 		VectorSubtract(lerpdata.origin,r_origin,angles);
 		VectorSubtract(r_origin,lerpdata.origin,angles);
