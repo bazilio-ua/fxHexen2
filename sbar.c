@@ -102,6 +102,8 @@ cvar_t	scr_centersbar = {"scr_centersbar", "1", CVAR_ARCHIVE};
 cvar_t	scr_overdrawsbar = {"scr_overdrawsbar", "1", CVAR_ARCHIVE};
 cvar_t	scr_sbaralpha = {"scr_sbaralpha", "1", CVAR_ARCHIVE};
 
+extern void SCR_RefdefChanged (void);
+
 static qpic_t *sb_nums[11];
 static qpic_t *sb_colon, *sb_slash;
 
@@ -193,6 +195,11 @@ Sbar_Init
 */
 void Sbar_Init(void)
 {
+	Cvar_RegisterVariableCallback (&scr_sbar, SCR_RefdefChanged);
+	Cvar_RegisterVariable (&scr_centersbar);
+	Cvar_RegisterVariableCallback (&scr_overdrawsbar, SCR_RefdefChanged);
+	Cvar_RegisterVariable (&scr_sbaralpha);
+
 	Sbar_LoadPics ();
 
 	Cmd_AddCommand("+showinfo", ShowInfoDown_f);
@@ -821,20 +828,21 @@ int	Sbar_ColorForMap (int m)
 
 //==========================================================================
 //
-// SoloScoreboard
+// Sbar_SoloScoreboard
 //
 //==========================================================================
 
-static void SoloScoreboard(void)
+void Sbar_SoloScoreboard (void)
 {
 	char	str[80];
 	int		minutes, seconds, tens, units;
-	int		l;
+	int		len;
 
-	sprintf (str,"Monsters:%3i /%3i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+	// draw stat
+	sprintf (str,"Monsters: %i/%i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
 	Sbar_DrawString (8, 4, str);
 
-	sprintf (str,"Secrets :%3i /%3i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+	sprintf (str,"Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
 	Sbar_DrawString (8, 12, str);
 
 	// draw time
@@ -846,8 +854,8 @@ static void SoloScoreboard(void)
 	Sbar_DrawString (184, 4, str);
 	
 	// draw level name
-	l = strlen (cl.levelname);
-	Sbar_DrawString (232 - l*4, 12, cl.levelname);
+	len = strlen (cl.levelname);
+	Sbar_DrawString (232 - len*4, 12, cl.levelname);
 }
 
 //==========================================================================
@@ -856,9 +864,9 @@ static void SoloScoreboard(void)
 //
 //==========================================================================
 
-void Sbar_DrawScoreboard(void)
+void Sbar_DrawScoreboard (void)
 {
-	SoloScoreboard();
+	Sbar_SoloScoreboard();
 	if(cl.gametype == GAME_DEATHMATCH)
 	{
 		Sbar_DeathmatchOverlay();
