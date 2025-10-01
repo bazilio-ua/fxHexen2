@@ -2961,9 +2961,9 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	
 	Mod_CalcAliasBounds (pheader); // calc correct bounds
 
-	//
-	// build the draw lists
-	//
+//
+// build the draw lists
+//
 	R_MakeAliasModelDisplayLists (mod, pheader);
 
 //
@@ -3144,9 +3144,9 @@ void Mod_LoadAliasModelNew (model_t *mod, void *buffer)
 
 	Mod_CalcAliasBounds (pheader); // calc correct bounds
 
-	//
-	// build the draw lists
-	//
+//
+// build the draw lists
+//
 	R_MakeAliasModelDisplayLists (mod, pheader);
 
 //
