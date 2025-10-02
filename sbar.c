@@ -1054,7 +1054,7 @@ void FindColor (int slot, int *color1, int *color2)
 //
 //==========================================================================
 
-void Sbar_DeathmatchOverlay(void)
+void Sbar_DeathmatchOverlay (void)
 {
 	qpic_t			*pic;
 	int				i, k, l;
@@ -1070,7 +1070,7 @@ void Sbar_DeathmatchOverlay(void)
 // scores	
 	Sbar_SortFrags ();
 
-// draw the text
+// draw the text (stats)
 	l = scoreboardlines;
 	
 	x = 80 + ((vid.width - 320)>>1);
@@ -1085,13 +1085,13 @@ void Sbar_DeathmatchOverlay(void)
 		if (!s->name[0])
 			continue;
 
-		// draw background
+	// draw background
 		FindColor (k, &top, &bottom);
 	
 		Draw_Fill ( x, y, 40, 4, top);
 		Draw_Fill ( x, y+4, 40, 4, bottom);
 
-		// draw number
+	// draw number (frags)
 		f = s->frags;
 		sprintf (num, "%3i",f);
 		
@@ -1102,9 +1102,13 @@ void Sbar_DeathmatchOverlay(void)
 		Draw_Character ( x+24 , y-1, num[2]);
 
 		if (k == cl.viewentity - 1)
-			Draw_Character ( x - 8, y-1, 12);
+		{
+//			Draw_Character ( x - 8, y-1, 12);
+			Draw_Character ( x, y-1, 16); // draw [ ] around our score in the scoreboard overlay
+			Draw_Character ( x + 32, y-1, 17);
+		}
 
-		// draw name
+	// draw name
 		Draw_String (x+64, y, s->name);
 		
 		y += 10;
@@ -1251,13 +1255,13 @@ void Sbar_SmallDeathmatchOverlay(void)
 		if (DMMode.value == 2)
 		{
 		}
-		// draw background
+	// draw background
 		FindColor (k, &top, &bottom);
 	
 		Draw_Fill ( x, y, 28, 4, top);
 		Draw_Fill ( x, y+4, 28, 4, bottom);
 
-		// draw number
+	// draw number
 		f = s->frags;
 		sprintf (num, "%3i",f);
 		
@@ -1276,6 +1280,8 @@ void Sbar_SmallDeathmatchOverlay(void)
 			Draw_Character ( x+18 , y-1, num[2] + 256);
 			if(k==sv_kingofhill)
 				Draw_Character ( x+30 , y-1, 130);
+			
+			Draw_Character ( x-8, y-1, 42); // draw '*' before our score in the mini overlay
 		}
 
 		y += 10;
