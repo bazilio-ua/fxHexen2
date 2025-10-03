@@ -1973,7 +1973,7 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 //	hull->available = true;
 	
 	
-	
+//player
 	hull = &loadmodel->hulls[1];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1987,6 +1987,7 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[2] = 32;
 	hull->available = true;
 	
+//scorpion	
 	hull = &loadmodel->hulls[2];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1999,7 +2000,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 24;
 	hull->clip_maxs[2] = 20;
 	hull->available = true;
-
+	
+//crouch
 	hull = &loadmodel->hulls[3];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -2012,7 +2014,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 16;
 	hull->available = true;
-
+	
+//hydra -changing in MP to '-8 -8 -8', '8 8 8' for pentacles
 	hull = &loadmodel->hulls[4];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -2025,12 +2028,20 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 8;
 	hull->clip_maxs[2] = 8;
 	hull->available = true;
-
+	
+//golem - maybe change to '-28 -28 -40', '28 28 40' for Yakman
 	hull = &loadmodel->hulls[5];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
 	hull->lastclipnode = count-1;
 	hull->planes = loadmodel->planes;
+	//use yak sizes
+//	hull->clip_mins[0] = -28;
+//	hull->clip_mins[1] = -28;
+//	hull->clip_mins[2] = -40;
+//	hull->clip_maxs[0] = 28;
+//	hull->clip_maxs[1] = 28;
+//	hull->clip_maxs[2] = 40;
 	hull->clip_mins[0] = -48;
 	hull->clip_mins[1] = -48;
 	hull->clip_mins[2] = -50;
@@ -2038,7 +2049,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 48;
 	hull->clip_maxs[2] = 50;
 	hull->available = true;
-
 	
 }
 
