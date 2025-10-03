@@ -28,6 +28,7 @@ void SCR_SizeUp (void);
 void SCR_SizeDown (void);
 void SCR_BringDownConsole (void);
 void SCR_CenterPrint (char *str);
+void SCR_FindTextBreaks (char *message, int Width);
 
 void SCR_SetTimeout (float timeout);
 void SCR_BeginLoadingPlaque (void);
@@ -42,13 +43,15 @@ extern vrect_t		scr_vrect;
 extern	float		scr_con_current;
 extern	float		scr_conlines;		// lines of console to display
 
-//extern	int			scr_fullupdate;	// set to 0 to force full redraw
-//extern	int			scr_topupdate;	// set to 0 to force top redraw
 extern	int			sb_lines;
 
 extern	qboolean	scr_disabled_for_loading;
 extern	char		scr_centerstring[1024];
 extern	float		scr_centertime_off;
+extern	int			scr_center_lines;
+
+#define MAXLINES 27
+extern	int StartC[MAXLINES],EndC[MAXLINES];
 
 extern	cvar_t		scr_viewsize;
 extern	cvar_t		scr_weaponsize;
@@ -56,9 +59,6 @@ extern	cvar_t		scr_showloading;
 
 extern qboolean		block_drawing;
 
-// only the refresh window will be updated unless these variables are flagged 
-//extern	int			scr_copytop;
-//extern	int			scr_copyeverything;
 
 extern int			total_loading_size, current_loading_size, entity_file_size, loading_stage;
 

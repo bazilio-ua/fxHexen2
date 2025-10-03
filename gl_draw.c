@@ -183,7 +183,7 @@ nonscrap:
 }
 
 
-qpic_t *Draw_PicFromFile (char *name, void *buf)
+qpic_t *Draw_PicFromFile (char *name, void *buf, unsigned extraflags)
 {
 	qpic_t	*p;
 	glpic_t *glp;
@@ -197,7 +197,7 @@ qpic_t *Draw_PicFromFile (char *name, void *buf)
 	SwapPic (p);
 
 	glp = (glpic_t *)p->data;
-	glp->gltexture = TexMgr_LoadTexture (NULL, name, p->width, p->height, SRC_INDEXED, p->data, name, sizeof(int)*2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP);
+	glp->gltexture = TexMgr_LoadTexture (NULL, name, p->width, p->height, SRC_INDEXED, p->data, name, sizeof(int)*2, TEXPREF_ALPHA | TEXPREF_PAD | TEXPREF_NOPICMIP | extraflags);
 	glp->sl = 0;
 	glp->sh = (float)p->width/(float)TexMgr_PadConditional(p->width); //johnfitz
 	glp->tl = 0;
@@ -372,12 +372,12 @@ void Draw_LoadPics (void)
 	for(i=MAX_DISC-1 ; i>=0 ; i--)
 	{	// Do this backwards so we don't try and draw the skull as we are loading
 		sprintf(texturepath, "gfx/menu/skull%d.lmp", i);
-		draw_disc[i] = Draw_PicFromFile (texturepath, draw_disc[i]);
+		draw_disc[i] = Draw_PicFromFile (texturepath, draw_disc[i], TEXPREF_CONCHARS);
 	}
 	block_drawing = false;
 
 //	draw_backtile = Draw_PicFromWad ("backtile");
-	draw_backtile = Draw_PicFromFile ("gfx/menu/backtile.lmp", draw_backtile);
+	draw_backtile = Draw_PicFromFile ("gfx/menu/backtile.lmp", draw_backtile, TEXPREF_NONE);
 
 }
 

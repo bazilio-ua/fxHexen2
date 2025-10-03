@@ -1085,6 +1085,9 @@ void CL_Plaque(void)
 		plaquemessage = &pr_global_strings[pr_string_index[index-1]];
 	else
 		plaquemessage = "";
+
+	if (plaquemessage[0])
+		Con_LogCenterPrint (plaquemessage);
 }
 
 void CL_ParticleExplosion(void)

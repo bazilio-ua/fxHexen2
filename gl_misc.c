@@ -499,7 +499,7 @@ void R_TimeRefresh_f (void)
 
 // workaround to avoid flickering uncovered by 3d refresh 2d areas when bloom enabled
 		GL_Set2D ();  
-		if (/*scr_sbar.value || */scr_viewsize.value < 120)
+		if (scr_sbar.value || scr_viewsize.value < 100)
 		{
 			SCR_TileClear ();
 			Sbar_Changed ();

@@ -730,7 +730,6 @@ void R_DrawAliasModel (entity_t *e)
 //	aliasalpha = 0.5f; // test
 	
 	alphatest = !!(e->model->flags & EF_HOLEY); // MF_HOLEY
-//	alphatest = !!(e->model->flags & (EF_HOLEY|EF_TRANSPARENT)); // MF_HOLEY
 
 	if (aliasalpha == 0)
 		goto cleanup;
@@ -741,16 +740,15 @@ void R_DrawAliasModel (entity_t *e)
 	
 	if (e->model->flags & EF_SPECIAL_TRANS)
 	{
-		// rjr
 		glEnable (GL_BLEND);
 		glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-//		glBlendFunc (paliashdr->glow ? GL_ONE : GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 		glDisable (GL_CULL_FACE);
 	}
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_FALSE);
+		if (e != &cl.viewent)
+			glDepthMask (GL_FALSE);
 		glEnable (GL_BLEND);
 	}
 	else
@@ -947,7 +945,6 @@ cleanup:
 	
 	if (e->model->flags & EF_SPECIAL_TRANS)
 	{
-		// rjr
 		glDisable (GL_BLEND);
 		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable (GL_CULL_FACE);
@@ -955,7 +952,8 @@ cleanup:
 	else
 	if (alphablend)
 	{
-		glDepthMask (GL_TRUE);
+		if (e != &cl.viewent)
+			glDepthMask (GL_TRUE);
 		glDisable (GL_BLEND);
 		glColor4f (1, 1, 1, 1);
 	}

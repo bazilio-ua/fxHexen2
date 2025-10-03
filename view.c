@@ -699,35 +699,14 @@ callback when the gamma/contrast cvar changes
 */
 void V_UpdateGamma (void)
 {
-	int		i;
-	byte	*basepal, *newpal;
-	byte	pal[768];
-	int		ir, ig, ib;
 	qboolean force;
 
 	force = V_CheckGamma ();
 	
 	if (force)
 	{
-		basepal = host_basepal;
-		newpal = pal;
-		
-		for (i=0 ; i<256 ; i++)
-		{
-			ir = basepal[0];
-			ig = basepal[1];
-			ib = basepal[2];
-			basepal += 3;
-			
-			newpal[0] = gammatable[ir];
-			newpal[1] = gammatable[ig];
-			newpal[2] = gammatable[ib];
-			newpal += 3;
-		}
-
-		V_ShiftPalette (pal);
+		V_ReloadPalette ();
 	}
-
 }
 
 void V_ShiftPalette (byte *palette)

@@ -1973,7 +1973,7 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 //	hull->available = true;
 	
 	
-	
+//player
 	hull = &loadmodel->hulls[1];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1987,6 +1987,7 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[2] = 32;
 	hull->available = true;
 	
+//scorpion	
 	hull = &loadmodel->hulls[2];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -1999,7 +2000,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 24;
 	hull->clip_maxs[2] = 20;
 	hull->available = true;
-
+	
+//crouch
 	hull = &loadmodel->hulls[3];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -2012,7 +2014,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 16;
 	hull->available = true;
-
+	
+//hydra -changing in MP to '-8 -8 -8', '8 8 8' for pentacles
 	hull = &loadmodel->hulls[4];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
@@ -2025,12 +2028,20 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 8;
 	hull->clip_maxs[2] = 8;
 	hull->available = true;
-
+	
+//golem - maybe change to '-28 -28 -40', '28 28 40' for Yakman
 	hull = &loadmodel->hulls[5];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;
 	hull->lastclipnode = count-1;
 	hull->planes = loadmodel->planes;
+	//use yak sizes
+//	hull->clip_mins[0] = -28;
+//	hull->clip_mins[1] = -28;
+//	hull->clip_mins[2] = -40;
+//	hull->clip_maxs[0] = 28;
+//	hull->clip_maxs[1] = 28;
+//	hull->clip_maxs[2] = 40;
 	hull->clip_mins[0] = -48;
 	hull->clip_mins[1] = -48;
 	hull->clip_mins[2] = -50;
@@ -2038,7 +2049,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[1] = 48;
 	hull->clip_maxs[2] = 50;
 	hull->available = true;
-
 	
 }
 
@@ -2709,6 +2719,8 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
 		if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
 		{
+			if (texflags & TEXPREF_SPECIAL_TRANS) goto special;
+			
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
 			pheader->base[i][0] =
 			pheader->base[i][1] =
@@ -2723,6 +2735,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 		}
 		else
 		{
+special:
 			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
 			pheader->base[i][0] =
 			pheader->base[i][1] =
@@ -2745,7 +2758,7 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 /*
 =================
-Mod_CalcAliasBounds
+Mod_CalcAliasBounds -- johnfitz
 
 calculate bounds of alias model for nonrotated, yawrotated, and fullrotated cases
 =================
@@ -2797,6 +2810,21 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 	loadmodel->ymaxs[2] = max (loadmodel->maxs[2], yawradius);
 }
 
+/*
+=================
+Mod_SetExtraFlags -- johnfitz
+
+set up extra flags that aren't in the mdl
+=================
+*/
+void Mod_SetExtraFlags (model_t *mod)
+{
+	// In mission pack, for model EF_MAGICMISSILE (ball.mdl)
+	// we have an EF_HOLEY flag, but EF_FACE_VIEW flag is absent,
+	// and visa verse for standard hexen2. So we set it both
+	if (mod->flags & EF_MAGICMISSILE)
+		mod->flags |= (EF_HOLEY|EF_FACE_VIEW);
+}
 
 /*
 =================
@@ -2838,9 +2866,8 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 	pheader = Hunk_AllocName (size, loadname);
 	
 	mod->flags = LittleLong (pinmodel->flags);
-	
-	if (mod->flags & EF_FACE_VIEW) //FIXME: temp debug
-		Con_Printf ("model %s has EF_FACE_VIEW flag\n", mod->name);
+
+	Mod_SetExtraFlags (mod); //johnfitz -- set up extra mdl flags
 
 //
 // endian-adjust and copy the data, starting with the alias model header
@@ -2957,12 +2984,11 @@ void Mod_LoadAliasModel (model_t *mod, void *buffer)
 
 	pheader->numposes = posenum;
 
-	
-	Mod_CalcAliasBounds (pheader); // calc correct bounds
+	Mod_CalcAliasBounds (pheader); //johnfitz -- calc correct bounds
 
-	//
-	// build the draw lists
-	//
+//
+// build the draw lists
+//
 	R_MakeAliasModelDisplayLists (mod, pheader);
 
 //
@@ -3025,8 +3051,7 @@ void Mod_LoadAliasModelNew (model_t *mod, void *buffer)
 	
 	mod->flags = LittleLong (pinmodel->flags);
 
-	if (mod->flags & EF_FACE_VIEW) //FIXME: temp debug
-		Con_Printf ("model %s has EF_FACE_VIEW flag\n", mod->name);
+	Mod_SetExtraFlags (mod); //johnfitz -- set up extra mdl flags
 
 //
 // endian-adjust and copy the data, starting with the alias model header
@@ -3143,12 +3168,11 @@ void Mod_LoadAliasModelNew (model_t *mod, void *buffer)
 
 	pheader->numposes = posenum;
 
+	Mod_CalcAliasBounds (pheader); //johnfitz -- calc correct bounds
 
-	Mod_CalcAliasBounds (pheader); // calc correct bounds
-
-	//
-	// build the draw lists
-	//
+//
+// build the draw lists
+//
 	R_MakeAliasModelDisplayLists (mod, pheader);
 
 //

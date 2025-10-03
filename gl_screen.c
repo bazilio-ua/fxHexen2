@@ -136,12 +136,10 @@ char		scr_centerstring[1024];
 float		scr_centertime_start;	// for slow victory printing
 float		scr_centertime_off;
 int			scr_center_lines;
-int			scr_erase_lines;
-int			scr_erase_center;
+//int			scr_erase_lines;
+//int			scr_erase_center;
 
-static int lines;
-#define MAXLINES 27
-static int StartC[MAXLINES],EndC[MAXLINES];
+int StartC[MAXLINES],EndC[MAXLINES];
 
 #define MAX_INFO 1024
 char infomessage[MAX_INFO];
@@ -185,14 +183,17 @@ void UpdateInfoMessage(void)
 			strcat(infomessage, newmessage);
 		}
 	}
+
+	if (strlen(infomessage)>11)
+		Con_LogCenterPrint (infomessage);
 }
 
-void FindTextBreaks(char *message, int Width)
+void SCR_FindTextBreaks(char *message, int Width)
 {
 	int length,pos,start,lastspace,oldlast;
 
 	length = strlen(message);
-	lines = pos = start = 0;
+	scr_center_lines = pos = start = 0;
 	lastspace = -1;
 
 	while(1)
@@ -204,10 +205,10 @@ void FindTextBreaks(char *message, int Width)
 			if (message[pos] == '@' || lastspace == -1 || message[pos] == 0)
 				lastspace = pos;
 
-			StartC[lines] = start;
-			EndC[lines] = lastspace;
-			lines++;
-			if (lines == MAXLINES)
+			StartC[scr_center_lines] = start;
+			EndC[scr_center_lines] = lastspace;
+			scr_center_lines++;
+			if (scr_center_lines == MAXLINES)
 				return;
 			if (message[pos] == '@')
 				start = pos + 1;
@@ -255,8 +256,8 @@ void SCR_CenterPrint (char *str)
 	scr_centertime_off = scr_centertime.value;
 	scr_centertime_start = cl.time;
 
-	FindTextBreaks(scr_centerstring, 38);
-	scr_center_lines = lines;
+//	FindTextBreaks(scr_centerstring, 38);
+//	scr_center_lines = lines;
 }
 
 
@@ -273,12 +274,12 @@ void SCR_DrawCenterString (void)
 	else
 		remaining = 9999;
 
-	scr_erase_center = 0;
+//	scr_erase_center = 0;
 
-	FindTextBreaks(scr_centerstring, 38);
+	SCR_FindTextBreaks(scr_centerstring, 38);
 
-	by = ((25-lines) * 8) / 2;
-	for(i=0;i<lines;i++,by+=8)
+	by = ((25-scr_center_lines) * 8) / 2;
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&scr_centerstring[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -289,8 +290,8 @@ void SCR_DrawCenterString (void)
 
 void SCR_CheckDrawCenterString (void)
 {
-	if (scr_center_lines > scr_erase_lines)
-		scr_erase_lines = scr_center_lines;
+//	if (scr_center_lines > scr_erase_lines)
+//		scr_erase_lines = scr_center_lines;
 
 	scr_centertime_off -= host_frametime;
 	
@@ -373,6 +374,7 @@ static void SCR_CalcRefdef (void)
 {
 	float		size;
 	int		h;
+	qboolean		full = false;
 
 	vid.recalc_refdef = false;
 
@@ -407,7 +409,7 @@ static void SCR_CalcRefdef (void)
 
 // intermission is always full screen	
 	if (cl.intermission)
-		size = 110;
+		size = 120;
 	else
 		size = scr_viewsize.value;
 
@@ -419,40 +421,61 @@ static void SCR_CalcRefdef (void)
 		sb_lines = 24+16+8;*/
 
 	if (size >= 110)
-	{ // No status bar
+		sb_lines = 0;		// No status bar
+	else
+		sb_lines = 36;
+
+	if (scr_overdrawsbar.value)
 		sb_lines = 0;
+
+	if (scr_viewsize.value >= 100.0)
+	{
+		full = true;
+		size = 100.0;
 	}
 	else
 	{
-		sb_lines = 36;
+		full = false;
+		size = scr_viewsize.value;
 	}
-
-	size = scr_viewsize.value > 100 ? 100 : scr_viewsize.value;
 	
 	if (cl.intermission)
 	{
+		full = true;
 		size = 100;
 		sb_lines = 0;
 	}
 	
 	size /= 100.0;
 
-	h = vid.height - sb_lines;
+	h = (!scr_sbar.value && full) ? vid.height : vid.height - sb_lines;
 
 	r_refdef.vrect.width = vid.width * size;
 
 	if (r_refdef.vrect.width < 96)
 	{
-		size = 96.0 / r_refdef.vrect.width; // was vid.width (H2)
+		size = 96.0 / r_refdef.vrect.width;
 		r_refdef.vrect.width = 96;	// min for icons
 	}
 
 	r_refdef.vrect.height = vid.height * size;
-	if (r_refdef.vrect.height > (int)vid.height - sb_lines)
-		r_refdef.vrect.height = vid.height - sb_lines;
+
+	if (scr_sbar.value || !full)
+	{
+		if (r_refdef.vrect.height > (int)vid.height - sb_lines)
+			r_refdef.vrect.height = vid.height - sb_lines;
+	}
+	else if (r_refdef.vrect.height > (int)vid.height)
+	{
+		r_refdef.vrect.height = vid.height;
+	} 
 
 	r_refdef.vrect.x = (vid.width - r_refdef.vrect.width)/2;
-	r_refdef.vrect.y = (h - r_refdef.vrect.height)/2;
+
+	if (full)
+		r_refdef.vrect.y = 0;
+	else 
+		r_refdef.vrect.y = (h - r_refdef.vrect.height)/2;
 
 	r_refdef.fov_x = AdaptFovx (scr_fov.value, vid.width, vid.height);
 	r_refdef.fov_y = CalcFovy (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
@@ -1148,12 +1171,12 @@ void Plaque_Draw (char *message, qboolean AlwaysDraw)
 	if (!*message) 
 		return;
 
-	FindTextBreaks(message, PLAQUE_WIDTH);
+	SCR_FindTextBreaks(message, PLAQUE_WIDTH);
 
-	by = ((25-lines) * 8) / 2;
-	M_DrawTextBox2 (32, by-16, 30, lines+2,false);
+	by = ((25-scr_center_lines) * 8) / 2;
+	M_DrawTextBox2 (32, by-16, 30, scr_center_lines+2,false);
 
-	for(i=0;i<lines;i++,by+=8)
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&message[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1175,18 +1198,18 @@ void Info_Plaque_Draw (char *message)
 		return;
 
 
-	FindTextBreaks(message, PLAQUE_WIDTH+4);
+	SCR_FindTextBreaks(message, PLAQUE_WIDTH+4);
 
-	if (lines == MAXLINES) 
+	if (scr_center_lines == MAXLINES) 
 	{
 		Con_DPrintf("Info_Plaque_Draw: line overflow error\n");
-		lines = MAXLINES-1;
+		scr_center_lines = MAXLINES-1;
 	}
 
-	by = ((25-lines) * 8) / 2;
-	M_DrawTextBox2 (15, by-16, PLAQUE_WIDTH+4+4, lines+2,false);
+	by = ((25-scr_center_lines) * 8) / 2;
+	M_DrawTextBox2 (15, by-16, PLAQUE_WIDTH+4+4, scr_center_lines+2,false);
 
-	for(i=0;i<lines;i++,by+=8)
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&message[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1219,13 +1242,13 @@ void Bottom_Plaque_Draw (char *message)
 		return;
 
 
-	FindTextBreaks(message, PLAQUE_WIDTH);
+	SCR_FindTextBreaks(message, PLAQUE_WIDTH);
 
-	by = (((vid.height)/8)-lines-2) * 8;
+	by = (((vid.height)/8)-scr_center_lines-2) * 8;
 
-	M_DrawTextBox2 (32, by-16, 30, lines+2,true);
+	M_DrawTextBox2 (32, by-16, 30, scr_center_lines+2,true);
 
-	for(i=0;i<lines;i++,by+=8)
+	for(i=0;i<scr_center_lines;i++,by+=8)
 	{
 		strncpy(temp,&message[StartC[i]],EndC[i]-StartC[i]);
 		temp[EndC[i]-StartC[i]] = 0;
@@ -1345,7 +1368,10 @@ void Sbar_IntermissionOverlay(void)
 	else
 		message = "";
 
-	FindTextBreaks(message, 38);
+	if (message[0])
+		Con_LogCenterPrint (message);
+
+	SCR_FindTextBreaks(message, 38);
 
 	// hacks to print the final messages centered: "by" is the y offset
 	// in pixels to begin printing at. each line is 8 pixels - S.A
@@ -1353,14 +1379,14 @@ void Sbar_IntermissionOverlay(void)
 	//	by = 16;
 	if (cl.intermission >= 6 && cl.intermission <= 8)
 		// eidolon, endings. num == 6,7,8
-		by = (vid.height/2 - lines*4);
+		by = (vid.height/2 - scr_center_lines*4);
 	else if (cl.intermission == 10)
 		// mission pack: tibet10. num == 10
 		by = 33;
 	else
-		by = ((25-lines) * 8) / 2;
+		by = ((25-scr_center_lines) * 8) / 2;
 
-	for (i = 0; i < lines; i++, by += 8)
+	for (i = 0; i < scr_center_lines; i++, by += 8)
 	{
 		size = EndC[i] - StartC[i];
 		strncpy (temp, &message[StartC[i]], size);
@@ -1380,7 +1406,7 @@ void Sbar_IntermissionOverlay(void)
 			break;
 	}
 
-	if (i == lines && elapsed >= 300 && cl.intermission >= 6 && cl.intermission <= 7)
+	if (i == scr_center_lines && elapsed >= 300 && cl.intermission >= 6 && cl.intermission <= 7)
 	{
 		cl.intermission++;
 		cl.completed_time = cl.time;
@@ -1452,7 +1478,7 @@ void SCR_UpdateScreen (void)
 		SCR_CalcRefdef ();
 	}
 
-	if (/*scr_overdrawsbar.value || */gl_clear.value || isIntel) // intel video workaround
+	if (scr_overdrawsbar.value || gl_clear.value || isIntel) // intel video workaround
 		Sbar_Changed ();
 
 //
@@ -1472,7 +1498,11 @@ void SCR_UpdateScreen (void)
 	//
 	// draw any areas not covered by the refresh
 	//
-	SCR_TileClear ();
+	if (scr_sbar.value || scr_viewsize.value < 100)
+	{
+		SCR_TileClear ();
+		Sbar_Changed ();
+	}
 
 	if (scr_drawdialog) //new game confirm
 	{
