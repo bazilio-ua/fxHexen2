@@ -894,8 +894,10 @@ void R_DrawBrushModel (entity_t *e)
 
 	clmodel = e->model;
 
-	alpha = ENTALPHA_DECODE(e->alpha);
-	forcealpha = (e->alpha != ENTALPHA_DEFAULT);
+	alpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
+//	alpha = ENTALPHA_DECODE(e->alpha);
+	forcealpha = (alpha < 1.0) || !!(e->model->flags & EF_TRANSPARENT);
+//	forcealpha = (e->alpha != ENTALPHA_DEFAULT);
 	
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
 	if (e->angles[0] || e->angles[1] || e->angles[2])
