@@ -111,6 +111,16 @@ void R_TransAlpha (void)
 
 /*
 ====================
+R_SpriteAlpha
+====================
+*/
+void R_SpriteAlpha (void)
+{
+	map_spritealpha = CLAMP(0.0, r_spritealpha.value, 1.0);
+}
+
+/*
+====================
 R_WaterAlpha -- ericw
 ====================
 */
@@ -172,6 +182,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_waterquality);
 	Cvar_RegisterVariableCallback (&r_wateralpha, R_WaterAlpha);
 	Cvar_RegisterVariableCallback (&r_transalpha, R_TransAlpha);
+	Cvar_RegisterVariableCallback (&r_spritealpha, R_SpriteAlpha);
 	Cvar_RegisterVariable (&r_lockalpha);
 	Cvar_RegisterVariableCallback (&r_lavaalpha, R_LavaAlpha);
 	Cvar_RegisterVariableCallback (&r_slimealpha, R_SlimeAlpha);
@@ -343,6 +354,7 @@ void R_InitSkyBoxTextures (void)
 
 float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha;
 float	map_transalpha = 0.5f;
+float	map_spritealpha = 1.0f;
 
 /*
 =================
