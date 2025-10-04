@@ -1804,7 +1804,7 @@ void R_DrawParticle (particle_t *p)
 	GL_BindTexture (particletexture);
 
 	glEnable (GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // H2
+//	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // H2 (fixme: already set?)
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glDepthMask (GL_FALSE); // don't bother writing Z (fix for particle z-buffer bug)
 
