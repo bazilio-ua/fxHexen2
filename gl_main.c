@@ -462,7 +462,7 @@ void R_DrawSpriteModel (entity_t *e)
 	else
 	{
 		if (psprite->type == SPR_ORIENTED)
-			glDepthMask (GL_FALSE); // don't bother writing Z
+			glDepthMask (GL_FALSE); // don't bother writing Z (disable zbuffer updates)
 		glEnable (GL_BLEND);
 //		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // (fixme: already set?)
 		glEnable (GL_ALPHA_TEST);
@@ -498,7 +498,7 @@ void R_DrawSpriteModel (entity_t *e)
 	else
 	{
 		if (psprite->type == SPR_ORIENTED)
-			glDepthMask (GL_TRUE); // back to normal Z buffering
+			glDepthMask (GL_TRUE); // back to normal Z buffering (enable zbuffer updates)
 		glDisable (GL_BLEND);
 		glDisable (GL_ALPHA_TEST);
 		glAlphaFunc (GL_GREATER, 0.666);
