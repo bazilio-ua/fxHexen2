@@ -788,9 +788,8 @@ void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t 
 		
 		if (ent->drawflags & MLS_ABSLIGHT)
 		{
-			// ent->abslight   0 - 255
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			intensity = ( float )ent->abslight / 255.0f;
+			intensity = ( float )ent->abslight / 255.0f; // abslight   0 - 255
 			lightmap = false;
 		}
 		
@@ -919,7 +918,7 @@ void R_DrawBrushModel (entity_t *e)
 
 	alpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
 //	alpha = ENTALPHA_DECODE(e->alpha);
-	forcealpha = (alpha < 1.0) || !!(e->model->flags & EF_TRANSPARENT);
+	forcealpha = !!(e->drawflags & DRF_TRANSLUCENT);
 //	forcealpha = (e->alpha != ENTALPHA_DEFAULT);
 	
 	VectorSubtract (r_refdef.vieworg, e->origin, modelorg);
@@ -1352,6 +1351,8 @@ void R_DrawTextureChains_Multitexture (model_t *model, entity_t *ent, texchain_t
 	float		*v;
 	qboolean	bound;
 	gltexture_t	*base, *glow;
+	float		intensity;
+	qboolean 	lightmap;
 	
 	
 	for (i=0 ; i<model->numtextures ; i++)
@@ -1362,6 +1363,8 @@ void R_DrawTextureChains_Multitexture (model_t *model, entity_t *ent, texchain_t
 			continue;
         
 		bound = false;
+		intensity = 1.0f;
+		lightmap = true;
         
 		for (s = t->texturechains[chain]; s; s = s->texturechain)
         {
@@ -1373,6 +1376,12 @@ void R_DrawTextureChains_Multitexture (model_t *model, entity_t *ent, texchain_t
 				GL_SelectTMU0 ();
 				GL_BindTexture (base);
 				
+				if (ent != NULL && ent->drawflags & MLS_ABSLIGHT)
+				{
+					intensity = ( float )ent->abslight / 255.0f; // abslight   0 - 255
+					lightmap = false;
+					glColor3f (intensity, intensity, intensity);
+				}
 				
                 if (t->texturechains[chain]->flags & SURF_DRAWHOLEY)
                     glEnable (GL_ALPHA_TEST); // Flip alpha test back on
@@ -1389,15 +1398,19 @@ void R_DrawTextureChains_Multitexture (model_t *model, entity_t *ent, texchain_t
                 bound = true;
             }
 			
-			GL_SelectTMU1 ();
-			GL_BindTexture (lightmaps[s->lightmaptexture].texture);
+			if (lightmap)
+			{
+				GL_SelectTMU1 ();
+				GL_BindTexture (lightmaps[s->lightmaptexture].texture);
+			}
 			
             glBegin(GL_POLYGON);
             v = s->polys->verts[0];
             for (j=0 ; j<s->polys->numverts ; j++, v+= VERTEXSIZE)
             {
                 qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
-                qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
+				if (lightmap)
+					qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
 				if (glow)
 					qglMultiTexCoord2f (GL_TEXTURE2_ARB, v[3], v[4]);
 				
@@ -1417,6 +1430,9 @@ void R_DrawTextureChains_Multitexture (model_t *model, entity_t *ent, texchain_t
 		
 		GL_SelectTMU0 ();
         
+		if (bound && ent != NULL && ent->drawflags & MLS_ABSLIGHT)
+			glColor3f (1, 1, 1);
+		
 		if (bound && t->texturechains[chain]->flags & SURF_DRAWHOLEY)
 			glDisable (GL_ALPHA_TEST); // Flip alpha test back off
 	}
