@@ -861,8 +861,7 @@ void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t 
 		
 		if (t->glow)
 		{
-			if (lightmap)
-				glDisable (GL_TEXTURE_2D);
+			glDisable (GL_TEXTURE_2D);
 			GL_SelectTMU2 ();
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			glDisable (GL_BLEND);
