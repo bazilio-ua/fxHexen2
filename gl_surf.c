@@ -782,17 +782,29 @@ void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t 
 	//
 	if ( !(s->flags & SURF_DRAWTILED) )
 	{
+		float		intensity = 1.0f;
+		qboolean 	lightmap = true;
 		
 		
-		if (alpha < 1.0)
+		if (ent->drawflags & MLS_ABSLIGHT)
+		{
+			// ent->abslight   0 - 255
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			intensity = ( float )ent->abslight / 255.0f;
+			lightmap = false;
+		}
+		
+		if ((alpha < 1.0) || (ent->drawflags & DRF_TRANSLUCENT))
 		{
 			glDepthMask (GL_FALSE);
 			glEnable (GL_BLEND);
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glColor4f (1, 1, 1, alpha);
+			glColor4f (intensity, intensity, intensity, alpha);
+//			glColor4f (1, 1, 1, alpha);
 		}
 		else
-			glColor3f (1, 1, 1);
+			glColor3f (intensity, intensity, intensity);
+//			glColor3f (1, 1, 1);
 
 		if (s->flags & SURF_DRAWHOLEY)
 			glEnable (GL_ALPHA_TEST); // Flip on alpha test
@@ -813,22 +825,25 @@ void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t 
 			glEnable (GL_BLEND);
 		}
 		
-		// Binds lightmap to texture env 1
-		GL_SelectTMU1 ();
-		GL_BindTexture (lightmaps[s->lightmaptexture].texture);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-		glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
-		glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
-		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, d_overbrightscale);
-		
+		if (lightmap)
+		{
+			// Binds lightmap to texture env 1
+			GL_SelectTMU1 ();
+			GL_BindTexture (lightmaps[s->lightmaptexture].texture);
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
+			glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
+			glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
+			glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
+			glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, d_overbrightscale);
+		}
 		
 		glBegin (GL_POLYGON);
 		v = p->verts[0];
 		for (i=0 ; i<p->numverts ; i++, v+= VERTEXSIZE)
 		{
 			qglMultiTexCoord2f (GL_TEXTURE0_ARB, v[3], v[4]);
-			qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
+			if (lightmap)
+				qglMultiTexCoord2f (GL_TEXTURE1_ARB, v[5], v[6]);
 			if (t->glow)
 				qglMultiTexCoord2f (GL_TEXTURE2_ARB, v[3], v[4]);
 			
@@ -837,14 +852,17 @@ void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t 
 		glEnd ();
 		rs_c_brush_passes++; // r_speeds
 		
-		
-//		GL_SelectTMU1 ();
-		glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1.0f);
-		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		if (lightmap)
+		{
+//			GL_SelectTMU1 ();
+			glTexEnvf (GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1.0f);
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		}
 		
 		if (t->glow)
 		{
-			glDisable (GL_TEXTURE_2D);
+			if (lightmap)
+				glDisable (GL_TEXTURE_2D);
 			GL_SelectTMU2 ();
 			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 			glDisable (GL_BLEND);
@@ -854,7 +872,13 @@ void R_DrawSequentialPoly (msurface_t *s, float alpha, model_t *model, entity_t 
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE); //FX
 		
 		
-		if (alpha < 1.0)
+		if (ent->drawflags & MLS_ABSLIGHT)
+		{
+			glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+			glColor3f (1, 1, 1);
+		}
+
+		if ((alpha < 1.0) || (ent->drawflags & DRF_TRANSLUCENT))
 		{
 			glDepthMask (GL_TRUE);
 			glDisable (GL_BLEND);
