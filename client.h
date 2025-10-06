@@ -112,6 +112,8 @@ typedef struct
 {
 	int		length;
 	char	map[MAX_STYLESTRING];
+	char	average; //johnfitz -- flatlightstyles
+	char	peak; //johnfitz -- flatlightstyles
 } lightstyle_t;
 
 typedef struct
@@ -359,7 +361,6 @@ extern	cvar_t	cl_minpitch; // variable pitch clamping
 
 extern	cvar_t	cl_anglespeedkey;
 
-
 extern	cvar_t	cl_shownet;
 extern	cvar_t	cl_nolerp;
 extern	cvar_t	cl_lerpmuzzleflash;
@@ -399,6 +400,9 @@ extern	dlight_t		cl_dlights[MAX_DLIGHTS];
 // cl_main.c
 //
 dlight_t *CL_AllocDlight (int key);
+void	CL_ColorDlight (dlight_t *dl, float r, float g, float b);
+void	CL_ColorDlightPalette (dlight_t *dl, int i);
+void	CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length);
 void	CL_DecayLights (void);
 
 void CL_Init (void);
