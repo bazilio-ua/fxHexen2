@@ -2015,7 +2015,7 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[2] = 16;
 	hull->available = true;
 	
-//hydra -changing in MP to '-8 -8 -8', '8 8 8' for pentacles
+//hydra -changing in MP to '-8 -8 -8', '8 8 8' for pentacles (was: '-40 -40 -42', '40 40 42')
 	hull = &loadmodel->hulls[4];
 	hull->clipnodes = out;
 	hull->firstclipnode = 0;

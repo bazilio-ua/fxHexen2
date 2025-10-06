@@ -33,6 +33,10 @@ cvar_t	cl_shownet = {"cl_shownet","0", CVAR_NONE};	// can be 0, 1, or 2
 cvar_t	cl_nolerp = {"cl_nolerp","0", CVAR_NONE};
 cvar_t	cl_lerpmuzzleflash = {"cl_lerpmuzzleflash","0", CVAR_NONE};
 
+cvar_t	cl_coloredlight = {"cl_coloredlight","0", CVAR_ARCHIVE};
+cvar_t	cl_extradlight = {"cl_extradlight","0", CVAR_ARCHIVE};
+cvar_t	cl_extradlightstatic = {"cl_extradlightstatic","0", CVAR_ARCHIVE};
+
 cvar_t	lookspring = {"lookspring","0", CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0", CVAR_ARCHIVE};
 cvar_t	sensitivity = {"sensitivity","3", CVAR_ARCHIVE};
@@ -377,6 +381,54 @@ dlight_t *CL_AllocDlight (int key)
 	return dl;
 }
 
+void CL_WhiteDlight (dlight_t *dl)
+{
+	float average;
+	
+	// make average white/grey dlight value from all colors
+	average = (dl->color[0] + dl->color[1] + dl->color[2]) / 3.0;
+	dl->color[0] = average;
+	dl->color[1] = average;
+	dl->color[2] = average;
+}
+
+void CL_ColorDlight (dlight_t *dl, float r, float g, float b)
+{
+	dl->color[0] = r;
+	dl->color[1] = g;
+	dl->color[2] = b;
+
+	if (!cl_coloredlight.value)
+		CL_WhiteDlight (dl);
+}
+
+void CL_ColorDlightPalette (dlight_t *dl, int i)
+{
+	byte	*rgb;
+	
+	rgb = (byte *)&d_8to24table[i];
+	dl->color[0] = rgb[0] * (1.0 / 255.0);
+	dl->color[1] = rgb[1] * (1.0 / 255.0);
+	dl->color[2] = rgb[2] * (1.0 / 255.0);
+	
+	if (!cl_coloredlight.value)
+		CL_WhiteDlight (dl);
+}
+
+void CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length)
+{
+	int 	i;
+	byte	*rgb;
+	
+	i = (start + (rand() % length));
+	rgb = (byte *)&d_8to24table[i];
+	dl->color[0] = rgb[0] * (1.0 / 255.0);
+	dl->color[1] = rgb[1] * (1.0 / 255.0);
+	dl->color[2] = rgb[2] * (1.0 / 255.0);
+	
+	if (!cl_coloredlight.value)
+		CL_WhiteDlight (dl);
+}
 
 /*
 ===============
@@ -886,6 +938,64 @@ void CL_SendCmd (void)
 //	else if (strcasecmp(Cmd_Argv(1),"restore") == 0)
 //		Cvar_SetValue ("sensitivity", save_sensitivity);
 //}
+
+/*
+=============
+CL_Tracepos_f
+
+display impact point of trace along VPN
+=============
+*/
+void CL_Tracepos_f (void)
+{
+	vec3_t	v, w;
+
+	VectorScale(vpn, 8192.0, v);
+	TraceLine(r_refdef.vieworg, v, w);
+
+	if (VectorLength(w) == 0)
+		Con_Printf ("Tracepos: trace didn't hit anything\n");
+	else
+		Con_Printf ("Tracepos: (%i %i %i)\n", (int)w[0], (int)w[1], (int)w[2]);
+}
+
+/*
+=============
+CL_Viewpos_f
+
+Display client's position and mangle
+=============
+*/
+void CL_Viewpos_f (void)
+{
+	// Player position
+	Con_Printf ("Viewpos: (%i %i %i) %i %i %i\n",
+		(int)cl_entities[cl.viewentity].origin[0],
+		(int)cl_entities[cl.viewentity].origin[1],
+		(int)cl_entities[cl.viewentity].origin[2],
+		(int)cl.viewangles[PITCH],
+		(int)cl.viewangles[YAW],
+		(int)cl.viewangles[ROLL]);
+		
+	if (sv_player && sv_player->v.movetype == MOVETYPE_NOCLIP && Cmd_Argc() == 4)
+	{
+		// Major hack ...
+		sv_player->v.origin[0] = atoi (Cmd_Argv(1));
+		sv_player->v.origin[1] = atoi (Cmd_Argv(2));
+		sv_player->v.origin[2] = atoi (Cmd_Argv(3));
+	}
+}
+
+/*
+=============
+CL_StaticEnts_f
+=============
+*/
+void CL_StaticEnts_f (void)
+{
+	Con_Printf ("%d static entities\n", cl.num_statics);
+}
+
 /*
 =================
 CL_Init
@@ -920,6 +1030,11 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&cl_shownet);
 	Cvar_RegisterVariable (&cl_nolerp);
 	Cvar_RegisterVariable (&cl_lerpmuzzleflash);
+
+	Cvar_RegisterVariable (&cl_coloredlight);
+	Cvar_RegisterVariable (&cl_extradlight);
+	Cvar_RegisterVariable (&cl_extradlightstatic);
+
 	Cvar_RegisterVariable (&lookspring);
 	Cvar_RegisterVariable (&lookstrafe);
 	Cvar_RegisterVariable (&sensitivity);
@@ -937,5 +1052,8 @@ void CL_Init (void)
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
 //	Cmd_AddCommand ("sensitivity_save", CL_Sensitivity_save_f);
+	Cmd_AddCommand ("tracepos", CL_Tracepos_f); // fitz
+	Cmd_AddCommand ("viewpos", CL_Viewpos_f);
+	Cmd_AddCommand ("staticents", CL_StaticEnts_f);
 }
 

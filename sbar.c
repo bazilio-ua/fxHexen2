@@ -1574,7 +1574,8 @@ static void ShowInfoUp_f(void)
 	{
 		BarTargetHeight = BAR_TOP_HEIGHT;
 	}
-	S_LocalSound("misc/barmovdn.wav");
+	if (sb_ShowInfo)
+		S_LocalSound("misc/barmovdn.wav");
 	sb_ShowInfo = false;
 	sb_updates = 0;
 }

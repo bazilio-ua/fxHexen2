@@ -76,6 +76,7 @@ cvar_t	r_fullbright = {"r_fullbright","0", CVAR_NONE};
 cvar_t	r_ambient = { "r_ambient","0", CVAR_NONE};
 cvar_t	r_wateralpha = {"r_wateralpha","1", CVAR_ARCHIVE};
 cvar_t	r_transalpha = {"r_transalpha","0.5", CVAR_NONE};
+cvar_t	r_spritealpha = {"r_spritealpha","1", CVAR_NONE};
 cvar_t	r_lockalpha = {"r_lockalpha","0", CVAR_ARCHIVE};
 cvar_t	r_lavaalpha = {"r_lavaalpha","1", CVAR_NONE};
 cvar_t	r_slimealpha = {"r_slimealpha","1", CVAR_NONE};
@@ -464,9 +465,9 @@ void R_DrawSpriteModel (entity_t *e)
 		if (psprite->type == SPR_ORIENTED)
 			glDepthMask (GL_FALSE); // don't bother writing Z
 		glEnable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable (GL_ALPHA_TEST);
-		glAlphaFunc (GL_GEQUAL, 0.5);
+		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		if (e->drawflags & DRF_TRANSLUCENT)
+			glColor4f (1,1,1, map_spritealpha);
 	}
 
 	glBegin (GL_QUADS);
@@ -500,8 +501,9 @@ void R_DrawSpriteModel (entity_t *e)
 		if (psprite->type == SPR_ORIENTED)
 			glDepthMask (GL_TRUE); // back to normal Z buffering
 		glDisable (GL_BLEND);
-		glDisable (GL_ALPHA_TEST);
-		glAlphaFunc (GL_GREATER, 0.666);
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+		if (e->drawflags & DRF_TRANSLUCENT)
+			glColor3f (1,1,1);
 	}
 
 	// offset decals
@@ -748,7 +750,7 @@ void R_DrawAliasModel (entity_t *e)
 	if (alphablend)
 	{
 		if (e != &cl.viewent)
-			glDepthMask (GL_FALSE);
+			glDepthMask (GL_FALSE); // don't bother writing Z
 		glEnable (GL_BLEND);
 	}
 	else
@@ -953,7 +955,7 @@ cleanup:
 	if (alphablend)
 	{
 		if (e != &cl.viewent)
-			glDepthMask (GL_TRUE);
+			glDepthMask (GL_TRUE); // back to normal Z buffering
 		glDisable (GL_BLEND);
 		glColor4f (1, 1, 1, 1);
 	}
