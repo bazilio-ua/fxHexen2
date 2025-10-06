@@ -519,6 +519,181 @@ float	CL_LerpPoint (void)
 	return frac;
 }
 
+void CL_UpdateStatic (void)
+{
+	entity_t *ent;
+	int		i;
+	dlight_t	*dl;
+	int		key;
+	
+	if (!cl_extradlightstatic.value)
+		return;
+	
+	for (i=0,ent=cl_static_entities ; i<cl.num_statics ; i++,ent++)
+	{
+		if (!ent->model)
+			continue;
+		
+		key = i + 1;
+		
+		if (!strcmp (ent->model->name, "progs/flame.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 12;
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		else if (!strcmp (ent->model->name, "progs/flame2.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 12;
+			dl->radius = 125;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+		else if (!strcmp (ent->model->name, "progs/s_light.spr"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 85;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPalette (dl, DL_COLOR_111);
+		}
+		else if (!strcmp (ent->model->name, "progs/candle.mdl")) // rogue
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+//			if (rogue)
+//				dl->origin[2] += 8;
+			dl->radius = 55;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME3);
+		}
+		else if (!strcmp (ent->model->name, "progs/lantern.mdl")) // rogue & nehahra
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+//			if (nehahra)
+//				dl->origin[2] -= 16;
+			dl->radius = 85;
+			dl->die = cl.time + 0.1;
+			
+//			if (nehahra)
+//				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+//			else
+//				CL_ColorDlightPalette (dl, DL_COLOR_246);
+		}
+		else if (!strcmp (ent->model->name, "progs/longtrch.mdl")) // quoth
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		else if (!strcmp (ent->model->name, "progs/brazshrt.mdl")) // quoth
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 115;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+		else if (!strcmp (ent->model->name, "progs/braztall.mdl")) // quoth
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 105;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+		else if (!strcmp (ent->model->name, "progs/lightpost.mdl")) // quoth
+		{
+			if (ent->skinnum == 3)		// skin3 gray	(off)
+				continue;
+			
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 65;
+			dl->die = cl.time + 0.1;
+			
+//			if (ent->skinnum == 0)		// skin0 yellow	(DL_COLOR_253)
+//				CL_ColorDlightPalette (dl, DL_COLOR_253);
+//			else if (ent->skinnum == 1)	// skin1 blue	(DL_COLOR_245)
+//				CL_ColorDlightPalette (dl, DL_COLOR_245);
+//			else if (ent->skinnum == 2)	// skin2 red	(DL_COLOR_250)
+//				CL_ColorDlightPalette (dl, DL_COLOR_250);
+		}
+		else if (!strcmp (ent->model->name, "progs/lighttube.mdl")) // quoth
+		{
+			if (ent->skinnum == 3)		// skin3 off	(off)
+				continue;
+			
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 85;
+			dl->die = cl.time + 0.1;
+			
+//			if (ent->skinnum == 0)		// skin0 yellow	(DL_COLOR_253)
+//				CL_ColorDlightPalette (dl, DL_COLOR_253);
+//			else if (ent->skinnum == 1)	// skin1 blue	(DL_COLOR_245)
+//				CL_ColorDlightPalette (dl, DL_COLOR_245);
+//			else if (ent->skinnum == 2)	// skin2 red	(DL_COLOR_250)
+//				CL_ColorDlightPalette (dl, DL_COLOR_250);
+		}
+		else if (!strcmp (ent->model->name, "progs/candleth.mdl")) // nehahra
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 32;
+			dl->radius = 55;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
+		}
+		else if (!strcmp (ent->model->name, "progs/candle_t.mdl")) // nehahra
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 16;
+			dl->radius = 55;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
+		}
+		else if (!strcmp (ent->model->name, "progs/candle_w.mdl") ||
+				 !strcmp (ent->model->name, "progs/candlews.mdl")) // nehahra
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 12;
+			dl->radius = 55;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
+		}
+		else if (!strcmp (ent->model->name, "progs/lantern0.mdl")) // nehahra
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] -= 16;
+			dl->radius = 85;
+			dl->die = cl.time + 0.1;
+			
+//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+	}
+}
 
 /*
 ===============
@@ -845,6 +1020,7 @@ int CL_ReadFromServer (void)
 	if (cl_shownet.value)
 		Con_Printf ("\n");
 
+	CL_UpdateStatic ();
 	CL_RelinkEntities ();
 	CL_UpdateTEnts ();
 
