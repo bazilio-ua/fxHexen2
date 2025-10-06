@@ -546,15 +546,25 @@ void CL_UpdateStatic (void)
 			
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
-		else if (!strcmp (ent->model->name, "progs/flame2.mdl"))
+		else if (!strcmp (ent->model->name, "models/flame1.mdl"))
 		{
 			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
-			dl->origin[2] += 12;
+//			dl->origin[2] += 12;
 			dl->radius = 125;
 			dl->die = cl.time + 0.1;
 			
-//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		else if (!strcmp (ent->model->name, "models/flame2.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+//			dl->origin[2] += 12;
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
 		}
 		else if (!strcmp (ent->model->name, "progs/s_light.spr"))
 		{

@@ -162,7 +162,7 @@ typedef struct
 // keep dlight colours in the one place so that if i need to change them i only need to do it once
 
 #define DL_COLOR_FLAME		166, 10
-#define DL_COLOR_FLAME2		166, 10
+#define DL_COLOR_FLAME2		174, 2
 //#define DL_COLOR_FLAME3		233, 6	//
 //#define DL_COLOR_FLAME4		234, 6	//
 #define DL_COLOR_254		254		// fb yellow (torch powerup)
