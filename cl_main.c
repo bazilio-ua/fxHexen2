@@ -536,15 +536,15 @@ void CL_UpdateStatic (void)
 		
 		key = i + 1;
 		
-		if (!strcmp (ent->model->name, "progs/flame.mdl"))
+		if (!strcmp (ent->model->name, "models/cflmtrch.mdl"))
 		{
 			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
-			dl->origin[2] += 12;
+//			dl->origin[2] += 12;
 			dl->radius = 100;
 			dl->die = cl.time + 0.1;
 			
-//			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
 		else if (!strcmp (ent->model->name, "progs/flame2.mdl"))
 		{
@@ -710,6 +710,7 @@ void CL_RelinkEntities (void)
 	vec3_t		oldorg;
 	dlight_t	*dl;
 	static float	lastmsg = 0;
+	int		key;
 
 // determine partial update time
 	frac = CL_LerpPoint ();
@@ -807,16 +808,43 @@ void CL_RelinkEntities (void)
 			}
 		}
 
-	//objrotate = anglemod(100*cl.time);
-	//objrotate = anglemod(100*(cl.time+ent->origin[0]+ent->origin[1]));
-	objrotate = anglemod((ent->origin[0]+ent->origin[1])*0.8+(108*cl.time)); // from R_RotateForEntity2
+		key = i + cl.num_statics + 1;
 
+		//objrotate = anglemod(100*cl.time);
+		//objrotate = anglemod(100*(cl.time+ent->origin[0]+ent->origin[1]));
+		objrotate = anglemod((ent->origin[0]+ent->origin[1])*0.8+(108*cl.time)); // from R_RotateForEntity2
 
 // rotate binary objects locally
 		if (ent->model->flags & EF_ROTATE)
 			ent->angles[1] = objrotate;
 
-			
+		if (!strcmp (ent->model->name, "models/flame1.mdl"))
+		{
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+//				dl->origin[2] += 12;
+				dl->radius = 125;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
+		}
+		if (!strcmp (ent->model->name, "models/a_torch.mdl"))
+		{
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->origin[2] += 12;
+				dl->radius = 30;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_254);
+			}
+		}
+
 		if (ent->effects & EF_DARKFIELD)
 			R_DarkFieldParticles (ent);
 
@@ -826,7 +854,7 @@ void CL_RelinkEntities (void)
 
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->origin[2] += 16;
 				AngleVectors (ent->angles, fv, rv, uv);
@@ -851,7 +879,7 @@ void CL_RelinkEntities (void)
 		{			
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->origin[2] += 16;
 				dl->radius = 400 + (rand()&31);
@@ -862,7 +890,7 @@ void CL_RelinkEntities (void)
 		{			
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200 + (rand()&31);
 				dl->die = cl.time + 0.001;
@@ -873,7 +901,7 @@ void CL_RelinkEntities (void)
 		{			
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200.0 + (rand()&31);
 				dl->die = cl.time + 0.001;
@@ -884,7 +912,7 @@ void CL_RelinkEntities (void)
 		{			
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200;
 				dl->die = cl.time + 0.001;
@@ -904,7 +932,7 @@ void CL_RelinkEntities (void)
 		else if (ent->model->flags & EF_ROCKET)
 		{
 			R_RocketTrail (oldorg, ent->origin, 0);
-/*			dl = CL_AllocDlight (i);
+/*			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
 			dl->radius = 200;
 			dl->die = cl.time + 0.01;*/
@@ -914,7 +942,7 @@ void CL_RelinkEntities (void)
 			R_RocketTrail (oldorg, ent->origin, rt_fireball);
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
@@ -925,7 +953,7 @@ void CL_RelinkEntities (void)
 			R_RocketTrail (oldorg, ent->origin, rt_acidball);
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
@@ -940,7 +968,7 @@ void CL_RelinkEntities (void)
 			R_RocketTrail (oldorg, ent->origin, rt_spit);
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = -120 - (rand() % 20);
 				dl->die = cl.time + 0.05;
