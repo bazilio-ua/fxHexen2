@@ -831,7 +831,7 @@ void CL_RelinkEntities (void)
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
 		}
-		if (!strcmp (ent->model->name, "models/a_torch.mdl"))
+		else if (!strcmp (ent->model->name, "models/a_torch.mdl"))
 		{
 			if (cl_extradlight.value)
 			{
