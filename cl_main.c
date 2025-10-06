@@ -595,6 +595,16 @@ void CL_UpdateStatic (void)
 			
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
+		else if (!strcmp (ent->model->name, "models/rflmtrch.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+//			dl->origin[2] += 12;
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
 		else
 		{
 //			Con_Printf("model: %s\n", ent->model->name);
