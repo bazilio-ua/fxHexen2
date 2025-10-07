@@ -163,7 +163,7 @@ typedef struct
 
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2
-#define DL_COLOR_FLAME3		164, 12	//
+//#define DL_COLOR_FLAME3		164, 12	//
 //#define DL_COLOR_FLAME4		234, 6	//
 #define DL_COLOR_254		254		// fb yellow (torch powerup)
 #define DL_COLOR_175		175		// yellow

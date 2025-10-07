@@ -588,6 +588,15 @@ void CL_UpdateStatic (void)
 
 			CL_ColorDlightPalette (dl, DL_COLOR_175);
 		}
+		else if (!strcmp (ent->model->name, "models/lantern.mdl")) // portals
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
 		else
 		{
 			if (strncasecmp(ent->model->name, "models/", 7) == 0)
@@ -612,20 +621,6 @@ void CL_UpdateStatic (void)
 //			dl->die = cl.time + 0.1;
 //			
 ////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME3);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/lantern.mdl")) // rogue & nehahra
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-////			if (nehahra)
-////				dl->origin[2] -= 16;
-//			dl->radius = 85;
-//			dl->die = cl.time + 0.1;
-//			
-////			if (nehahra)
-////				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
-////			else
-////				CL_ColorDlightPalette (dl, DL_COLOR_246);
 //		}
 //		else if (!strcmp (ent->model->name, "progs/longtrch.mdl")) // quoth
 //		{
@@ -855,7 +850,12 @@ void CL_RelinkEntities (void)
 		if (ent->model->flags & EF_ROTATE)
 			ent->angles[1] = objrotate;
 
-		if (!strcmp (ent->model->name, "models/flame1.mdl"))
+		if (strncasecmp(ent->model->name, "models/flame", 12) == 0)
+			Con_Printf("model: %s\n", ent->model->name);
+		if (strncasecmp(ent->model->name, "flmtrch.mdl", 11) == 0)
+			Con_Printf("model: %s\n", ent->model->name);
+
+		if (!strcmp (ent->model->name, "models/flame1.mdl")) // portals only
 		{
 			if (cl_extradlight.value)
 			{
@@ -867,6 +867,16 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
+		}
+		else if (!strcmp (ent->model->name, "models/flame2.mdl")) // portals only
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+//			dl->origin[2] += 12;
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
 		}
 		else if (!strcmp (ent->model->name, "models/a_torch.mdl"))
 		{
