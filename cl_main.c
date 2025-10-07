@@ -536,7 +536,10 @@ void CL_UpdateStatic (void)
 		
 		key = i + 1;
 		
-		if (!strcmp (ent->model->name, "models/cflmtrch.mdl"))
+		if (!strcmp (ent->model->name, "models/cflmtrch.mdl") || // blackmarsh castle
+			!strcmp (ent->model->name, "models/mflmtrch.mdl") || // meso
+			!strcmp (ent->model->name, "models/eflmtrch.mdl") || // egypt
+			!strcmp (ent->model->name, "models/rflmtrch.mdl"))   // romeric
 		{
 			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
@@ -576,16 +579,6 @@ void CL_UpdateStatic (void)
 			
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
 		}
-		else if (!strcmp (ent->model->name, "models/mflmtrch.mdl"))
-		{
-			dl = CL_AllocDlight (key);
-			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
-			dl->radius = 100;
-			dl->die = cl.time + 0.1;
-			
-			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME3);
-		}
 		else if (!strcmp (ent->model->name, "models/gemlight.mdl"))
 		{
 			dl = CL_AllocDlight (key);
@@ -595,29 +588,10 @@ void CL_UpdateStatic (void)
 
 			CL_ColorDlightPalette (dl, DL_COLOR_175);
 		}
-		else if (!strcmp (ent->model->name, "models/eflmtrch.mdl"))
-		{
-			dl = CL_AllocDlight (key);
-			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
-			dl->radius = 100;
-			dl->die = cl.time + 0.1;
-			
-			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
-		}
-		else if (!strcmp (ent->model->name, "models/rflmtrch.mdl"))
-		{
-			dl = CL_AllocDlight (key);
-			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
-			dl->radius = 100;
-			dl->die = cl.time + 0.1;
-			
-			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
-		}
 		else
 		{
-//			Con_Printf("model: %s\n", ent->model->name);
+			if (strncasecmp(ent->model->name, "models/", 7) == 0)
+				Con_Printf("model: %s\n", ent->model->name);
 		}
 //		else if (!strcmp (ent->model->name, "progs/s_light.spr"))
 //		{
