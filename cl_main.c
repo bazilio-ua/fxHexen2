@@ -597,6 +597,32 @@ void CL_UpdateStatic (void)
 			
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
+		else if (!strcmp (ent->model->name, "models/snowcrnr.mdl")) // portals
+		{
+			// snowbank, do nothing
+		}
+		else if (!strcmp (ent->model->name, "models/snowwall.mdl")) // portals
+		{
+			// snow stuff, do nothing
+		}
+		else if (!strcmp (ent->model->name, "models/snowpile.mdl")) // portals
+		{
+			// snow stuff, do nothing
+		}
+		else if (!strcmp (ent->model->name, "models/burnerfl.mdl")) // portals
+		{
+			// burner, without flame
+		}
+		else if (!strcmp (ent->model->name, "models/candle.mdl")) // portals
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 8;
+			dl->radius = 55;
+			dl->die = cl.time + 0.1;
+
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
 		else
 		{
 			if (strncasecmp(ent->model->name, "models/", 7) == 0)
@@ -610,17 +636,6 @@ void CL_UpdateStatic (void)
 //			dl->die = cl.time + 0.1;
 //			
 ////			CL_ColorDlightPalette (dl, DL_COLOR_111);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/candle.mdl")) // rogue
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-////			if (rogue)
-////				dl->origin[2] += 8;
-//			dl->radius = 55;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME3);
 //		}
 //		else if (!strcmp (ent->model->name, "progs/longtrch.mdl")) // quoth
 //		{
@@ -850,10 +865,10 @@ void CL_RelinkEntities (void)
 		if (ent->model->flags & EF_ROTATE)
 			ent->angles[1] = objrotate;
 
-		if (strncasecmp(ent->model->name, "models/flame", 12) == 0)
-			Con_Printf("model: %s\n", ent->model->name);
-		if (strncasecmp(ent->model->name, "flmtrch.mdl", 11) == 0)
-			Con_Printf("model: %s\n", ent->model->name);
+//		if (strncasecmp(ent->model->name, "models/flame", 12) == 0)
+//			Con_Printf("model: %s\n", ent->model->name);
+//		if (strncasecmp(ent->model->name, "flmtrch.mdl", 11) == 0)
+//			Con_Printf("model: %s\n", ent->model->name);
 
 		if (!strcmp (ent->model->name, "models/flame1.mdl")) // portals only
 		{
@@ -877,6 +892,16 @@ void CL_RelinkEntities (void)
 			dl->die = cl.time + 0.1;
 			
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+		else if (!strcmp (ent->model->name, "models/newfire.mdl")) // portals only
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+//			dl->origin[2] += 12;
+			dl->radius = 300;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
 		else if (!strcmp (ent->model->name, "models/a_torch.mdl"))
 		{
