@@ -792,6 +792,9 @@ void CL_RelinkEntities (void)
 			}
 		}
 
+//		if (ent->effects & EF_BRIGHTFIELD);
+//			R_EntityParticles (ent);
+
 		if (ent->effects & EF_DARKFIELD)
 			R_DarkFieldParticles (ent);
 
@@ -810,6 +813,8 @@ void CL_RelinkEntities (void)
 				dl->radius = 200 + (rand()&31);
 				dl->minlight = 32;
 				dl->die = cl.time + 0.1;
+				
+				// yellow
 			}
 			
 			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
@@ -831,6 +836,8 @@ void CL_RelinkEntities (void)
 				dl->origin[2] += 16;
 				dl->radius = 400 + (rand()&31);
 				dl->die = cl.time + 0.001;
+				
+				// purple
 			}
 		}
 		if (ent->effects & EF_DIMLIGHT)
@@ -841,6 +848,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200 + (rand()&31);
 				dl->die = cl.time + 0.001;
+				
+				// orange
 			}
 		}
 
@@ -863,6 +872,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200;
 				dl->die = cl.time + 0.001;
+				
+				// orange
 			}
 		}
 
@@ -883,6 +894,8 @@ void CL_RelinkEntities (void)
 			VectorCopy (ent->origin, dl->origin);
 			dl->radius = 200;
 			dl->die = cl.time + 0.01;*/
+			
+			// todo color
 		}
 		else if (ent->model->flags & EF_FIREBALL)
 		{
@@ -893,6 +906,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
+				
+				// red
 			}
 		}
 		else if (ent->model->flags & EF_ACIDBALL)
@@ -904,6 +919,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
+				
+				// green
 			}
 		}
 		else if (ent->model->flags & EF_ICE)
@@ -919,6 +936,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = -120 - (rand() % 20);
 				dl->die = cl.time + 0.05;
+				
+				// green
 			}
 		}
 		else if (ent->model->flags & EF_SPELL)
@@ -932,6 +951,16 @@ void CL_RelinkEntities (void)
 		else if (ent->model->flags & EF_VORP_MISSILE)
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_vorpal);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				// blue
+			}
 		}
 		else if (ent->model->flags & EF_SET_STAFF)
 		{
@@ -941,11 +970,33 @@ void CL_RelinkEntities (void)
 		{
 			if ((rand() & 3) < 1)
 				R_RocketTrail (oldorg, ent->origin, rt_magicmissile);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				// blue
+			}
 		}
 		else if (ent->model->flags & EF_BONESHARD)
 			R_RocketTrail (oldorg, ent->origin, rt_boneshard);
 		else if (ent->model->flags & EF_SCARAB)
+		{
 			R_RocketTrail (oldorg, ent->origin, rt_scarab);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				// orange
+			}
+		}
 
 		ent->forcelink = false;
 
