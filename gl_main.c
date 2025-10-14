@@ -75,7 +75,8 @@ cvar_t	r_speeds = {"r_speeds","0", CVAR_NONE};
 cvar_t	r_fullbright = {"r_fullbright","0", CVAR_NONE};
 cvar_t	r_ambient = { "r_ambient","0", CVAR_NONE};
 cvar_t	r_wateralpha = {"r_wateralpha","1", CVAR_ARCHIVE};
-cvar_t	r_transalpha = {"r_transalpha","0.5", CVAR_NONE};
+cvar_t	r_translucentalpha = {"r_translucentalpha","0.6", CVAR_NONE};
+cvar_t	r_transparentalpha = {"r_transparentalpha","0.5", CVAR_NONE};
 cvar_t	r_spritealpha = {"r_spritealpha","1", CVAR_NONE};
 cvar_t	r_lockalpha = {"r_lockalpha","0", CVAR_ARCHIVE};
 cvar_t	r_lavaalpha = {"r_lavaalpha","1", CVAR_NONE};
@@ -726,7 +727,7 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// set up for alpha blending
 	//
-	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
+	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? map_translucentalpha/*0.5f*/ : 1.0f;
 	
 //	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test

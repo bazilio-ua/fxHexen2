@@ -79,7 +79,7 @@ qboolean R_SetAlphaSurface(msurface_t *s, float alpha, qboolean force)
     if (force || alpha < 1.0) {
         // do nothing
     } else if (s->flags & SURF_TRANSLUCENT) {
-        alpha = map_transalpha/*0.5f*/;
+        alpha = map_translucentalpha/*0.5f*/;
 	} else if (s->flags & SURF_TRANS33) {
 		alpha = 0.33f;
 	} else if (s->flags & SURF_TRANS66) {
@@ -916,7 +916,7 @@ void R_DrawBrushModel (entity_t *e)
 
 	clmodel = e->model;
 
-	alpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
+	alpha = (e->drawflags & DRF_TRANSLUCENT) ? map_translucentalpha/*0.5f*/ : 1.0f;
 //	alpha = ENTALPHA_DECODE(e->alpha);
 	forcealpha = !!(e->drawflags & DRF_TRANSLUCENT);
 //	forcealpha = (e->alpha != ENTALPHA_DEFAULT);
