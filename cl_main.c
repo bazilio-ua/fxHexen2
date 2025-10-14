@@ -543,7 +543,6 @@ void CL_UpdateStatic (void)
 		{
 			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
 			dl->radius = 100;
 			dl->die = cl.time + 0.1;
 			
@@ -553,7 +552,6 @@ void CL_UpdateStatic (void)
 		{
 			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
 			dl->radius = 125;
 			dl->die = cl.time + 0.1;
 			
@@ -563,7 +561,6 @@ void CL_UpdateStatic (void)
 		{
 			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
 			dl->radius = 100;
 			dl->die = cl.time + 0.1;
 			
@@ -585,7 +582,7 @@ void CL_UpdateStatic (void)
 			VectorCopy (ent->origin, dl->origin);
 			dl->radius = 85;
 			dl->die = cl.time + 0.1;
-
+			
 			CL_ColorDlightPalette (dl, DL_COLOR_175);
 		}
 		else if (!strcmp (ent->model->name, "models/lantern.mdl")) // portals
@@ -611,7 +608,11 @@ void CL_UpdateStatic (void)
 		}
 		else if (!strcmp (ent->model->name, "models/burnerfl.mdl")) // portals
 		{
-			// burner, without flame
+			// burner without flame, do nothing
+		}
+		else if (!strcmp (ent->model->name, "models/palight.mdl")) // portals
+		{
+			// burner without flame, do nothing
 		}
 		else if (!strcmp (ent->model->name, "models/candle.mdl")) // portals
 		{
@@ -623,122 +624,6 @@ void CL_UpdateStatic (void)
 
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
-		else
-		{
-			if (strncasecmp(ent->model->name, "models/", 7) == 0)
-				Con_Printf("model: %s\n", ent->model->name);
-		}
-//		else if (!strcmp (ent->model->name, "progs/s_light.spr"))
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->radius = 85;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPalette (dl, DL_COLOR_111);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/longtrch.mdl")) // quoth
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->radius = 100;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/brazshrt.mdl")) // quoth
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->radius = 115;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/braztall.mdl")) // quoth
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->radius = 105;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/lightpost.mdl")) // quoth
-//		{
-//			if (ent->skinnum == 3)		// skin3 gray	(off)
-//				continue;
-//			
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->radius = 65;
-//			dl->die = cl.time + 0.1;
-//			
-////			if (ent->skinnum == 0)		// skin0 yellow	(DL_COLOR_253)
-////				CL_ColorDlightPalette (dl, DL_COLOR_253);
-////			else if (ent->skinnum == 1)	// skin1 blue	(DL_COLOR_245)
-////				CL_ColorDlightPalette (dl, DL_COLOR_245);
-////			else if (ent->skinnum == 2)	// skin2 red	(DL_COLOR_250)
-////				CL_ColorDlightPalette (dl, DL_COLOR_250);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/lighttube.mdl")) // quoth
-//		{
-//			if (ent->skinnum == 3)		// skin3 off	(off)
-//				continue;
-//			
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->radius = 85;
-//			dl->die = cl.time + 0.1;
-//			
-////			if (ent->skinnum == 0)		// skin0 yellow	(DL_COLOR_253)
-////				CL_ColorDlightPalette (dl, DL_COLOR_253);
-////			else if (ent->skinnum == 1)	// skin1 blue	(DL_COLOR_245)
-////				CL_ColorDlightPalette (dl, DL_COLOR_245);
-////			else if (ent->skinnum == 2)	// skin2 red	(DL_COLOR_250)
-////				CL_ColorDlightPalette (dl, DL_COLOR_250);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/candleth.mdl")) // nehahra
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 32;
-//			dl->radius = 55;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/candle_t.mdl")) // nehahra
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 16;
-//			dl->radius = 55;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/candle_w.mdl") ||
-//				 !strcmp (ent->model->name, "progs/candlews.mdl")) // nehahra
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
-//			dl->radius = 55;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
-//		}
-//		else if (!strcmp (ent->model->name, "progs/lantern0.mdl")) // nehahra
-//		{
-//			dl = CL_AllocDlight (key);
-//			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] -= 16;
-//			dl->radius = 85;
-//			dl->die = cl.time + 0.1;
-//			
-////			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
-//		}
 	}
 }
 
@@ -865,45 +750,55 @@ void CL_RelinkEntities (void)
 		if (ent->model->flags & EF_ROTATE)
 			ent->angles[1] = objrotate;
 
-//		if (strncasecmp(ent->model->name, "models/flame", 12) == 0)
-//			Con_Printf("model: %s\n", ent->model->name);
-//		if (strncasecmp(ent->model->name, "flmtrch.mdl", 11) == 0)
-//			Con_Printf("model: %s\n", ent->model->name);
-
-		if (!strcmp (ent->model->name, "models/flame1.mdl")) // portals only
+		if (!strcmp (ent->model->name, "models/flame1.mdl")) // in the 'portals' mission pack, this is not a static model
 		{
 			if (cl_extradlight.value)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-//				dl->origin[2] += 12;
 				dl->radius = 125;
 				dl->die = cl.time + 0.1;
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
 		}
-		else if (!strcmp (ent->model->name, "models/flame2.mdl")) // portals only
+		else if (!strcmp (ent->model->name, "models/flame2.mdl")) // in the 'portals' mission pack, this is not a static model
 		{
-			dl = CL_AllocDlight (key);
-			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
-			dl->radius = 100;
-			dl->die = cl.time + 0.1;
-			
-			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 100;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+			}
 		}
-		else if (!strcmp (ent->model->name, "models/newfire.mdl")) // portals only
+		else if (!strcmp (ent->model->name, "models/newfire.mdl")) // in the 'portals' mission pack, this is not a static model
 		{
-			dl = CL_AllocDlight (key);
-			VectorCopy (ent->origin, dl->origin);
-//			dl->origin[2] += 12;
-			dl->radius = 300;
-			dl->die = cl.time + 0.1;
-			
-			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 300;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
 		}
-		else if (!strcmp (ent->model->name, "models/a_torch.mdl"))
+		else if (!strcmp (ent->model->name, "models/gemlight.mdl")) // in the 'portals' mission pack, this is not a static model
+		{
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 85;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_175);
+			}
+		}
+		else if (!strcmp (ent->model->name, "models/a_torch.mdl")) // torch powerup item
 		{
 			if (cl_extradlight.value)
 			{
