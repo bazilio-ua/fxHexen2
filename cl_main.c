@@ -594,26 +594,6 @@ void CL_UpdateStatic (void)
 			
 			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 		}
-//		else if (!strcmp (ent->model->name, "models/snowcrnr.mdl")) // portals
-//		{
-//			// snowbank, do nothing
-//		}
-//		else if (!strcmp (ent->model->name, "models/snowwall.mdl")) // portals
-//		{
-//			// snow stuff, do nothing
-//		}
-//		else if (!strcmp (ent->model->name, "models/snowpile.mdl")) // portals
-//		{
-//			// snow stuff, do nothing
-//		}
-//		else if (!strcmp (ent->model->name, "models/burnerfl.mdl")) // portals
-//		{
-//			// burner without flame, do nothing
-//		}
-//		else if (!strcmp (ent->model->name, "models/palight.mdl")) // portals
-//		{
-//			// burner without flame, do nothing
-//		}
 		else if (!strcmp (ent->model->name, "models/candle.mdl")) // portals
 		{
 			dl = CL_AllocDlight (key);
