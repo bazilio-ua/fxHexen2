@@ -896,16 +896,26 @@ void CL_RelinkEntities (void)
 						case IT_WEAPON2:
 							if (!strcmp(ent->model->name, "models/necro.mdl"))
 								CL_ColorDlightPaletteLength (dl, DL_COLOR_SPELL_M);
+							else if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_185);
 							break;
 						case IT_WEAPON3:
 							if (!strcmp(ent->model->name, "models/necro.mdl"))
 								CL_ColorDlightPaletteLength (dl, DL_COLOR_SPELL);
+							else if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_135);
 							else if (!strcmp(ent->model->name, "models/crusader.mdl"))
 								CL_ColorDlightPalette (dl, DL_COLOR_252);
 							break;
 						case IT_WEAPON4:
 							if (!strcmp(ent->model->name, "models/assassin.mdl"))
 								CL_ColorDlightPalette (dl, DL_COLOR_88);
+							else if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPaletteLength (dl, DL_COLOR_V_SHOT);
+							break;
+						default:
+							if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_135);
 							break;
 					}
 				}
