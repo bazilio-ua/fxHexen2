@@ -904,6 +904,8 @@ void CL_RelinkEntities (void)
 								CL_ColorDlightPalette (dl, DL_COLOR_252);
 							break;
 						case IT_WEAPON4:
+							if (!strcmp(ent->model->name, "models/assassin.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_88);
 							break;
 					}
 				}
@@ -1017,6 +1019,16 @@ void CL_RelinkEntities (void)
 		else if (ent->model->flags & EF_SET_STAFF)
 		{
 			R_RocketTrail (oldorg, ent->origin,rt_setstaff);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_120);
+			}
 		}
 		else if (ent->model->flags & EF_MAGICMISSILE)
 		{
@@ -1047,7 +1059,7 @@ void CL_RelinkEntities (void)
 				dl->radius = 240 - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
-				// orange
+				CL_ColorDlightPalette (dl, DL_COLOR_27);
 			}
 		}
 

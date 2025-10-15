@@ -173,6 +173,9 @@ typedef struct
 #define DL_COLOR_FLAME2		174, 2
 #define DL_COLOR_15			15		// dark grey 104
 #define DL_COLOR_29			29		// dim white 232
+#define DL_COLOR_27			27		// dim white 212
+#define DL_COLOR_88			88
+#define DL_COLOR_120		120
 #define DL_COLOR_252		252		// full bright orange
 #define DL_COLOR_254		254		// full bright yellow (torch powerup)
 #define DL_COLOR_175		175		// yellow

@@ -76,7 +76,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "+playerclass 3 +map demo1"
+            argument = "+playerclass 4 +map demo1"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
