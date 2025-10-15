@@ -1027,7 +1027,8 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->radius = 240 - (rand() % 20);
+//				dl->radius = 240 - (rand() % 20);
+				dl->radius = ((ent->effects & EF_DIMLIGHT) ? 340 : 240) - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
