@@ -161,12 +161,22 @@ typedef struct
 
 // keep dlight colours in the one place so that if i need to change them i only need to do it once
 
+#define DL_COLOR_V_SHOT		152, 8
+#define DL_COLOR_BALL		150, 6
+//#define DL_COLOR_BALL2		157, 3
+#define DL_COLOR_TORNATO	160, 8
+
+#define DL_COLOR_SPELL		39, 3
+#define DL_COLOR_SPELL_M	132, 5
+
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2
-//#define DL_COLOR_FLAME3		164, 12	//
-//#define DL_COLOR_FLAME4		234, 6	//
-#define DL_COLOR_254		254		// fb yellow (torch powerup)
+#define DL_COLOR_15			15		// dark grey 104
+#define DL_COLOR_29			29		// dim white 232
+#define DL_COLOR_252		252		// full bright orange
+#define DL_COLOR_254		254		// full bright yellow (torch powerup)
 #define DL_COLOR_175		175		// yellow
+#define DL_COLOR_255		255		// full white
 
 #define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 

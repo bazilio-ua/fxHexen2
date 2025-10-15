@@ -798,35 +798,6 @@ void CL_RelinkEntities (void)
 		if (ent->effects & EF_DARKFIELD)
 			R_DarkFieldParticles (ent);
 
-		if (ent->effects & EF_MUZZLEFLASH)
-		{
-			vec3_t		fv, rv, uv;
-
-			if (cl_prettylights.value)
-			{
-				dl = CL_AllocDlight (key);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->origin[2] += 16;
-				AngleVectors (ent->angles, fv, rv, uv);
-				 
-				VectorMA (dl->origin, 18, fv, dl->origin);
-				dl->radius = 200 + (rand()&31);
-				dl->minlight = 32;
-				dl->die = cl.time + 0.1;
-				
-				// yellow
-			}
-			
-			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
-			if (!cl_lerpmuzzleflash.value)
-			{
-				if (i == cl.viewentity)
-					cl.viewent.lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
-				else
-					ent->lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
-			}
-			
-		}
 		if (ent->effects & EF_BRIGHTLIGHT)
 		{			
 			if (cl_prettylights.value)
@@ -837,22 +808,44 @@ void CL_RelinkEntities (void)
 				dl->radius = 400 + (rand()&31);
 				dl->die = cl.time + 0.001;
 				
-				// purple
+				
+				if (i == cl.viewentity)
+				{
+					// white
+				}
+				else
+				{
+					
+				}
+
+				
+				if (!strcmp (ent->model->name, "models/drgnball.mdl"))
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+				else
+					CL_ColorDlightPalette (dl, DL_COLOR_255); // uncoloured (full white)
 			}
 		}
-		if (ent->effects & EF_DIMLIGHT)
-		{			
+		if (ent->effects & EF_DIMLIGHT) // powerup(s) glows
+		{
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200 + (rand()&31);
 				dl->die = cl.time + 0.001;
-				
-				// orange
+
+				// powerup dynamic lights
+				if (i == cl.viewentity)
+				{
+					CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
+				}
+				else
+				{
+					CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
+				}
+
 			}
 		}
-
 		if (ent->effects & EF_DARKLIGHT)
 		{			
 			if (cl_prettylights.value)
@@ -874,6 +867,65 @@ void CL_RelinkEntities (void)
 				dl->die = cl.time + 0.001;
 				
 				// orange
+			}
+		}
+		if (ent->effects & EF_MUZZLEFLASH)
+		{
+			vec3_t		fv, rv, uv;
+			
+			if (cl_prettylights.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->origin[2] += 16;
+				AngleVectors (ent->angles, fv, rv, uv);
+				
+				VectorMA (dl->origin, 18, fv, dl->origin);
+//				dl->radius = 200 + (rand()&31);
+				dl->radius = ((ent->effects & EF_DIMLIGHT) ? 300 : 200) + (rand()&31);
+				dl->minlight = 32;
+				dl->die = cl.time + 0.1;
+				
+				if (i == cl.viewentity)
+				{
+					// switch the flash colour for the current weapon
+					switch ((int)cl.v.weapon)
+					{
+						case IT_WEAPON1:
+							break;
+						case IT_WEAPON2:
+							if (!strcmp(ent->model->name, "models/necro.mdl"))
+								CL_ColorDlightPaletteLength (dl, DL_COLOR_SPELL_M);
+							break;
+						case IT_WEAPON3:
+							if (!strcmp(ent->model->name, "models/necro.mdl"))
+								CL_ColorDlightPaletteLength (dl, DL_COLOR_SPELL);
+							else if (!strcmp(ent->model->name, "models/crusader.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_252);
+							break;
+						case IT_WEAPON4:
+							break;
+					}
+				}
+				else
+				{
+					// some entities have different attacks resulting in a different flash colour
+					if (!strcmp (ent->model->name, "models/ball.mdl"))
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
+					else if (!strcmp (ent->model->name, "models/tornato.mdl"))
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TORNATO);
+					else
+						CL_ColorDlightPalette (dl, DL_COLOR_15);
+				}
+			}
+			
+			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
+			if (!cl_lerpmuzzleflash.value)
+			{
+				if (i == cl.viewentity)
+					cl.viewent.lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
+				else
+					ent->lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
 			}
 		}
 
@@ -959,7 +1011,7 @@ void CL_RelinkEntities (void)
 				dl->radius = 240 - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
-				// blue
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_V_SHOT);
 			}
 		}
 		else if (ent->model->flags & EF_SET_STAFF)
@@ -978,7 +1030,7 @@ void CL_RelinkEntities (void)
 				dl->radius = 240 - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
-				// blue
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
 			}
 		}
 		else if (ent->model->flags & EF_BONESHARD)

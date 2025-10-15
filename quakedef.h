@@ -145,6 +145,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //#define	STAT_GREENMANA			16
 //#define	STAT_EXPERIENCE		17
 
+// Generic Weapon Names
+#define	IT_WEAPON1			4096
+#define	IT_WEAPON2			1
+#define	IT_WEAPON3			2
+#define	IT_WEAPON4			4
 
 #define	MAX_INVENTORY			15		// Max inventory array size
 
