@@ -784,7 +784,7 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->origin[2] += 12;
+				dl->origin[2] += 16;
 				dl->radius = 30;
 				dl->die = cl.time + 0.1;
 				
