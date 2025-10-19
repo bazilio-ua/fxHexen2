@@ -730,9 +730,9 @@ void CL_RelinkEntities (void)
 		if (ent->model->flags & EF_ROTATE)
 			ent->angles[1] = objrotate;
 
-		if (!strcmp (ent->model->name, "models/flame1.mdl")) // in the 'portals' mission pack, this is not a static model
+		if (cl_extradlight.value)
 		{
-			if (cl_extradlight.value)
+			if (!strcmp (ent->model->name, "models/flame1.mdl")) // in the 'portals' mission pack, this is not a static model
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
@@ -741,10 +741,7 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
-		}
-		else if (!strcmp (ent->model->name, "models/flame2.mdl")) // in the 'portals' mission pack, this is not a static model
-		{
-			if (cl_extradlight.value)
+			else if (!strcmp (ent->model->name, "models/flame2.mdl")) // in the 'portals' mission pack, this is not a static model
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
@@ -753,10 +750,7 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
 			}
-		}
-		else if (!strcmp (ent->model->name, "models/newfire.mdl")) // in the 'portals' mission pack, this is not a static model
-		{
-			if (cl_extradlight.value)
+			else if (!strcmp (ent->model->name, "models/newfire.mdl")) // in the 'portals' mission pack, this is not a static model
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
@@ -765,10 +759,7 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
-		}
-		else if (!strcmp (ent->model->name, "models/gemlight.mdl")) // in the 'portals' mission pack, this is not a static model
-		{
-			if (cl_extradlight.value)
+			else if (!strcmp (ent->model->name, "models/gemlight.mdl")) // in the 'portals' mission pack, this is not a static model
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
@@ -777,10 +768,7 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPalette (dl, DL_COLOR_175);
 			}
-		}
-		else if (!strcmp (ent->model->name, "models/a_torch.mdl")) // torch powerup item
-		{
-			if (cl_extradlight.value)
+			else if (!strcmp (ent->model->name, "models/a_torch.mdl")) // torch powerup item
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
@@ -789,6 +777,15 @@ void CL_RelinkEntities (void)
 				dl->die = cl.time + 0.1;
 				
 				CL_ColorDlightPalette (dl, DL_COLOR_254);
+			}
+			else if (!strcmp (ent->model->name, "models/purfir1.mdl")) // paladin's purifier (IT_WEAPON4) shot
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
 		}
 

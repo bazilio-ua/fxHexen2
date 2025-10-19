@@ -181,6 +181,7 @@ void CL_ParseEffect(void)
 	float	angleval, sinval, cosval;
 	float skinnum;
 	float final;
+	dlight_t	*dl;
 
 	ImmediateFree = false;
 
@@ -394,7 +395,20 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_YELLOWSPARK)
 					ent->model = Mod_ForName("models/spark.spr", true);
 				else if (cl.Effects[index].type == CE_SM_CIRCLE_EXP)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 0.1;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/fcircle.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BG_CIRCLE_EXP)
 					ent->model = Mod_ForName("models/xplod29.spr", true);
 				else if (cl.Effects[index].type == CE_SM_WHITE_FLASH)
