@@ -193,6 +193,7 @@ void CL_ParseEffect(void)
 
 	cl.Effects[index].type = MSG_ReadByte(net_message);
 
+	Con_Printf("type: %d\n", cl.Effects[index].type); // DEBUG
 	switch(cl.Effects[index].type)
 	{
 		case CE_RAIN:
@@ -401,7 +402,7 @@ void CL_ParseEffect(void)
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
 						dl->radius = 200;
-						dl->die = cl.time + 0.1;
+						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
 						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
@@ -410,7 +411,20 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/fcircle.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_BG_CIRCLE_EXP)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 300;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/xplod29.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_SM_WHITE_FLASH)
 					ent->model = Mod_ForName("models/sm_white.spr", true);
 				else if (cl.Effects[index].type == CE_YELLOWRED_FLASH)
@@ -421,9 +435,35 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_SM_EXPLOSION)
 					ent->model = Mod_ForName("models/sm_expld.spr", true);
 				else if (cl.Effects[index].type == CE_LG_EXPLOSION)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 400;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/bg_expld.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 400;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/fl_expld.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION3)
 					ent->model = Mod_ForName("models/biggy.spr", true);
 				else if (cl.Effects[index].type == CE_BLUE_EXPLOSION)
@@ -439,11 +479,37 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_MEZZO_REFLECT)
 					ent->model = Mod_ForName("models/mezzoref.spr", true);
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)
+				{
+//					if (cl_extradlight.value)
+//					{
+//						dl = CL_AllocDlight (0);
+//						VectorCopy (ent->origin, dl->origin);
+//						dl->radius = 400;
+//						dl->die = cl.time + 1.0;
+//						dl->decay = 300;
+//						
+//						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+//					}
+					
 					ent->model = Mod_ForName("models/flrexpl2.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_XBOW_EXPLOSION)
 					ent->model = Mod_ForName("models/xbowexpl.spr", true);
 				else if (cl.Effects[index].type == CE_NEW_EXPLOSION)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 300;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/gen_expl.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_MAGIC_MISSILE_EXPLOSION)
 					ent->model = Mod_ForName("models/mm_expld.spr", true);
 				else if (cl.Effects[index].type == CE_BONE_EXPLOSION)
