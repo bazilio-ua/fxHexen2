@@ -478,21 +478,8 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/medhit.spr", true);
 				else if (cl.Effects[index].type == CE_MEZZO_REFLECT)
 					ent->model = Mod_ForName("models/mezzoref.spr", true);
-				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)
-				{
-//					if (cl_extradlight.value)
-//					{
-//						dl = CL_AllocDlight (0);
-//						VectorCopy (ent->origin, dl->origin);
-//						dl->radius = 400;
-//						dl->die = cl.time + 1.0;
-//						dl->decay = 300;
-//						
-//						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
-//					}
-					
-					ent->model = Mod_ForName("models/flrexpl2.spr", true);
-				}
+				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)		// it seems like this is not used anywhere,
+					ent->model = Mod_ForName("models/flrexpl2.spr", true);	// and the sprite itself is missing
 				else if (cl.Effects[index].type == CE_XBOW_EXPLOSION)
 					ent->model = Mod_ForName("models/xbowexpl.spr", true);
 				else if (cl.Effects[index].type == CE_NEW_EXPLOSION)
