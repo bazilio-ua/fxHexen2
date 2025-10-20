@@ -392,7 +392,20 @@ void CL_ParseEffect(void)
 				VectorCopy(cl.Effects[index].effect.Smoke.origin, ent->origin);
 
 				if (cl.Effects[index].type == CE_BLUESPARK)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_BLUE);
+					}
+					
 					ent->model = Mod_ForName("models/bspark.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_YELLOWSPARK)
 				{
 					if (cl_extradlight.value)
@@ -506,7 +519,20 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION3)
 					ent->model = Mod_ForName("models/biggy.spr", true);
 				else if (cl.Effects[index].type == CE_BLUE_EXPLOSION)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_BLUE);
+					}
+					
 					ent->model = Mod_ForName("models/xpspblue.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_REDSPARK)
 					ent->model = Mod_ForName("models/rspark.spr", true);
 				else if (cl.Effects[index].type == CE_GREENSPARK)
@@ -598,7 +624,20 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_BLUE_FLASH)
 					ent->model = Mod_ForName("models/bluflash.spr", true);
 				else if (cl.Effects[index].type == CE_SM_BLUE_FLASH)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_BLUE);
+					}
+					
 					ent->model = Mod_ForName("models/sm_blue.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_RED_FLASH)
 					ent->model = Mod_ForName("models/redspt.spr", true);
 

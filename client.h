@@ -182,6 +182,7 @@ typedef struct
 #define DL_COLOR_254		254		// full bright yellow (torch powerup)
 #define DL_COLOR_175		175		// yellow
 #define DL_COLOR_255		255		// full white
+#define DL_COLOR_BLUE		247, 4	// full brights blue
 
 #define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 
