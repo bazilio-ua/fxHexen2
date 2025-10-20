@@ -787,6 +787,11 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
+			
+			else
+			{
+//				Con_Printf("model: %s\n", ent->model->name);
+			}
 		}
 
 //		if (ent->effects & EF_BRIGHTFIELD);

@@ -193,7 +193,7 @@ void CL_ParseEffect(void)
 
 	cl.Effects[index].type = MSG_ReadByte(net_message);
 
-	Con_Printf("type: %d\n", cl.Effects[index].type); // DEBUG
+	Con_Printf("effect type: %d\n", cl.Effects[index].type); // DEBUG
 	switch(cl.Effects[index].type)
 	{
 		case CE_RAIN:
@@ -394,7 +394,20 @@ void CL_ParseEffect(void)
 				if (cl.Effects[index].type == CE_BLUESPARK)
 					ent->model = Mod_ForName("models/bspark.spr", true);
 				else if (cl.Effects[index].type == CE_YELLOWSPARK)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/spark.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_SM_CIRCLE_EXP)
 				{
 					if (cl_extradlight.value)
@@ -426,14 +439,40 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/xplod29.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_SM_WHITE_FLASH)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPalette (dl, DL_COLOR_255);
+					}
+					
 					ent->model = Mod_ForName("models/sm_white.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_YELLOWRED_FLASH)
 				{
 					ent->model = Mod_ForName("models/yr_flsh.spr", true);
 					ent->drawflags = DRF_TRANSLUCENT;
 				}
 				else if (cl.Effects[index].type == CE_SM_EXPLOSION)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/sm_expld.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_LG_EXPLOSION)
 				{
 					if (cl_extradlight.value)
