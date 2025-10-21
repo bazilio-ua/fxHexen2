@@ -173,9 +173,11 @@ typedef struct
 #define DL_COLOR_ICE		144, 16
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2
+#define DL_COLOR_SUN		169, 7
 #define DL_COLOR_15			15		// dark grey 104
 #define DL_COLOR_29			29		// dim white 232
 #define DL_COLOR_27			27		// dim white 212
+#define DL_COLOR_31			31		// white 252
 #define DL_COLOR_88			88
 #define DL_COLOR_120		120
 #define DL_COLOR_135		135

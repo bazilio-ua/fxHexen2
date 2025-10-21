@@ -198,15 +198,22 @@ void CL_ParseTEnt(void)
 		pos[0] = MSG_ReadCoord (net_message);
 		pos[1] = MSG_ReadCoord (net_message);
 		pos[2] = MSG_ReadCoord (net_message);
+		
+		if (cl_extradlight.value)
+		{
+			dl = CL_AllocDlight (0);
+			VectorCopy (pos, dl->origin);
+			dl->radius = 350;
+			dl->die = cl.time + 0.5;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		
 		R_ParticleExplosion (pos);
-		break;
-		dl = CL_AllocDlight (0);
-		VectorCopy (pos, dl->origin);
-		dl->radius = 350;
-		dl->die = cl.time + 0.5;
-		dl->decay = 300;
 		S_StartSound (-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 		break;
+		
 /*	//jfm:not used
 	case TE_TAREXPLOSION:			// tarbaby explosion
 		pos[0] = MSG_ReadCoord ();
@@ -289,6 +296,7 @@ static void ParseStream(int type)
 	int skin;
 	vec3_t source;
 	vec3_t dest;
+	dlight_t *dl;
 	stream_t *stream;
 	float duration;
 	model_t *models[4];
@@ -316,12 +324,50 @@ static void ParseStream(int type)
 		models[0] = Mod_ForName("models/stchain.mdl", true);
 		break;
 	case TE_STREAM_SUNSTAFF1:
+		if (cl_extradlight.value)
+		{
+			dl = CL_AllocDlight (0);
+			VectorCopy (source, dl->origin);
+			dl->radius = 250;
+			dl->die = cl.time + 0.1;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_SUN);
+			
+			dl = CL_AllocDlight (0);
+			VectorCopy (dest, dl->origin);
+			dl->radius = 250;
+			dl->die = cl.time + 0.1;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_SUN);
+		}
+		
 		models[0] = Mod_ForName("models/stsunsf1.mdl", true);
 		models[1] = Mod_ForName("models/stsunsf2.mdl", true);
 		models[2] = Mod_ForName("models/stsunsf3.mdl", true);
 		models[3] = Mod_ForName("models/stsunsf4.mdl", true);
 		break;
 	case TE_STREAM_SUNSTAFF2:
+		if (cl_extradlight.value)
+		{
+			dl = CL_AllocDlight (0);
+			VectorCopy (source, dl->origin);
+			dl->radius = 250;
+			dl->die = cl.time + 0.1;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_SUN);
+			
+			dl = CL_AllocDlight (0);
+			VectorCopy (dest, dl->origin);
+			dl->radius = 250;
+			dl->die = cl.time + 0.1;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_SUN);
+		}
+		
 		models[0] = Mod_ForName("models/stsunsf5.mdl", true);
 		models[2] = Mod_ForName("models/stsunsf3.mdl", true);
 		models[3] = Mod_ForName("models/stsunsf4.mdl", true);
