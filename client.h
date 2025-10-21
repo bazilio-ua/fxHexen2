@@ -178,11 +178,14 @@ typedef struct
 #define DL_COLOR_120		120
 #define DL_COLOR_135		135
 #define DL_COLOR_185		185
-#define DL_COLOR_252		252		// full bright orange
-#define DL_COLOR_254		254		// full bright yellow (torch powerup)
+#define DL_COLOR_252		252		// bright orange
+#define DL_COLOR_254		254		// bright yellow (torch powerup)
 #define DL_COLOR_175		175		// yellow
 #define DL_COLOR_255		255		// full white
-#define DL_COLOR_BLUE		247, 4	// full brights blue
+#define DL_COLOR_G_MAGENTA	239, 4	// glow magenta
+#define DL_COLOR_G_GREEN	243, 4	// glow green
+#define DL_COLOR_G_BLUE		247, 4	// glow blue
+#define DL_COLOR_G_ORANGE	251, 4	// glow orange
 
 #define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 

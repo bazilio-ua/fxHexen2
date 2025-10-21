@@ -401,7 +401,7 @@ void CL_ParseEffect(void)
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_BLUE);
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_G_BLUE);
 					}
 					
 					ent->model = Mod_ForName("models/bspark.spr", true);
@@ -528,7 +528,7 @@ void CL_ParseEffect(void)
 						dl->die = cl.time + 1.0;
 						dl->decay = 300;
 						
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_BLUE);
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_G_BLUE);
 					}
 					
 					ent->model = Mod_ForName("models/xpspblue.spr", true);
@@ -633,7 +633,7 @@ void CL_ParseEffect(void)
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_BLUE);
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_G_BLUE);
 					}
 					
 					ent->model = Mod_ForName("models/sm_blue.spr", true);
