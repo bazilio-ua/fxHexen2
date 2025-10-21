@@ -288,7 +288,20 @@ void CL_ParseEffect(void)
 
 				if ((cl.Effects[index].type == CE_WHITE_SMOKE) || 
 					(cl.Effects[index].type == CE_SLOW_WHITE_SMOKE))
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_SMOKE);
+					}
+					
 					ent->model = Mod_ForName("models/whtsmk1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_GREEN_SMOKE)
 					ent->model = Mod_ForName("models/grnsmk1.spr", true);
 				else if (cl.Effects[index].type == CE_GREY_SMOKE)
@@ -538,7 +551,20 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_GREENSPARK)
 					ent->model = Mod_ForName("models/gspark.spr", true);
 				else if (cl.Effects[index].type == CE_ICEHIT)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
+					}
+					
 					ent->model = Mod_ForName("models/icehit.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_MEDUSA_HIT)
 					ent->model = Mod_ForName("models/medhit.spr", true);
 				else if (cl.Effects[index].type == CE_MEZZO_REFLECT)
