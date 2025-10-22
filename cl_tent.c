@@ -387,6 +387,25 @@ static void ParseStream(int type)
 		models[0] = Mod_ForName("models/stclrbm.mdl", true);
 		break;
 	case TE_STREAM_ICECHUNKS:
+		if (cl_extradlight.value)
+		{
+			dl = CL_AllocDlight (0);
+			VectorCopy (source, dl->origin);
+			dl->radius = 250;
+			dl->die = cl.time + 0.1;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
+			
+			dl = CL_AllocDlight (0);
+			VectorCopy (dest, dl->origin);
+			dl->radius = 250;
+			dl->die = cl.time + 0.1;
+			dl->decay = 300;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
+		}
+		
 		models[0] = Mod_ForName("models/stice.mdl", true);
 		break;
 	case TE_STREAM_GAZE:
