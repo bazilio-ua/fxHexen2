@@ -787,7 +787,15 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
 			}
-			
+			else if (!strcmp (ent->model->name, "models/tempmetr.mdl")) // crusader's meteor (IT_WEAPON3) shot
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
+			}
 			else
 			{
 //				Con_Printf("model: %s\n", ent->model->name);
