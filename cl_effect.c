@@ -193,7 +193,7 @@ void CL_ParseEffect(void)
 
 	cl.Effects[index].type = MSG_ReadByte(net_message);
 
-	Con_Printf("effect type: %d\n", cl.Effects[index].type); // DEBUG
+	Con_Printf("effect type: %d\n", cl.Effects[index].type); //DBG
 	switch(cl.Effects[index].type)
 	{
 		case CE_RAIN:

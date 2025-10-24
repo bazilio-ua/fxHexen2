@@ -803,10 +803,10 @@ void CL_RelinkEntities (void)
 		}
 
 		
-//		if (ent->effects != 0) // DBG
+//		if (ent->effects != 0) //DBG
 //			Con_Printf("effects: %d, model: %s\n", ent->effects, ent->model->name);
 //		
-//		if (ent->model->flags != 0) // DBG
+//		if (ent->model->flags != 0) //DBG
 //			Con_Printf("flags: %d, model: %s\n", ent->model->flags, ent->model->name);
 
 		
@@ -972,17 +972,34 @@ void CL_RelinkEntities (void)
 		}
 
 		if (ent->model->flags & EF_GIB)
+		{
+			Con_Printf("EF_GIB, model: %s\n", ent->model->name); //DBG
 			R_RocketTrail (oldorg, ent->origin, 2);
+		}
 		else if (ent->model->flags & EF_ZOMGIB)
+		{
+			Con_Printf("EF_ZOMGIB, model: %s\n", ent->model->name); //DBG
 			R_RocketTrail (oldorg, ent->origin, 4);
+		}
 		else if (ent->model->flags & EF_BLOODSHOT)
+		{
+			Con_Printf("EF_BLOODSHOT, model: %s\n", ent->model->name); //DBG
 			R_RocketTrail (oldorg, ent->origin, 17);
+		}
 		else if (ent->model->flags & EF_TRACER)
+		{
+			Con_Printf("EF_TRACER, model: %s\n", ent->model->name); //DBG
 			R_RocketTrail (oldorg, ent->origin, 3);
+		}
 		else if (ent->model->flags & EF_TRACER2)
+		{
+			Con_Printf("EF_TRACER2, model: %s\n", ent->model->name); //DBG
 			R_RocketTrail (oldorg, ent->origin, 5);
+		}
 		else if (ent->model->flags & EF_ROCKET)
 		{
+			Con_Printf("EF_ROCKET, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, 0);
 /*			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
@@ -993,6 +1010,8 @@ void CL_RelinkEntities (void)
 		}
 		else if (ent->model->flags & EF_FIREBALL)
 		{
+			Con_Printf("EF_FIREBALL, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_fireball);
 			if (cl_prettylights.value)
 			{
@@ -1006,6 +1025,8 @@ void CL_RelinkEntities (void)
 		}
 		else if (ent->model->flags & EF_ACIDBALL)
 		{
+			Con_Printf("EF_ACIDBALL, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_acidball);
 			if (cl_prettylights.value)
 			{
@@ -1019,10 +1040,14 @@ void CL_RelinkEntities (void)
 		}
 		else if (ent->model->flags & EF_ICE)
 		{
+			Con_Printf("EF_ICE, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_ice);
 		}
 		else if (ent->model->flags & EF_SPIT)
 		{
+			Con_Printf("EF_SPIT, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_spit);
 			if (cl_prettylights.value)
 			{
@@ -1036,14 +1061,26 @@ void CL_RelinkEntities (void)
 		}
 		else if (ent->model->flags & EF_SPELL)
 		{
+			Con_Printf("EF_SPELL, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_spell);
 		}
 		else if (ent->model->flags & EF_GRENADE)
+		{
+			Con_Printf("EF_GRENADE, model: %s\n", ent->model->name); //DBG
+			
 			R_RocketTrail (oldorg, ent->origin, 1);
+		}
 		else if (ent->model->flags & EF_TRACER3)
+		{
+			Con_Printf("EF_TRACER3, model: %s\n", ent->model->name); //DBG
+			
 			R_RocketTrail (oldorg, ent->origin, 6);
+		}
 		else if (ent->model->flags & EF_VORP_MISSILE)
 		{
+			Con_Printf("EF_VORP_MISSILE, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_vorpal);
 			
 			if (cl_extradlight.value)
@@ -1058,6 +1095,8 @@ void CL_RelinkEntities (void)
 		}
 		else if (ent->model->flags & EF_SET_STAFF)
 		{
+			Con_Printf("EF_SET_STAFF, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin,rt_setstaff);
 			
 			if (cl_extradlight.value)
@@ -1072,6 +1111,8 @@ void CL_RelinkEntities (void)
 		}
 		else if (ent->model->flags & EF_MAGICMISSILE)
 		{
+			Con_Printf("EF_MAGICMISSILE, model: %s\n", ent->model->name); //DBG
+
 			if ((rand() & 3) < 1)
 				R_RocketTrail (oldorg, ent->origin, rt_magicmissile);
 			
@@ -1087,9 +1128,15 @@ void CL_RelinkEntities (void)
 			}
 		}
 		else if (ent->model->flags & EF_BONESHARD)
+		{
+			Con_Printf("EF_BONESHARD, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_boneshard);
+		}
 		else if (ent->model->flags & EF_SCARAB)
 		{
+			Con_Printf("EF_SCARAB, model: %s\n", ent->model->name); //DBG
+
 			R_RocketTrail (oldorg, ent->origin, rt_scarab);
 			
 			if (cl_extradlight.value)

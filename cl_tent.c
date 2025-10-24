@@ -129,6 +129,9 @@ void CL_ParseTEnt(void)
 	int rnd;
 
 	type = MSG_ReadByte(net_message);
+	
+	Con_Printf("TEnt type: %d\n", type); //DBG
+
 	switch(type)
 	{
 	case TE_WIZSPIKE:			// spike hitting wall
@@ -300,6 +303,8 @@ static void ParseStream(int type)
 	stream_t *stream;
 	float duration;
 	model_t *models[4];
+
+	Con_Printf("stream type: %d\n", type); //DBG
 
 	ent = MSG_ReadShort(net_message);
 	flags = MSG_ReadByte(net_message);

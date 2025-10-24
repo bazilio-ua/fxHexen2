@@ -69,7 +69,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "+map demo1"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "+playerclass 5 +map demo1 +chase_active 0"
@@ -77,7 +77,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "+playerclass 2 +map demo1"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-portals"
