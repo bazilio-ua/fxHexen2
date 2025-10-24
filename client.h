@@ -168,6 +168,7 @@ typedef struct
 #define DL_COLOR_SPELL		39, 3
 #define DL_COLOR_SPELL_M	132, 5
 
+#define DL_COLOR_YELLOWRED_FLASH	251, 2
 #define DL_COLOR_GREEN_SMOKE	176, 13
 #define DL_COLOR_GREY_SMOKE		3, 5
 #define DL_COLOR_WHITE_SMOKE	16, 8

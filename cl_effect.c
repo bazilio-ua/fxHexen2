@@ -293,7 +293,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 125;//150;
+						dl->radius = 125;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -308,7 +308,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 125;//150;
+						dl->radius = 125;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -323,7 +323,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 125;//150;
+						dl->radius = 125;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -338,7 +338,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 125;//150;
+						dl->radius = 125;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -520,6 +520,17 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_YELLOWRED_FLASH)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_YELLOWRED_FLASH);
+					}
+					
 					ent->model = Mod_ForName("models/yr_flsh.spr", true);
 					ent->drawflags = DRF_TRANSLUCENT;
 				}
@@ -694,7 +705,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 150;//200;
+						dl->radius = 150;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -709,7 +720,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 150;//200;
+						dl->radius = 150;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -739,7 +750,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 150;//200;
+						dl->radius = 150;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
