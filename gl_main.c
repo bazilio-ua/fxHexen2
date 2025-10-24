@@ -466,6 +466,7 @@ void R_DrawSpriteModel (entity_t *e)
 		if (psprite->type == SPR_ORIENTED)
 			glDepthMask (GL_FALSE); // don't bother writing Z
 		glEnable (GL_BLEND);
+		glEnable (GL_ALPHA_TEST);
 		glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		if (e->drawflags & DRF_TRANSLUCENT)
 			glColor4f (1,1,1, map_spritealpha);
@@ -502,6 +503,7 @@ void R_DrawSpriteModel (entity_t *e)
 		if (psprite->type == SPR_ORIENTED)
 			glDepthMask (GL_TRUE); // back to normal Z buffering
 		glDisable (GL_BLEND);
+		glDisable (GL_ALPHA_TEST);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		if (e->drawflags & DRF_TRANSLUCENT)
 			glColor3f (1,1,1);
