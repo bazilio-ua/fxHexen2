@@ -348,9 +348,35 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/redsmk1.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_TELESMK1)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELESMK);
+					}
+					
 					ent->model = Mod_ForName("models/telesmk1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_TELESMK2)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELESMK);
+					}
+					
 					ent->model = Mod_ForName("models/telesmk2.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_REDCLOUD)
 					ent->model = Mod_ForName("models/rcloud.spr", true);
 				else if (cl.Effects[index].type == CE_FLAMESTREAM)
