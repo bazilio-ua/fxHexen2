@@ -303,11 +303,50 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/whtsmk1.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_GREEN_SMOKE)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;//150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_GREEN_SMOKE);
+					}
+					
 					ent->model = Mod_ForName("models/grnsmk1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_GREY_SMOKE)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;//150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_GREY_SMOKE);
+					}
+					
 					ent->model = Mod_ForName("models/grysmk1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_RED_SMOKE)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;//150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_RED_SMOKE);
+					}
+					
 					ent->model = Mod_ForName("models/redsmk1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_TELESMK1)
 					ent->model = Mod_ForName("models/telesmk1.spr", true);
 				else if (cl.Effects[index].type == CE_TELESMK2)
