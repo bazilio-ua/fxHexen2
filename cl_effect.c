@@ -449,7 +449,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 150;
+						dl->radius = 100;//150;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -580,7 +580,20 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/fl_expld.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION3)
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 400;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/biggy.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BLUE_EXPLOSION)
 				{
 					if (cl_extradlight.value)
@@ -598,10 +611,32 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_REDSPARK)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_REDSPARK);
+					}
+					
 					ent->model = Mod_ForName("models/rspark.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_GREENSPARK)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_G_GREEN);
+					}
+					
 					ent->model = Mod_ForName("models/gspark.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_ICEHIT)
@@ -671,7 +706,20 @@ void CL_ParseEffect(void)
 				else if (cl.Effects[index].type == CE_FIREWALL_LARGE)
 					ent->model = Mod_ForName("models/firewal4.spr", true);
 				else if (cl.Effects[index].type == CE_BRN_BOUNCE)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+					
 					ent->model = Mod_ForName("models/spark.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_LSHOCK)
 				{
 					ent->model = Mod_ForName("models/vorpshok.mdl", true);
