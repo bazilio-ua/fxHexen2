@@ -802,14 +802,24 @@ void CL_RelinkEntities (void)
 			}
 		}
 
-//		if (ent->effects & EF_BRIGHTFIELD);
+		
+//		if (ent->effects != 0) // DBG
+//			Con_Printf("effects: %d, model: %s\n", ent->effects, ent->model->name);
+//		
+//		if (ent->model->flags != 0) // DBG
+//			Con_Printf("flags: %d, model: %s\n", ent->model->flags, ent->model->name);
+
+		
+//		if (ent->effects & EF_BRIGHTFIELD)
 //			R_EntityParticles (ent);
 
 		if (ent->effects & EF_DARKFIELD)
 			R_DarkFieldParticles (ent);
 
 		if (ent->effects & EF_BRIGHTLIGHT)
-		{			
+		{
+			Con_Printf("EF_BRIGHTLIGHT, model: %s\n", ent->model->name); //DBG
+
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
@@ -837,6 +847,8 @@ void CL_RelinkEntities (void)
 		}
 		if (ent->effects & EF_DIMLIGHT) // powerup(s) glows
 		{
+			Con_Printf("EF_DIMLIGHT, model: %s\n", ent->model->name); //DBG
+
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
@@ -857,7 +869,9 @@ void CL_RelinkEntities (void)
 			}
 		}
 		if (ent->effects & EF_DARKLIGHT)
-		{			
+		{
+			Con_Printf("EF_DARKLIGHT, model: %s\n", ent->model->name); //DBG
+
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
@@ -868,7 +882,9 @@ void CL_RelinkEntities (void)
 			}
 		}
 		if (ent->effects & EF_LIGHT)
-		{			
+		{
+			Con_Printf("EF_LIGHT, model: %s\n", ent->model->name); //DBG
+
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
@@ -882,7 +898,9 @@ void CL_RelinkEntities (void)
 		if (ent->effects & EF_MUZZLEFLASH)
 		{
 			vec3_t		fv, rv, uv;
-			
+
+			Con_Printf("EF_MUZZLEFLASH, model: %s\n", ent->model->name); //DBG
+
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
@@ -936,6 +954,8 @@ void CL_RelinkEntities (void)
 						CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
 					else if (!strcmp (ent->model->name, "models/tornato.mdl"))
 						CL_ColorDlightPaletteLength (dl, DL_COLOR_TORNATO);
+					else if (!strcmp (ent->model->name, "models/hamthrow.mdl"))
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
 					else
 						CL_ColorDlightPalette (dl, DL_COLOR_15);
 				}
