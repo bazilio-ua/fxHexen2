@@ -293,7 +293,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 150;
+						dl->radius = 125;//150;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -547,9 +547,13 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/xpspblue.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_REDSPARK)
+				{
 					ent->model = Mod_ForName("models/rspark.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_GREENSPARK)
+				{
 					ent->model = Mod_ForName("models/gspark.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_ICEHIT)
 				{
 					if (cl_extradlight.value)
@@ -651,7 +655,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 200;
+						dl->radius = 150;//200;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -666,7 +670,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 200;
+						dl->radius = 150;//200;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
@@ -696,7 +700,7 @@ void CL_ParseEffect(void)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
-						dl->radius = 200;
+						dl->radius = 150;//200;
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
