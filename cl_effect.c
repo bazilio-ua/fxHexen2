@@ -646,9 +646,35 @@ void CL_ParseEffect(void)
 				VectorCopy(cl.Effects[index].effect.Flash.origin, ent->origin);
 
 				if (cl.Effects[index].type == CE_WHITE_FLASH)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_WHITE_FLASH);
+					}
+					
 					ent->model = Mod_ForName("models/gryspt.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BLUE_FLASH)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_G_BLUE);
+					}
+					
 					ent->model = Mod_ForName("models/bluflash.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_SM_BLUE_FLASH)
 				{
 					if (cl_extradlight.value)
@@ -665,7 +691,20 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/sm_blue.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_RED_FLASH)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_RED_FLASH);
+					}
+					
 					ent->model = Mod_ForName("models/redspt.spr", true);
+				}
 
 				ent->drawflags = DRF_TRANSLUCENT;
 
