@@ -796,6 +796,20 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
 			}
+			else if (!strcmp (ent->model->name, "models/akarrow.mdl")) // archer's shot
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+				
+				if (ent->skinnum == 0)
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_G_GREEN);
+				else if (ent->skinnum == 1)
+					CL_ColorDlightPalette (dl, DL_COLOR_140); // red
+				else if (ent->skinnum == 2)
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_YELLOWRED_FLASH);
+			}
 			else
 			{
 //				Con_Printf("model: %s\n", ent->model->name);

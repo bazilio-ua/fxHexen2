@@ -188,6 +188,7 @@ typedef struct
 #define DL_COLOR_88			88
 #define DL_COLOR_120		120
 #define DL_COLOR_135		135
+#define DL_COLOR_140		140		// red
 #define DL_COLOR_185		185
 #define DL_COLOR_252		252		// bright orange
 #define DL_COLOR_254		254		// bright yellow (torch powerup)
