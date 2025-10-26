@@ -164,6 +164,7 @@ typedef struct
 #define DL_COLOR_V_SHOT		152, 8
 #define DL_COLOR_BALL		150, 6
 #define DL_COLOR_TORNATO	160, 8
+#define DL_COLOR_LIGHTNING	147, 13
 
 #define DL_COLOR_SPELL		39, 3
 #define DL_COLOR_SPELL_M	132, 5

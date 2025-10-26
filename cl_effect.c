@@ -881,6 +881,17 @@ void CL_ParseEffect(void)
 					cl.Effects[index].effect.Teleporter.velocity[i][2] = 0;
 					dir += 45;
 
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELESMK);
+					}
+
 					ent->model = Mod_ForName("models/telesmk2.spr", true);
 					ent->drawflags = DRF_TRANSLUCENT;
 				}
@@ -904,6 +915,17 @@ void CL_ParseEffect(void)
 			{
 				ent = &EffectEntities[cl.Effects[index].effect.Teleporter.entity_index[0]];
 				VectorCopy(cl.Effects[index].effect.Teleporter.origin, ent->origin);
+				
+				if (cl_extradlight.value)
+				{
+					dl = CL_AllocDlight (0);
+					VectorCopy (ent->origin, dl->origin);
+					dl->radius = 250;
+					dl->die = cl.time + 0.2;
+					dl->decay = 300;
+					
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_LIGHTNING);
+				}
 
 				ent->model = Mod_ForName("models/teleport.mdl", true);
 				ent->drawflags = SCALE_TYPE_XYONLY | DRF_TRANSLUCENT;
