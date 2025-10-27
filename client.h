@@ -200,6 +200,8 @@ typedef struct
 #define DL_COLOR_G_BLUE		247, 4	// glow blue
 #define DL_COLOR_G_ORANGE	251, 4	// glow orange
 
+#define DL_COLOR_RED_ARROW	(int []) {135, 137, 140, 143}, 4	// red arrow, skin1
+
 #define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 
 #define	MAX_MAPSTRING	2048
@@ -439,6 +441,7 @@ dlight_t *CL_AllocDlight (int key);
 void	CL_ColorDlight (dlight_t *dl, float r, float g, float b);
 void	CL_ColorDlightPalette (dlight_t *dl, int i);
 void	CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length);
+void	CL_ColorDlightPaletteIndices (dlight_t *dl, int *indices, int count);
 void	CL_DecayLights (void);
 
 void CL_Init (void);

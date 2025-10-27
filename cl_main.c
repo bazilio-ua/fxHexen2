@@ -430,6 +430,21 @@ void CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length)
 		CL_WhiteDlight (dl);
 }
 
+void CL_ColorDlightPaletteIndices (dlight_t *dl, int *indices, int count)
+{
+	int 	i;
+	byte	*rgb;
+	
+	i = *(indices + (rand() % count));
+	rgb = (byte *)&d_8to24table[i];
+	dl->color[0] = rgb[0] * (1.0 / 255.0);
+	dl->color[1] = rgb[1] * (1.0 / 255.0);
+	dl->color[2] = rgb[2] * (1.0 / 255.0);
+	
+	if (!cl_coloredlight.value)
+		CL_WhiteDlight (dl);
+}
+
 /*
 ===============
 CL_DecayLights
@@ -806,7 +821,7 @@ void CL_RelinkEntities (void)
 				if (ent->skinnum == 0)
 					CL_ColorDlightPaletteLength (dl, DL_COLOR_G_GREEN);
 				else if (ent->skinnum == 1)
-					CL_ColorDlightPalette (dl, DL_COLOR_140); // red
+					CL_ColorDlightPaletteIndices (dl, DL_COLOR_RED_ARROW);
 				else if (ent->skinnum == 2)
 					CL_ColorDlightPaletteLength (dl, DL_COLOR_YELLOWRED_FLASH);
 			}
