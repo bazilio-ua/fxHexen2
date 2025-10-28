@@ -177,7 +177,7 @@ typedef struct
 #define DL_COLOR_WHITE_FLASH	16, 16
 #define DL_COLOR_RED_SMOKE		129, 8
 #define DL_COLOR_RED_FLASH		128, 16
-#define DL_COLOR_REDSPARK	253, 2
+#define DL_COLOR_REDSPARK	(int []) {253, 254, 173, 174, 175, 137, 139, 141, 142, 143}, 10
 #define DL_COLOR_ICE		144, 16
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2

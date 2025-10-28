@@ -645,7 +645,7 @@ void CL_ParseEffect(void)
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_REDSPARK);
+						CL_ColorDlightPaletteIndices (dl, DL_COLOR_REDSPARK);
 					}
 					
 					ent->model = Mod_ForName("models/rspark.spr", true);
