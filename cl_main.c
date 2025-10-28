@@ -418,31 +418,17 @@ void CL_ColorDlightPalette (dlight_t *dl, int i)
 void CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length)
 {
 	int 	i;
-	byte	*rgb;
 	
 	i = (start + (rand() % length));
-	rgb = (byte *)&d_8to24table[i];
-	dl->color[0] = rgb[0] * (1.0 / 255.0);
-	dl->color[1] = rgb[1] * (1.0 / 255.0);
-	dl->color[2] = rgb[2] * (1.0 / 255.0);
-	
-	if (!cl_coloredlight.value)
-		CL_WhiteDlight (dl);
+	CL_ColorDlightPalette (dl, i);
 }
 
 void CL_ColorDlightPaletteIndices (dlight_t *dl, int *indices, int count)
 {
 	int 	i;
-	byte	*rgb;
 	
 	i = *(indices + (rand() % count));
-	rgb = (byte *)&d_8to24table[i];
-	dl->color[0] = rgb[0] * (1.0 / 255.0);
-	dl->color[1] = rgb[1] * (1.0 / 255.0);
-	dl->color[2] = rgb[2] * (1.0 / 255.0);
-	
-	if (!cl_coloredlight.value)
-		CL_WhiteDlight (dl);
+	CL_ColorDlightPalette (dl, i);
 }
 
 /*
