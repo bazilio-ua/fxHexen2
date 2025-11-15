@@ -874,13 +874,15 @@ void CL_RelinkEntities (void)
 				// powerup dynamic lights
 				if (i == cl.viewentity)
 				{
-					CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
+					// dim white
 				}
 				else
 				{
-					CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
+					
 				}
 
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
 			}
 		}
 		if (ent->effects & EF_DARKLIGHT)
