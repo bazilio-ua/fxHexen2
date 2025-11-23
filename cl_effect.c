@@ -704,7 +704,9 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/gen_expl.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_MAGIC_MISSILE_EXPLOSION)
+				{
 					ent->model = Mod_ForName("models/mm_expld.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BONE_EXPLOSION)
 					ent->model = Mod_ForName("models/bonexpld.spr", true);
 				else if (cl.Effects[index].type == CE_BLDRN_EXPL)
@@ -924,7 +926,10 @@ void CL_ParseEffect(void)
 					dl->die = cl.time + 0.2;
 					dl->decay = 300;
 					
-					CL_ColorDlightPaletteLength (dl, DL_COLOR_LIGHTNING);
+					if (skinnum == 0)
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELEPORT0);
+					else if (skinnum == 1)
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELEPORT1);
 				}
 
 				ent->model = Mod_ForName("models/teleport.mdl", true);
