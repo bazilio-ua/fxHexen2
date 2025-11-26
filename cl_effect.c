@@ -927,9 +927,9 @@ void CL_ParseEffect(void)
 					dl->decay = 300;
 					
 					if (skinnum == 0)
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELEPORT0);
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_LIGHTNING);
 					else if (skinnum == 1)
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELEPORT1);
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TELERED);
 				}
 
 				ent->model = Mod_ForName("models/teleport.mdl", true);

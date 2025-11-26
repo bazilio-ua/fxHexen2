@@ -164,9 +164,8 @@ typedef struct
 #define DL_COLOR_V_SHOT		152, 8
 #define DL_COLOR_BALL		150, 6
 #define DL_COLOR_TORNATO	160, 8
-//#define DL_COLOR_LIGHTNING
-#define DL_COLOR_TELEPORT0	147, 13	// skin0
-#define DL_COLOR_TELEPORT1	131, 13	// skin1 red
+#define DL_COLOR_LIGHTNING	147, 13
+#define DL_COLOR_TELERED	131, 13
 
 #define DL_COLOR_SPELL		39, 3
 #define DL_COLOR_SPELL_M	132, 5
@@ -179,7 +178,7 @@ typedef struct
 #define DL_COLOR_WHITE_FLASH	16, 16
 #define DL_COLOR_RED_SMOKE		129, 8
 #define DL_COLOR_RED_FLASH		128, 16
-#define DL_COLOR_REDSPARK	(int []) {253, 254, 173, 174, 175, 137, 139, 141, 142, 143}, 10
+#define DL_COLOR_REDSPARK	(int []) {253, 254, 174, 175, 142, 143}, 6
 #define DL_COLOR_ICE		144, 16
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2
