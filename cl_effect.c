@@ -393,7 +393,7 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/rcloud.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FLAMESTREAM)
-				{
+				{	// portals
 					if (cl_extradlight.value)
 					{
 						dl = CL_AllocDlight (0);
