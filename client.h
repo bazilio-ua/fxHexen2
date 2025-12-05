@@ -166,6 +166,7 @@ typedef struct
 #define DL_COLOR_TORNATO	160, 8
 #define DL_COLOR_LIGHTNING	147, 13
 #define DL_COLOR_TELERED	131, 13
+#define DL_COLOR_REDCLOUD	136, 8
 
 #define DL_COLOR_SPELL		39, 3
 #define DL_COLOR_SPELL_M	132, 5
@@ -182,6 +183,7 @@ typedef struct
 #define DL_COLOR_ICE		144, 16
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2
+#define DL_COLOR_FLAME3		168, 8
 #define DL_COLOR_SUN		169, 7
 #define DL_COLOR_15			15		// dark grey 104
 #define DL_COLOR_29			29		// dim white 232

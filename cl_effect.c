@@ -277,9 +277,9 @@ void CL_ParseEffect(void)
 			cl.Effects[index].effect.Smoke.velocity[2] = MSG_ReadFloat (net_message);
 
 			cl.Effects[index].effect.Smoke.framelength = MSG_ReadFloat (net_message);
-		/* smoke frame is a mission pack thing only. */
-		if (cl.protocol > PROTOCOL_RAVEN_111)
-			cl.Effects[index].effect.Smoke.frame = MSG_ReadFloat (net_message);
+			/* smoke frame is a mission pack thing only. */
+			if (cl.protocol > PROTOCOL_RAVEN_111)
+				cl.Effects[index].effect.Smoke.frame = MSG_ReadFloat (net_message);
 
 			if ((cl.Effects[index].effect.Smoke.entity_index = NewEffectEntity()) != -1)
 			{
@@ -378,9 +378,35 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/telesmk2.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_REDCLOUD)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 300;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_REDCLOUD);
+					}
+
 					ent->model = Mod_ForName("models/rcloud.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FLAMESTREAM)
+				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME3);
+					}
+
 					ent->model = Mod_ForName("models/flamestr.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_ACID_MUZZFL)
 				{
 					ent->model = Mod_ForName("models/muzzle1.spr", true);
