@@ -408,15 +408,30 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/flamestr.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_ACID_MUZZFL)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteIndices (dl, DL_COLOR_ACID_MUZZFL);
+					}
+
 					ent->model = Mod_ForName("models/muzzle1.spr", true);
 					ent->drawflags=DRF_TRANSLUCENT|MLS_ABSLIGHT;
 					ent->abslight=0.2;
 				}
 				else if (cl.Effects[index].type == CE_FLAMEWALL)
+				{
 					ent->model = Mod_ForName("models/firewal1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FLAMEWALL2)
+				{
 					ent->model = Mod_ForName("models/firewal2.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_ONFIRE)
 				{
 					float rdm = rand() & 3;
@@ -445,6 +460,17 @@ void CL_ParseEffect(void)
 
 				if (cl.Effects[index].type == CE_GHOST)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 100;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_GHOST);
+					}
+
 					ent->model = Mod_ForName("models/ghost.spr", true);
 					ent->drawflags = DRF_TRANSLUCENT | MLS_ABSLIGHT;
 					ent->abslight = .5;
