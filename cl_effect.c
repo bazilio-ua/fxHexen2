@@ -425,11 +425,33 @@ void CL_ParseEffect(void)
 					ent->abslight=0.2;
 				}
 				else if (cl.Effects[index].type == CE_FLAMEWALL)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAMEWALL);
+					}
+
 					ent->model = Mod_ForName("models/firewal1.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FLAMEWALL2)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAMEWALL2);
+					}
+
 					ent->model = Mod_ForName("models/firewal2.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_ONFIRE)
