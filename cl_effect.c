@@ -774,8 +774,7 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/mezzoref.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)
-				{
-				// it seems like this is not used anywhere and the sprite itself is missing
+				{	// it seems like this is not used anywhere and the sprite itself is missing
 					ent->model = Mod_ForName("models/flrexpl2.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_XBOW_EXPLOSION)
