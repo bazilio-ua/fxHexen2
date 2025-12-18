@@ -455,9 +455,20 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/firewal2.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_ONFIRE)
-				{
+				{	// portals
 					float rdm = rand() & 3;
 
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = (rdm >= 2) ? 175 : 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, (rdm < 1) ? DL_COLOR_FLAMEWALL : DL_COLOR_FLAMEWALL2);
+					}
+					
 					if (rdm < 1)
 						ent->model = Mod_ForName("models/firewal1.spr", true);
 					else if (rdm < 2)
@@ -755,13 +766,22 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/icehit.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_MEDUSA_HIT)
+				{
 					ent->model = Mod_ForName("models/medhit.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_MEZZO_REFLECT)
+				{
 					ent->model = Mod_ForName("models/mezzoref.spr", true);
-				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)		// it seems like this is not used anywhere,
-					ent->model = Mod_ForName("models/flrexpl2.spr", true);	// and the sprite itself is missing
+				}
+				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)
+				{
+				// it seems like this is not used anywhere and the sprite itself is missing
+					ent->model = Mod_ForName("models/flrexpl2.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_XBOW_EXPLOSION)
+				{
 					ent->model = Mod_ForName("models/xbowexpl.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_NEW_EXPLOSION)
 				{
 					if (cl_extradlight.value)
@@ -782,13 +802,21 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/mm_expld.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_BONE_EXPLOSION)
+				{
 					ent->model = Mod_ForName("models/bonexpld.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BLDRN_EXPL)
+				{
 					ent->model = Mod_ForName("models/xplsn_1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_ACID_HIT)
+				{
 					ent->model = Mod_ForName("models/axplsn_2.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_ACID_SPLAT)
+				{
 					ent->model = Mod_ForName("models/axplsn_1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_ACID_EXPL)
 				{
 					ent->model = Mod_ForName("models/axplsn_5.spr", true);
@@ -796,17 +824,29 @@ void CL_ParseEffect(void)
 					ent->abslight = 1;
 				}
 				else if (cl.Effects[index].type == CE_FBOOM)
+				{
 					ent->model = Mod_ForName("models/fboom.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BOMB)
+				{
 					ent->model = Mod_ForName("models/pow.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_LBALL_EXPL)
+				{
 					ent->model = Mod_ForName("models/Bluexp3.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FIREWALL_SMALL)
+				{
 					ent->model = Mod_ForName("models/firewal1.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FIREWALL_MEDIUM)
+				{
 					ent->model = Mod_ForName("models/firewal5.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_FIREWALL_LARGE)
+				{
 					ent->model = Mod_ForName("models/firewal4.spr", true);
+				}
 				else if (cl.Effects[index].type == CE_BRN_BOUNCE)
 				{
 					if (cl_extradlight.value)
