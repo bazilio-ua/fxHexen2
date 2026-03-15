@@ -207,6 +207,7 @@ typedef struct
 #define DL_COLOR_G_BLUE		247, 4	// glow blue
 #define DL_COLOR_G_ORANGE	251, 4	// glow orange
 
+#define DL_COLOR_MM_EXPLOSION	(int []) {28, 31, 47, 159}, 4
 #define DL_COLOR_MEZZO_REF	(int []) {135, 139, 140, 143}, 4
 #define DL_COLOR_RED_ARROW	(int []) {135, 137, 140, 143}, 4	// red arrow, skin1
 
