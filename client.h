@@ -186,6 +186,7 @@ typedef struct
 #define DL_COLOR_FLAME		166, 10
 #define DL_COLOR_FLAME2		174, 2
 #define DL_COLOR_FLAME3		168, 8
+#define DL_COLOR_FBOOM		170, 6
 #define DL_COLOR_SUN		169, 7
 #define DL_COLOR_FLAMEWALL	162, 13
 #define DL_COLOR_FLAMEWALL2	162, 14
@@ -207,7 +208,9 @@ typedef struct
 #define DL_COLOR_G_BLUE		247, 4	// glow blue
 #define DL_COLOR_G_ORANGE	251, 4	// glow orange
 #define DL_COLOR_BLDRN_EXPL	251, 5
+#define DL_COLOR_ACID_EXPL	186, 6
 
+#define DL_COLOR_BOMB		(int []) {170, 171, 172, 173, 174, 175, 255}, 7
 #define DL_COLOR_ACID_HIT	(int []) {191, 245, 246}, 3
 #define DL_COLOR_BONE_EXPLOSION	(int []) {27, 28, 29, 30, 31, 45, 46}, 7
 #define DL_COLOR_MM_EXPLOSION	(int []) {28, 31, 47, 159}, 4

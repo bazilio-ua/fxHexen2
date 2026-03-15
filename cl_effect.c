@@ -905,17 +905,50 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/axplsn_1.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_ACID_EXPL)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_ACID_EXPL);
+					}
+
 					ent->model = Mod_ForName("models/axplsn_5.spr", true);
 					ent->drawflags = MLS_ABSLIGHT;
 					ent->abslight = 1;
 				}
 				else if (cl.Effects[index].type == CE_FBOOM)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FBOOM);
+					}
+
 					ent->model = Mod_ForName("models/fboom.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_BOMB)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteIndices (dl, DL_COLOR_BOMB);
+					}
+
 					ent->model = Mod_ForName("models/pow.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_LBALL_EXPL)
