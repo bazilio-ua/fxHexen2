@@ -767,10 +767,32 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_MEDUSA_HIT)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_G_GREEN);
+					}
+
 					ent->model = Mod_ForName("models/medhit.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_MEZZO_REFLECT)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteIndices (dl, DL_COLOR_MEZZO_REF);
+					}
+
 					ent->model = Mod_ForName("models/mezzoref.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION2)
@@ -779,6 +801,17 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_XBOW_EXPLOSION)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					}
+
 					ent->model = Mod_ForName("models/xbowexpl.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_NEW_EXPLOSION)
