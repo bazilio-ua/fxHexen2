@@ -769,16 +769,18 @@ void CL_RelinkEntities (void)
 				
 				CL_ColorDlightPalette (dl, DL_COLOR_175);
 			}
-//			else if (!strcmp (ent->model->name, "models/a_torch.mdl")) // torch powerup item
-//			{
-//				dl = CL_AllocDlight (key);
-//				VectorCopy (ent->origin, dl->origin);
-//				dl->origin[2] += 16;
-//				dl->radius = 30;
-//				dl->die = cl.time + 0.1;
-//				
-//				CL_ColorDlightPalette (dl, DL_COLOR_254);
-//			}
+			else if (!strcmp (ent->model->name, "models/cflmtrch.mdl") || // blackmarsh castle (in the 'portals' mission pack, this is not a static model)
+					 !strcmp (ent->model->name, "models/mflmtrch.mdl") || // meso
+					 !strcmp (ent->model->name, "models/eflmtrch.mdl") || // egypt
+					 !strcmp (ent->model->name, "models/rflmtrch.mdl"))   // romeric
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 100;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
 			else if (!strcmp (ent->model->name, "models/purfir1.mdl")) // paladin's purifier (IT_WEAPON4) shot
 			{
 				dl = CL_AllocDlight (key);
