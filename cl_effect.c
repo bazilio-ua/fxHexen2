@@ -931,7 +931,7 @@ void CL_ParseEffect(void)
 						dl->die = cl.time + 0.5;
 						dl->decay = 300;
 						
-						CL_ColorDlightPaletteLength (dl, DL_COLOR_FBOOM);
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
 					}
 
 					ent->model = Mod_ForName("models/fboom.spr", true);
@@ -967,15 +967,48 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/Bluexp3.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_SMALL)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAMEWALL);
+					}
+
 					ent->model = Mod_ForName("models/firewal1.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_MEDIUM)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME4);
+					}
+
 					ent->model = Mod_ForName("models/firewal5.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_LARGE)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 300;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAMEWALL3);
+					}
+
 					ent->model = Mod_ForName("models/firewal4.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_BRN_BOUNCE)
