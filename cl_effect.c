@@ -1028,6 +1028,17 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_LSHOCK)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 150;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_V_SHOT);
+					}
+
 					ent->model = Mod_ForName("models/vorpshok.mdl", true);
 					ent->drawflags=MLS_TORCH;
 					ent->angles[2]=90;
