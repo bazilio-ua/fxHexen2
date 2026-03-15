@@ -210,6 +210,7 @@ typedef struct
 #define DL_COLOR_BLDRN_EXPL	251, 5
 #define DL_COLOR_ACID_EXPL	186, 6
 
+#define DL_COLOR_LBALL_EXPL	(int []) {28, 31, 44, 45, 46, 47}, 6
 #define DL_COLOR_BOMB		(int []) {170, 171, 172, 173, 174, 175, 255}, 7
 #define DL_COLOR_ACID_HIT	(int []) {191, 245, 246}, 3
 #define DL_COLOR_BONE_EXPLOSION	(int []) {27, 28, 29, 30, 31, 45, 46}, 7

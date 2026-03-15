@@ -952,7 +952,18 @@ void CL_ParseEffect(void)
 					ent->model = Mod_ForName("models/pow.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_LBALL_EXPL)
-				{
+				{	// portals
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 200;
+						dl->die = cl.time + 1.0;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteIndices (dl, DL_COLOR_LBALL_EXPL);
+					}
+
 					ent->model = Mod_ForName("models/Bluexp3.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_SMALL)
