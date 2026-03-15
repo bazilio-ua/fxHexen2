@@ -846,6 +846,17 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BONE_EXPLOSION)
 				{
+					if (cl_extradlight.value)
+					{
+						dl = CL_AllocDlight (0);
+						VectorCopy (ent->origin, dl->origin);
+						dl->radius = 125;
+						dl->die = cl.time + 0.5;
+						dl->decay = 300;
+						
+						CL_ColorDlightPaletteIndices (dl, DL_COLOR_BONE_EXPLOSION);
+					}
+
 					ent->model = Mod_ForName("models/bonexpld.spr", true);
 				}
 				else if (cl.Effects[index].type == CE_BLDRN_EXPL)
