@@ -735,7 +735,7 @@ void V_SetPalette (byte *palette)
 {
 	byte *pal, *src;
 	int i;
-	int a = (int)(255 * map_transalpha);
+	int a = (int)(255 * map_transparentalpha);
 
 	pal = palette;
 	

@@ -161,8 +161,63 @@ typedef struct
 
 // keep dlight colours in the one place so that if i need to change them i only need to do it once
 
-//define DL_COLOR
+#define DL_COLOR_V_SHOT		152, 8
+#define DL_COLOR_BALL		150, 6
+#define DL_COLOR_TORNATO	160, 8
+#define DL_COLOR_LIGHTNING	147, 13
+#define DL_COLOR_TELERED	131, 13
+#define DL_COLOR_REDCLOUD	136, 8
 
+#define DL_COLOR_SPELL		39, 3
+#define DL_COLOR_SPELL_M	132, 5
+
+#define DL_COLOR_GHOST			19, 5
+#define DL_COLOR_ACID_MUZZFL	(int []) {191, 188}, 2
+#define DL_COLOR_YELLOWRED_FLASH	251, 2
+#define DL_COLOR_GREEN_SMOKE	176, 13
+#define DL_COLOR_TELESMK		17, 4
+#define DL_COLOR_GREY_SMOKE		3, 5
+#define DL_COLOR_WHITE_SMOKE	16, 8
+#define DL_COLOR_WHITE_FLASH	16, 16
+#define DL_COLOR_RED_SMOKE		129, 8
+#define DL_COLOR_RED_FLASH		128, 16
+#define DL_COLOR_REDSPARK	(int []) {253, 254, 174, 175, 142, 143}, 6
+#define DL_COLOR_ICE		144, 16
+#define DL_COLOR_FLAME		166, 10
+#define DL_COLOR_FLAME2		174, 2
+#define DL_COLOR_FLAME3		168, 8
+#define DL_COLOR_FLAME4		170, 6
+#define DL_COLOR_SUN		169, 7
+#define DL_COLOR_FLAMEWALL	162, 13
+#define DL_COLOR_FLAMEWALL2	162, 14
+#define DL_COLOR_FLAMEWALL3	166, 8
+#define DL_COLOR_15			15		// dark grey 104
+#define DL_COLOR_29			29		// dim white 232
+#define DL_COLOR_27			27		// dim white 212
+#define DL_COLOR_31			31		// white 252
+#define DL_COLOR_88			88
+#define DL_COLOR_120		120
+#define DL_COLOR_135		135
+#define DL_COLOR_140		140		// red
+#define DL_COLOR_185		185
+#define DL_COLOR_252		252		// bright orange
+#define DL_COLOR_254		254		// bright yellow (torch powerup)
+#define DL_COLOR_175		175		// yellow
+#define DL_COLOR_255		255		// full white
+#define DL_COLOR_G_MAGENTA	239, 4	// glow magenta
+#define DL_COLOR_G_GREEN	243, 4	// glow green
+#define DL_COLOR_G_BLUE		247, 4	// glow blue
+#define DL_COLOR_G_ORANGE	251, 4	// glow orange
+#define DL_COLOR_BLDRN_EXPL	251, 5
+#define DL_COLOR_ACID_EXPL	186, 6
+
+#define DL_COLOR_LBALL_EXPL	(int []) {28, 31, 44, 45, 46, 47}, 6
+#define DL_COLOR_BOMB		(int []) {170, 171, 172, 173, 174, 175, 255}, 7
+#define DL_COLOR_ACID_HIT	(int []) {191, 245, 246}, 3
+#define DL_COLOR_BONE_EXPLOSION	(int []) {27, 28, 29, 30, 31, 45, 46}, 7
+#define DL_COLOR_MM_EXPLOSION	(int []) {28, 31, 47, 159}, 4
+#define DL_COLOR_MEZZO_REF	(int []) {135, 139, 140, 143}, 4
+#define DL_COLOR_RED_ARROW	(int []) {135, 137, 140, 143}, 4	// red arrow, skin1
 
 #define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 
@@ -403,6 +458,7 @@ dlight_t *CL_AllocDlight (int key);
 void	CL_ColorDlight (dlight_t *dl, float r, float g, float b);
 void	CL_ColorDlightPalette (dlight_t *dl, int i);
 void	CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length);
+void	CL_ColorDlightPaletteIndices (dlight_t *dl, int *indices, int count);
 void	CL_DecayLights (void);
 
 void CL_Init (void);

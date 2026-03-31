@@ -509,7 +509,8 @@ extern	char	skybox_name[MAX_OSPATH];
 extern	float	skyfog; // ericw
 extern	float	skyalpha;
 extern	float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha; //ericw
-extern	float	map_transalpha;
+extern	float	map_translucentalpha;
+extern	float	map_transparentalpha;
 extern	float	map_spritealpha;
 
 #define	OVERBRIGHT_SCALE	2.0
@@ -531,7 +532,8 @@ extern	cvar_t	r_fullbright;
 extern	cvar_t	r_ambient;
 extern	cvar_t	r_waterquality;
 extern	cvar_t	r_wateralpha;
-extern	cvar_t	r_transalpha;
+extern	cvar_t	r_translucentalpha;
+extern	cvar_t	r_transparentalpha;
 extern	cvar_t	r_spritealpha;
 extern	cvar_t	r_lockalpha;
 extern	cvar_t	r_lavaalpha;

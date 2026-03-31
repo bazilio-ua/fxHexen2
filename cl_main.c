@@ -418,16 +418,17 @@ void CL_ColorDlightPalette (dlight_t *dl, int i)
 void CL_ColorDlightPaletteLength (dlight_t *dl, int start, int length)
 {
 	int 	i;
-	byte	*rgb;
 	
 	i = (start + (rand() % length));
-	rgb = (byte *)&d_8to24table[i];
-	dl->color[0] = rgb[0] * (1.0 / 255.0);
-	dl->color[1] = rgb[1] * (1.0 / 255.0);
-	dl->color[2] = rgb[2] * (1.0 / 255.0);
+	CL_ColorDlightPalette (dl, i);
+}
+
+void CL_ColorDlightPaletteIndices (dlight_t *dl, int *indices, int count)
+{
+	int 	i;
 	
-	if (!cl_coloredlight.value)
-		CL_WhiteDlight (dl);
+	i = *(indices + (rand() % count));
+	CL_ColorDlightPalette (dl, i);
 }
 
 /*
@@ -519,6 +520,93 @@ float	CL_LerpPoint (void)
 	return frac;
 }
 
+void CL_UpdateStatic (void)
+{
+	entity_t *ent;
+	int		i;
+	dlight_t	*dl;
+	int		key;
+	
+	if (!cl_extradlightstatic.value)
+		return;
+	
+	for (i=0,ent=cl_static_entities ; i<cl.num_statics ; i++,ent++)
+	{
+		if (!ent->model)
+			continue;
+		
+		key = i + 1;
+		
+		if (!strcmp (ent->model->name, "models/cflmtrch.mdl") || // blackmarsh castle
+			!strcmp (ent->model->name, "models/mflmtrch.mdl") || // meso
+			!strcmp (ent->model->name, "models/eflmtrch.mdl") || // egypt
+			!strcmp (ent->model->name, "models/rflmtrch.mdl"))   // romeric
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		else if (!strcmp (ent->model->name, "models/flame1.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 125;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		else if (!strcmp (ent->model->name, "models/flame2.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+		else if (!strcmp (ent->model->name, "models/flame.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 12;
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+		}
+		else if (!strcmp (ent->model->name, "models/gemlight.mdl"))
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 85;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPalette (dl, DL_COLOR_175);
+		}
+		else if (!strcmp (ent->model->name, "models/lantern.mdl")) // portals
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->radius = 100;
+			dl->die = cl.time + 0.1;
+			
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+		else if (!strcmp (ent->model->name, "models/candle.mdl")) // portals
+		{
+			dl = CL_AllocDlight (key);
+			VectorCopy (ent->origin, dl->origin);
+			dl->origin[2] += 8;
+			dl->radius = 55;
+			dl->die = cl.time + 0.1;
+
+			CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+		}
+	}
+}
 
 /*
 ===============
@@ -535,6 +623,7 @@ void CL_RelinkEntities (void)
 	vec3_t		oldorg;
 	dlight_t	*dl;
 	static float	lastmsg = 0;
+	int		key;
 
 // determine partial update time
 	frac = CL_LerpPoint ();
@@ -632,34 +721,245 @@ void CL_RelinkEntities (void)
 			}
 		}
 
-	//objrotate = anglemod(100*cl.time);
-	//objrotate = anglemod(100*(cl.time+ent->origin[0]+ent->origin[1]));
-	objrotate = anglemod((ent->origin[0]+ent->origin[1])*0.8+(108*cl.time)); // from R_RotateForEntity2
+		key = i + cl.num_statics + 1;
 
+		//objrotate = anglemod(100*cl.time);
+		//objrotate = anglemod(100*(cl.time+ent->origin[0]+ent->origin[1]));
+		objrotate = anglemod((ent->origin[0]+ent->origin[1])*0.8+(108*cl.time)); // from R_RotateForEntity2
 
 // rotate binary objects locally
 		if (ent->model->flags & EF_ROTATE)
 			ent->angles[1] = objrotate;
 
-			
+		if (cl_extradlight.value)
+		{
+			if (!strcmp (ent->model->name, "models/flame1.mdl")) // in the 'portals' mission pack, this is not a static model
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 125;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
+			else if (!strcmp (ent->model->name, "models/flame2.mdl")) // in the 'portals' mission pack, this is not a static model
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 100;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME2);
+			}
+			else if (!strcmp (ent->model->name, "models/newfire.mdl")) // in the 'portals' mission pack, this is not a static model
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 300;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
+			else if (!strcmp (ent->model->name, "models/gemlight.mdl")) // in the 'portals' mission pack, this is not a static model
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 85;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_175);
+			}
+			else if (!strcmp (ent->model->name, "models/cflmtrch.mdl") || // blackmarsh castle (in the 'portals' mission pack, this is not a static model)
+					 !strcmp (ent->model->name, "models/mflmtrch.mdl") || // meso
+					 !strcmp (ent->model->name, "models/eflmtrch.mdl") || // egypt
+					 !strcmp (ent->model->name, "models/rflmtrch.mdl"))   // romeric
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 100;
+				dl->die = cl.time + 0.1;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
+			else if (!strcmp (ent->model->name, "models/purfir1.mdl")) // paladin's purifier (IT_WEAPON4) shot
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+			}
+			else if (!strcmp (ent->model->name, "models/tempmetr.mdl")) // crusader's meteor (IT_WEAPON3) shot
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
+			}
+			else if (!strcmp (ent->model->name, "models/akarrow.mdl")) // archer's shot
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+				
+				if (ent->skinnum == 0)
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_G_GREEN);
+				else if (ent->skinnum == 1)
+					CL_ColorDlightPaletteIndices (dl, DL_COLOR_RED_ARROW);
+				else if (ent->skinnum == 2)
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_YELLOWRED_FLASH);
+			}
+			else
+			{
+//				Con_Printf("model: %s\n", ent->model->name);
+			}
+		}
+
+//		if (ent->effects & EF_BRIGHTFIELD)
+//			R_EntityParticles (ent);
+
 		if (ent->effects & EF_DARKFIELD)
 			R_DarkFieldParticles (ent);
 
+		if (ent->effects & EF_BRIGHTLIGHT)
+		{
+			if (cl_prettylights.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->origin[2] += 16;
+				dl->radius = 400 + (rand()&31);
+				dl->die = cl.time + 0.001;
+				
+				
+				if (i == cl.viewentity)
+				{
+					// white
+				}
+				else
+				{
+					
+				}
+
+				
+				if (!strcmp (ent->model->name, "models/drgnball.mdl"))
+					CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+				else
+					CL_ColorDlightPalette (dl, DL_COLOR_255); // uncoloured (full white)
+			}
+		}
+		if (ent->effects & EF_DIMLIGHT) // powerup(s) glows
+		{
+			if (cl_prettylights.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200 + (rand()&31);
+				dl->die = cl.time + 0.001;
+
+				// powerup dynamic lights
+				if (i == cl.viewentity)
+				{
+					// dim white
+				}
+				else
+				{
+					
+				}
+
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
+			}
+		}
+		if (ent->effects & EF_DARKLIGHT)
+		{
+			if (cl_prettylights.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200.0 + (rand()&31);
+				dl->die = cl.time + 0.001;
+				dl->dark = true;
+			}
+		}
+		if (ent->effects & EF_LIGHT)
+		{
+			if (cl_prettylights.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.001;
+				
+				// orange
+			}
+		}
 		if (ent->effects & EF_MUZZLEFLASH)
 		{
 			vec3_t		fv, rv, uv;
 
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
 				dl->origin[2] += 16;
 				AngleVectors (ent->angles, fv, rv, uv);
-				 
+				
 				VectorMA (dl->origin, 18, fv, dl->origin);
-				dl->radius = 200 + (rand()&31);
+//				dl->radius = 200 + (rand()&31);
+				dl->radius = ((ent->effects & EF_DIMLIGHT) ? 300 : 200) + (rand()&31);
 				dl->minlight = 32;
 				dl->die = cl.time + 0.1;
+				
+				if (i == cl.viewentity)
+				{
+					// switch the flash colour for the current weapon
+					switch ((int)cl.v.weapon)
+					{
+						case IT_WEAPON1:
+							break;
+						case IT_WEAPON2:
+							if (!strcmp(ent->model->name, "models/necro.mdl"))
+								CL_ColorDlightPaletteLength (dl, DL_COLOR_SPELL_M);
+							else if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_185);
+							break;
+						case IT_WEAPON3:
+							if (!strcmp(ent->model->name, "models/necro.mdl"))
+								CL_ColorDlightPaletteLength (dl, DL_COLOR_SPELL);
+							else if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_135);
+							else if (!strcmp(ent->model->name, "models/crusader.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_252);
+							break;
+						case IT_WEAPON4:
+							if (!strcmp(ent->model->name, "models/assassin.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_88);
+							else if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPaletteLength (dl, DL_COLOR_V_SHOT);
+							break;
+						default:
+							if (!strcmp(ent->model->name, "models/succubus.mdl"))
+								CL_ColorDlightPalette (dl, DL_COLOR_135);
+							break;
+					}
+				}
+				else
+				{
+					// some entities have different attacks resulting in a different flash colour
+					if (!strcmp (ent->model->name, "models/ball.mdl"))
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
+					else if (!strcmp (ent->model->name, "models/tornato.mdl"))
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_TORNATO);
+					else if (!strcmp (ent->model->name, "models/hamthrow.mdl"))
+						CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
+					else
+						CL_ColorDlightPalette (dl, DL_COLOR_15);
+				}
 			}
 			
 			//johnfitz -- assume muzzle flash accompanied by muzzle flare, which looks bad when lerped
@@ -670,79 +970,49 @@ void CL_RelinkEntities (void)
 				else
 					ent->lerpflags |= LERP_RESETANIM|LERP_RESETANIM2; // no lerping for two frames
 			}
-			
-		}
-		if (ent->effects & EF_BRIGHTLIGHT)
-		{			
-			if (cl_prettylights.value)
-			{
-				dl = CL_AllocDlight (i);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->origin[2] += 16;
-				dl->radius = 400 + (rand()&31);
-				dl->die = cl.time + 0.001;
-			}
-		}
-		if (ent->effects & EF_DIMLIGHT)
-		{			
-			if (cl_prettylights.value)
-			{
-				dl = CL_AllocDlight (i);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 200 + (rand()&31);
-				dl->die = cl.time + 0.001;
-			}
-		}
-
-		if (ent->effects & EF_DARKLIGHT)
-		{			
-			if (cl_prettylights.value)
-			{
-				dl = CL_AllocDlight (i);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 200.0 + (rand()&31);
-				dl->die = cl.time + 0.001;
-				dl->dark = true;
-			}
-		}
-		if (ent->effects & EF_LIGHT)
-		{			
-			if (cl_prettylights.value)
-			{
-				dl = CL_AllocDlight (i);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 200;
-				dl->die = cl.time + 0.001;
-			}
 		}
 
 		if (ent->model->flags & EF_GIB)
+		{
 			R_RocketTrail (oldorg, ent->origin, 2);
+		}
 		else if (ent->model->flags & EF_ZOMGIB)
+		{
 			R_RocketTrail (oldorg, ent->origin, 4);
+		}
 		else if (ent->model->flags & EF_BLOODSHOT)
+		{
 			R_RocketTrail (oldorg, ent->origin, 17);
+		}
 		else if (ent->model->flags & EF_TRACER)
+		{
 			R_RocketTrail (oldorg, ent->origin, 3);
+		}
 		else if (ent->model->flags & EF_TRACER2)
+		{
 			R_RocketTrail (oldorg, ent->origin, 5);
+		}
 		else if (ent->model->flags & EF_ROCKET)
 		{
 			R_RocketTrail (oldorg, ent->origin, 0);
-/*			dl = CL_AllocDlight (i);
+/*			dl = CL_AllocDlight (key);
 			VectorCopy (ent->origin, dl->origin);
 			dl->radius = 200;
 			dl->die = cl.time + 0.01;*/
+			
+			// todo color
 		}
 		else if (ent->model->flags & EF_FIREBALL)
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_fireball);
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
+				
+				// red
 			}
 		}
 		else if (ent->model->flags & EF_ACIDBALL)
@@ -750,10 +1020,12 @@ void CL_RelinkEntities (void)
 			R_RocketTrail (oldorg, ent->origin, rt_acidball);
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
+				
+				// green
 			}
 		}
 		else if (ent->model->flags & EF_ICE)
@@ -765,10 +1037,12 @@ void CL_RelinkEntities (void)
 			R_RocketTrail (oldorg, ent->origin, rt_spit);
 			if (cl_prettylights.value)
 			{
-				dl = CL_AllocDlight (i);
+				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = -120 - (rand() % 20);
 				dl->die = cl.time + 0.05;
+				
+				// green
 			}
 		}
 		else if (ent->model->flags & EF_SPELL)
@@ -776,26 +1050,75 @@ void CL_RelinkEntities (void)
 			R_RocketTrail (oldorg, ent->origin, rt_spell);
 		}
 		else if (ent->model->flags & EF_GRENADE)
+		{
 			R_RocketTrail (oldorg, ent->origin, 1);
+		}
 		else if (ent->model->flags & EF_TRACER3)
+		{
 			R_RocketTrail (oldorg, ent->origin, 6);
+		}
 		else if (ent->model->flags & EF_VORP_MISSILE)
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_vorpal);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_V_SHOT);
+			}
 		}
 		else if (ent->model->flags & EF_SET_STAFF)
 		{
 			R_RocketTrail (oldorg, ent->origin,rt_setstaff);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_120);
+			}
 		}
 		else if (ent->model->flags & EF_MAGICMISSILE)
 		{
 			if ((rand() & 3) < 1)
 				R_RocketTrail (oldorg, ent->origin, rt_magicmissile);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+//				dl->radius = 240 - (rand() % 20);
+				dl->radius = ((ent->effects & EF_DIMLIGHT) ? 340 : 240) - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
+			}
 		}
 		else if (ent->model->flags & EF_BONESHARD)
+		{
 			R_RocketTrail (oldorg, ent->origin, rt_boneshard);
+		}
 		else if (ent->model->flags & EF_SCARAB)
+		{
 			R_RocketTrail (oldorg, ent->origin, rt_scarab);
+			
+			if (cl_extradlight.value)
+			{
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 240 - (rand() % 20);
+				dl->die = cl.time + 0.01;
+				
+				CL_ColorDlightPalette (dl, DL_COLOR_27);
+			}
+		}
 
 		ent->forcelink = false;
 
@@ -845,6 +1168,7 @@ int CL_ReadFromServer (void)
 	if (cl_shownet.value)
 		Con_Printf ("\n");
 
+	CL_UpdateStatic ();
 	CL_RelinkEntities ();
 	CL_UpdateTEnts ();
 
