@@ -87,7 +87,7 @@ void NET_Ban_f (void)
 	}
 	else
 	{
-		if (PR_GLOBAL_STRUCT(deathmatch) || PR_GLOBAL_STRUCT(coop))
+		if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
 			return;
 
 		print = SV_ClientPrintf;

@@ -1948,7 +1948,7 @@ void SV_SaveSpawnparms (void)
 {
 	int		i;
 
-	svs.serverflags = PR_GLOBAL_STRUCT(serverflags);
+	svs.serverflags = *pr_global_struct.serverflags;
 
 	for (i=0, host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)
 	{
@@ -2124,34 +2124,18 @@ void SV_SpawnServer (char *server, char *startspot)
 	ent->v.solid = SOLID_BSP;
 	ent->v.movetype = MOVETYPE_PUSH;
 
-	if (is_progdefs111)
-	{
-		if (coop.value)
-			pr_global_struct_v111->coop = coop.value;
-		else
-			pr_global_struct_v111->deathmatch = deathmatch.value;
-
-		pr_global_struct_v111->randomclass = randomclass.value;
-		pr_global_struct_v111->mapname = PR_SetString(sv.name);
-		pr_global_struct_v111->startspot = PR_SetString(sv.startspot);
-
-		// serverflags are for cross level information (sigils)
-		pr_global_struct_v111->serverflags = svs.serverflags;
-	}
+	if (coop.value)
+		*pr_global_struct.coop = coop.value;
 	else
-	{
-		if (coop.value)
-			pr_global_struct->coop = coop.value;
-		else
-			pr_global_struct->deathmatch = deathmatch.value;
+		*pr_global_struct.deathmatch = deathmatch.value;
 
-		pr_global_struct->randomclass = randomclass.value;
-		pr_global_struct->mapname = PR_SetString(sv.name);
-		pr_global_struct->startspot = PR_SetString(sv.startspot);
+	if (progs->crc != PROGS_V103_CRC)
+		*pr_global_struct.randomclass = randomclass.value;
+	*pr_global_struct.mapname = PR_SetString(sv.name);
+	*pr_global_struct.startspot = PR_SetString(sv.startspot);
 
-		// serverflags are for cross level information (sigils)
-		pr_global_struct->serverflags = svs.serverflags;
-	}
+// serverflags are for cross level information (sigils)
+	*pr_global_struct.serverflags = svs.serverflags;
 
 	current_loading_size += 5;
 	D_ShowLoadingSize();

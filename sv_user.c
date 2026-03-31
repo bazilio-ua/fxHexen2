@@ -148,7 +148,7 @@ void SV_UserFriction (void)
 // feel slightly more slippery.
 
 #if USE_AOT_FRICTION
-	if (progs->crc == PROGS_V111_CRC)
+	if (progs->crc != PROGS_V112_CRC)
 		friction = 6;
 	else
 	{
@@ -158,7 +158,7 @@ void SV_UserFriction (void)
 			friction = sv_friction.value*sv_player->v.friction;
 	}
 #else	// not using AoT friction
-	if (progs->crc == PROGS_V111_CRC)
+	if (progs->crc != PROGS_V112_CRC)
 		sv_player->v.friction = 1.0f;
 
 	if (trace.fraction == 1.0)
