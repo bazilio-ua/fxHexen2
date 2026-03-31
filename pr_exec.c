@@ -21,68 +21,29 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define MAX_STACK_DEPTH 	256 //32
-#define LOCALSTACK_SIZE 2048
-
-//#if defined(_MSC_VER) && defined(_WIN32) && defined(_DEBUG)
-//// Uses the Pentium specific opcode RDTSC (ReaD TimeStamp Counter)
-//#define TIMESNAP_ACTIVE
-//#define TIMESNAP(clock) __asm push eax\
-//	__asm push edx\
-//	__asm _emit 0x0F\
-//	__asm _emit 0x31\
-//	__asm mov clock, eax\
-//	__asm pop edx\
-//	__asm pop eax
-//#endif
-
-// TYPES -------------------------------------------------------------------
-
 typedef struct
 {
 	int s;
 	dfunction_t *f;
 } prstack_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+#define MAX_STACK_DEPTH 	256 //32
+prstack_t pr_stack[MAX_STACK_DEPTH];
+int pr_depth;
 
-char *PR_GlobalString(int ofs);
-char *PR_GlobalStringNoContents(int ofs);
+#define LOCALSTACK_SIZE 2048
+int localstack[LOCALSTACK_SIZE];
+int localstack_used;
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-extern	char			*pr_strings;
-extern  int         pr_strings_size;
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static int EnterFunction(dfunction_t *f);
-static int LeaveFunction(void);
-static void PrintStatement(dstatement_t *s);
-static void PrintCallHistory(void);
-//#ifdef TIMESNAP_ACTIVE
-//static unsigned int ProgsTimer(void);
-//#endif
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 qboolean pr_trace;
 dfunction_t	*pr_xfunction;
 int pr_xstatement;
+
+
 int pr_argc;
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static prstack_t pr_stack[MAX_STACK_DEPTH];
-static int pr_depth;
-static int localstack[LOCALSTACK_SIZE];
-static int localstack_used;
-
-static char *pr_opnames[] =
+char *pr_opnames[] =
 {
 	"DONE",
 	"MUL_F", "MUL_V",  "MUL_FV", "MUL_VF",
@@ -132,7 +93,385 @@ static char *pr_opnames[] =
 
 };
 
-// CODE --------------------------------------------------------------------
+char *PR_GlobalString (int ofs);
+char *PR_GlobalStringNoContents (int ofs);
+
+//==========================================================================
+//
+// PR_PrintStatement
+//
+//==========================================================================
+
+void PR_PrintStatement (dstatement_t *s)
+{
+	int i;
+
+	if((unsigned)s->op < sizeof(pr_opnames)/sizeof(pr_opnames[0]))
+	{
+		Con_Printf("%s ", pr_opnames[s->op]);
+		i = strlen(pr_opnames[s->op]);
+		for(; i < 10; i++)
+		{
+			Con_Printf(" ");
+		}
+	}
+
+	if(s->op == OP_IF || s->op == OP_IFNOT)
+	{
+		Con_Printf("%sbranch %i", PR_GlobalString(s->a), s->b);
+	}
+	else if(s->op == OP_GOTO)
+	{
+		Con_Printf("branch %i", s->a);
+	}
+	else if((unsigned)(s->op-OP_STORE_F) < 6)
+	{
+		Con_Printf("%s", PR_GlobalString(s->a));
+		Con_Printf("%s", PR_GlobalStringNoContents(s->b));
+	}
+	else
+	{
+		if(s->a)
+		{
+			Con_Printf("%s", PR_GlobalString(s->a));
+		}
+		if(s->b)
+		{
+			Con_Printf("%s", PR_GlobalString(s->b));
+		}
+		if(s->c)
+		{
+			Con_Printf("%s", PR_GlobalStringNoContents(s->c));
+		}
+	}
+	Con_Printf("\n");
+}
+
+//==========================================================================
+//
+// PR_StackTrace
+//
+//==========================================================================
+
+void PR_StackTrace (void)
+{
+	int i;
+	dfunction_t	*f;
+
+	if(pr_depth == 0)
+	{
+		Con_Printf("<NO STACK>\n");
+		return;
+	}
+
+	pr_stack[pr_depth].f = pr_xfunction;
+	for(i = pr_depth; i >= 0; i--)
+	{
+		f = pr_stack[i].f;
+		if(!f)
+		{
+			Con_Printf("<NO FUNCTION>\n");
+		}
+		else
+		{
+			Con_Printf("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
+		}
+	}
+}
+
+//==========================================================================
+//
+// PR_Profile_f
+//
+//==========================================================================
+
+void PR_Profile_f (void)
+{
+	int i, j;
+	int max;
+	dfunction_t *f, *bestFunc;
+	int total;
+	int funcCount;
+	qboolean byHC;
+	char saveName[128];
+	FILE *saveFile;
+	int currentFile;
+	int bestFile;
+	int tally;
+	char *s;
+
+	byHC = false;
+	funcCount = 10;
+	*saveName = 0;
+	for(i = 1; i < Cmd_Argc(); i++)
+	{
+		s = Cmd_Argv(i);
+		if(tolower(*s) == 'h')
+		{ // Sort by HC source file
+			byHC = true;
+		}
+		else if(tolower(*s) == 's')
+		{ // Save to file
+			if(i+1 < Cmd_Argc() && !isdigit(*Cmd_Argv(i+1)))
+			{
+				i++;
+				sprintf(saveName, "%s/%s", com_gamedir, Cmd_Argv(i));
+			}
+			else
+			{
+				sprintf(saveName, "%s/profile.txt", com_gamedir);
+			}
+		}
+		else if(isdigit(*s))
+		{ // Specify function count
+			funcCount = atoi(Cmd_Argv(i));
+			if(funcCount < 1)
+			{
+				funcCount = 1;
+			}
+		}
+	}
+
+	total = 0;
+	for(i = 0; i < progs->numfunctions; i++)
+	{
+		total += pr_functions[i].profile;
+	}
+
+	if(*saveName)
+	{ // Create the output file
+		if((saveFile = fopen(saveName, "w")) == NULL)
+		{
+			Con_Printf("Could not open %s\n", saveName);
+			return;
+		}
+	}
+
+
+	if(byHC == false)
+	{
+		j = 0;
+		do
+		{
+			max = 0;
+			bestFunc = NULL;
+			for(i = 0; i < progs->numfunctions; i++)
+			{
+				f = &pr_functions[i];
+				if(f->profile > max)
+				{
+					max = f->profile;
+					bestFunc = f;
+				}
+			}
+			if(bestFunc)
+			{
+				if(j < funcCount)
+				{
+					if(*saveName)
+					{
+						fprintf(saveFile, "%05.2f %s\n",
+							((float)bestFunc->profile/(float)total)*100.0,
+							PR_GetString(bestFunc->s_name));
+					}
+					else
+					{
+						Con_Printf("%05.2f %s\n",
+							((float)bestFunc->profile/(float)total)*100.0,
+							PR_GetString(bestFunc->s_name));
+					}
+				}
+				j++;
+				bestFunc->profile = 0;
+			}
+		} while(bestFunc);
+		if(*saveName)
+		{
+			fclose(saveFile);
+		}
+		return;
+	}
+
+	currentFile = -1;
+	do
+	{
+		tally = 0;
+		bestFile = INT_MAX;
+		for(i = 0; i < progs->numfunctions; i++)
+		{
+			if(pr_functions[i].s_file > currentFile
+				&& pr_functions[i].s_file < bestFile)
+			{
+				bestFile = pr_functions[i].s_file;
+				tally = pr_functions[i].profile;
+				continue;
+			}
+			if(pr_functions[i].s_file == bestFile)
+			{
+				tally += pr_functions[i].profile;
+			}
+		}
+		currentFile = bestFile;
+		if(tally && currentFile != INT_MAX)
+		{
+			if(*saveName)
+			{
+				fprintf(saveFile, "\"%s\"\n", PR_GetString(currentFile));
+			}
+			else
+			{
+				Con_Printf("\"%s\"\n", PR_GetString(currentFile));
+			}
+			j = 0;
+			do
+			{
+				max = 0;
+				bestFunc = NULL;
+				for(i = 0; i < progs->numfunctions; i++)
+				{
+					f = &pr_functions[i];
+					if(f->s_file == currentFile && f->profile > max)
+					{
+						max = f->profile;
+						bestFunc = f;
+					}
+				}
+				if(bestFunc)
+				{
+					if(j < funcCount)
+					{
+						if(*saveName)
+						{
+							fprintf(saveFile, "   %05.2f %s\n",
+								((float)bestFunc->profile
+								/(float)total)*100.0,
+								PR_GetString(bestFunc->s_name));
+						}
+						else
+						{
+							Con_Printf("   %05.2f %s\n",
+								((float)bestFunc->profile
+								/(float)total)*100.0,
+								PR_GetString(bestFunc->s_name));
+						}
+					}
+					j++;
+					bestFunc->profile = 0;
+				}
+			} while(bestFunc);
+		}
+	} while(currentFile != INT_MAX);
+	if(*saveName)
+	{
+		fclose(saveFile);
+	}
+}
+
+//==========================================================================
+//
+// PR_RunError
+//
+//==========================================================================
+
+void PR_RunError (char *error, ...)
+{
+	va_list argptr;
+	char string[1024];
+
+	va_start(argptr,error);
+	vsprintf(string,error,argptr);
+	va_end(argptr);
+
+	PR_PrintStatement(pr_statements + pr_xstatement);
+	PR_StackTrace();
+
+	Con_Printf("%s\n", string);
+
+	pr_depth = 0; // dump the stack so host_error can shutdown functions
+
+	Host_Error("Program error");
+}
+
+//==========================================================================
+//
+// PR_EnterFunction
+//
+//==========================================================================
+
+int PR_EnterFunction (dfunction_t *f)
+{
+	int i, j, c, o;
+
+	pr_stack[pr_depth].s = pr_xstatement;
+	pr_stack[pr_depth].f = pr_xfunction;
+	pr_depth++;
+	if(pr_depth >= MAX_STACK_DEPTH)
+	{
+		PR_RunError("stack overflow");
+	}
+
+	// save off any locals that the new function steps on
+	c = f->locals;
+	if(localstack_used + c > LOCALSTACK_SIZE)
+	{
+		PR_RunError ("PR_ExecuteProgram: locals stack overflow\n");
+	}
+
+	for(i = 0; i < c ; i++)
+	{
+		localstack[localstack_used+i] = ((int *)pr_globals)[f->parm_start + i];
+	}
+	localstack_used += c;
+
+	// copy parameters
+	o = f->parm_start;
+	for(i = 0; i < f->numparms; i++)
+	{
+		for(j = 0; j < f->parm_size[i]; j++)
+		{
+			((int *)pr_globals)[o] = ((int *)pr_globals)[OFS_PARM0+i*3+j];
+			o++;
+		}
+	}
+
+	pr_xfunction = f;
+	return f->first_statement - 1;	// offset the s++
+}
+
+//==========================================================================
+//
+// PR_LeaveFunction
+//
+//==========================================================================
+
+int PR_LeaveFunction (void)
+{
+	int i, c;
+
+	if(pr_depth <= 0)
+	{
+		Host_Error("prog stack underflow");
+	}
+
+	// Restore locals from the stack
+	c = pr_xfunction->locals;
+	localstack_used -= c;
+	if(localstack_used < 0)
+	{
+		PR_RunError("PR_ExecuteProgram: locals stack underflow\n");
+	}
+
+	for (i=0 ; i < c ; i++)
+	{
+		((int *)pr_globals)[pr_xfunction->parm_start+i] =
+			localstack[localstack_used+i];
+	}
+
+	// up stack
+	pr_depth--;
+	pr_xfunction = pr_stack[pr_depth].f;
+	return pr_stack[pr_depth].s;
+}
 
 //==========================================================================
 //
@@ -143,7 +482,7 @@ static char *pr_opnames[] =
 //switch types
 enum {SWITCH_F,SWITCH_V,SWITCH_S,SWITCH_E,SWITCH_FNC};
 
-void PR_ExecuteProgram(func_t fnum)
+void PR_ExecuteProgram (func_t fnum)
 {
 	int i;
 	int s;
@@ -176,10 +515,7 @@ void PR_ExecuteProgram(func_t fnum)
 
 	exitdepth = pr_depth;
 
-	s = EnterFunction(f);
-//#ifdef TIMESNAP_ACTIVE
-//	ProgsTimer(); // Init
-//#endif
+	s = PR_EnterFunction(f);
 
 while (1)
 {
@@ -195,15 +531,13 @@ while (1)
 		PR_RunError("runaway loop error");
 	}
 
-//#ifndef TIMESNAP_ACTIVE
 	pr_xfunction->profile++;
-//#endif
 
 	pr_xstatement = s;
 	
 	if(pr_trace)
 	{
-		PrintStatement(st);
+		PR_PrintStatement(st);
 	}
 
 	switch(st->op)
@@ -519,10 +853,7 @@ while (1)
 			break;
 		}
 		// Normal function
-//#ifdef TIMESNAP_ACTIVE
-//		pr_xfunction->profile += ProgsTimer();
-//#endif
-		s = EnterFunction(newf);
+		s = PR_EnterFunction(newf);
 		break;
 
 	case OP_DONE:
@@ -530,10 +861,7 @@ while (1)
 		pr_globals[OFS_RETURN] = pr_globals[(unsigned short)st->a];
 		pr_globals[OFS_RETURN+1] = pr_globals[(unsigned short)st->a+1];
 		pr_globals[OFS_RETURN+2] = pr_globals[(unsigned short)st->a+2];
-//#ifdef TIMESNAP_ACTIVE
-//		pr_xfunction->profile += ProgsTimer();
-//#endif
-		s = LeaveFunction();
+		s = PR_LeaveFunction();
 		if(pr_depth == exitdepth)
 		{ // Done
 			return;
@@ -758,459 +1086,6 @@ while (1)
 
 }
 
-//==========================================================================
-//
-// EnterFunction
-//
-//==========================================================================
-
-static int EnterFunction(dfunction_t *f)
-{
-	int i, j, c, o;
-
-	pr_stack[pr_depth].s = pr_xstatement;
-	pr_stack[pr_depth].f = pr_xfunction;	
-	pr_depth++;
-	if(pr_depth >= MAX_STACK_DEPTH)
-	{
-		PR_RunError("stack overflow");
-	}
-
-	// save off any locals that the new function steps on
-	c = f->locals;
-	if(localstack_used + c > LOCALSTACK_SIZE)
-	{
-		PR_RunError ("PR_ExecuteProgram: locals stack overflow\n");
-	}
-
-	for(i = 0; i < c ; i++)
-	{
-		localstack[localstack_used+i] = ((int *)pr_globals)[f->parm_start + i];
-	}
-	localstack_used += c;
-
-	// copy parameters
-	o = f->parm_start;
-	for(i = 0; i < f->numparms; i++)
-	{
-		for(j = 0; j < f->parm_size[i]; j++)
-		{
-			((int *)pr_globals)[o] = ((int *)pr_globals)[OFS_PARM0+i*3+j];
-			o++;
-		}
-	}
-
-	pr_xfunction = f;
-	return f->first_statement - 1;	// offset the s++
-}
-
-//==========================================================================
-//
-// LeaveFunction
-//
-//==========================================================================
-
-static int LeaveFunction(void)
-{
-	int i, c;
-
-	if(pr_depth <= 0)
-	{
-		Host_Error("prog stack underflow");
-	}
-
-	// Restore locals from the stack
-	c = pr_xfunction->locals;
-	localstack_used -= c;
-	if(localstack_used < 0)
-	{
-		PR_RunError("PR_ExecuteProgram: locals stack underflow\n");
-	}
-
-	for (i=0 ; i < c ; i++)
-	{
-		((int *)pr_globals)[pr_xfunction->parm_start+i] =
-			localstack[localstack_used+i];
-	}
-
-	// up stack
-	pr_depth--;
-	pr_xfunction = pr_stack[pr_depth].f;
-	return pr_stack[pr_depth].s;
-}
-
-//==========================================================================
-//
-// PR_RunError
-//
-//==========================================================================
-
-void PR_RunError(char *error, ...)
-{
-	va_list argptr;
-	char string[1024];
-
-	va_start(argptr,error);
-	vsprintf(string,error,argptr);
-	va_end(argptr);
-
-	PrintStatement(pr_statements + pr_xstatement);
-	PrintCallHistory();
-
-	Con_Printf("%s\n", string);
-
-	pr_depth = 0; // dump the stack so host_error can shutdown functions
-
-	Host_Error("Program error");
-}
-
-//==========================================================================
-//
-// PrintCallHistory
-//
-//==========================================================================
-
-static void PrintCallHistory(void)
-{
-	int i;
-	dfunction_t	*f;
-
-	if(pr_depth == 0)
-	{
-		Con_Printf("<NO STACK>\n");
-		return;
-	}
-
-	pr_stack[pr_depth].f = pr_xfunction;
-	for(i = pr_depth; i >= 0; i--)
-	{
-		f = pr_stack[i].f;
-		if(!f)
-		{
-			Con_Printf("<NO FUNCTION>\n");
-		}
-		else
-		{
-			Con_Printf("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
-		}
-	}
-}
-
-//==========================================================================
-//
-// PrintStatement
-//
-//==========================================================================
-
-static void PrintStatement(dstatement_t *s)
-{
-	int i;
-
-	if((unsigned)s->op < sizeof(pr_opnames)/sizeof(pr_opnames[0]))
-	{
-		Con_Printf("%s ", pr_opnames[s->op]);
-		i = strlen(pr_opnames[s->op]);
-		for(; i < 10; i++)
-		{
-			Con_Printf(" ");
-		}
-	}
-
-	if(s->op == OP_IF || s->op == OP_IFNOT)
-	{
-		Con_Printf("%sbranch %i", PR_GlobalString(s->a), s->b);
-	}
-	else if(s->op == OP_GOTO)
-	{
-		Con_Printf("branch %i", s->a);
-	}
-	else if((unsigned)(s->op-OP_STORE_F) < 6)
-	{
-		Con_Printf("%s", PR_GlobalString(s->a));
-		Con_Printf("%s", PR_GlobalStringNoContents(s->b));
-	}
-	else
-	{
-		if(s->a)
-		{
-			Con_Printf("%s", PR_GlobalString(s->a));
-		}
-		if(s->b)
-		{
-			Con_Printf("%s", PR_GlobalString(s->b));
-		}
-		if(s->c)
-		{
-			Con_Printf("%s", PR_GlobalStringNoContents(s->c));
-		}
-	}
-	Con_Printf("\n");
-}
-
-//==========================================================================
-//
-// PR_Profile_f
-//
-//==========================================================================
-
-void PR_Profile_f(void)
-{
-	int i, j;
-	int max;
-	dfunction_t *f, *bestFunc;
-	int total;
-	int funcCount;
-	qboolean byHC;
-	char saveName[128];
-	FILE *saveFile;
-	int currentFile;
-	int bestFile;
-	int tally;
-	char *s;
-
-	byHC = false;
-	funcCount = 10;
-	*saveName = 0;
-	for(i = 1; i < Cmd_Argc(); i++)
-	{
-		s = Cmd_Argv(i);
-		if(tolower(*s) == 'h')
-		{ // Sort by HC source file
-			byHC = true;
-		}
-		else if(tolower(*s) == 's')
-		{ // Save to file
-			if(i+1 < Cmd_Argc() && !isdigit(*Cmd_Argv(i+1)))
-			{
-				i++;
-				sprintf(saveName, "%s/%s", com_gamedir, Cmd_Argv(i));
-			}
-			else
-			{
-				sprintf(saveName, "%s/profile.txt", com_gamedir);
-			}
-		}
-		else if(isdigit(*s))
-		{ // Specify function count
-			funcCount = atoi(Cmd_Argv(i));
-			if(funcCount < 1)
-			{
-				funcCount = 1;
-			}
-		}
-	}
-
-	total = 0;
-	for(i = 0; i < progs->numfunctions; i++)
-	{
-		total += pr_functions[i].profile;
-	}
-
-	if(*saveName)
-	{ // Create the output file
-		if((saveFile = fopen(saveName, "w")) == NULL)
-		{
-			Con_Printf("Could not open %s\n", saveName);
-			return;
-		}
-	}
-
-//#ifdef TIMESNAP_ACTIVE
-//	if(*saveName)
-//	{
-//		fprintf(saveFile, "(Timesnap Profile)\n");
-//	}
-//	else
-//	{
-//		Con_Printf("(Timesnap Profile)\n");
-//	}
-//#endif
-
-	if(byHC == false)
-	{
-		j = 0;
-		do
-		{
-			max = 0;
-			bestFunc = NULL;
-			for(i = 0; i < progs->numfunctions; i++)
-			{
-				f = &pr_functions[i];
-				if(f->profile > max)
-				{
-					max = f->profile;
-					bestFunc = f;
-				}
-			}
-			if(bestFunc)
-			{
-				if(j < funcCount)
-				{
-					if(*saveName)
-					{
-						fprintf(saveFile, "%05.2f %s\n",
-							((float)bestFunc->profile/(float)total)*100.0,
-							PR_GetString(bestFunc->s_name));
-					}
-					else
-					{
-						Con_Printf("%05.2f %s\n",
-							((float)bestFunc->profile/(float)total)*100.0,
-							PR_GetString(bestFunc->s_name));
-					}
-				}
-				j++;
-				bestFunc->profile = 0;
-			}
-		} while(bestFunc);
-		if(*saveName)
-		{
-			fclose(saveFile);
-		}
-		return;
-	}
-
-	currentFile = -1;
-	do
-	{
-		tally = 0;
-		bestFile = INT_MAX;
-		for(i = 0; i < progs->numfunctions; i++)
-		{
-			if(pr_functions[i].s_file > currentFile
-				&& pr_functions[i].s_file < bestFile)
-			{
-				bestFile = pr_functions[i].s_file;
-				tally = pr_functions[i].profile;
-				continue;
-			}
-			if(pr_functions[i].s_file == bestFile)
-			{
-				tally += pr_functions[i].profile;
-			}
-		}
-		currentFile = bestFile;
-		if(tally && currentFile != INT_MAX)
-		{
-			if(*saveName)
-			{
-				fprintf(saveFile, "\"%s\"\n", PR_GetString(currentFile));
-			}
-			else
-			{
-				Con_Printf("\"%s\"\n", PR_GetString(currentFile));
-			}
-			j = 0;
-			do
-			{
-				max = 0;
-				bestFunc = NULL;
-				for(i = 0; i < progs->numfunctions; i++)
-				{
-					f = &pr_functions[i];
-					if(f->s_file == currentFile && f->profile > max)
-					{
-						max = f->profile;
-						bestFunc = f;
-					}
-				}
-				if(bestFunc)
-				{
-					if(j < funcCount)
-					{
-						if(*saveName)
-						{
-							fprintf(saveFile, "   %05.2f %s\n",
-								((float)bestFunc->profile
-								/(float)total)*100.0,
-								PR_GetString(bestFunc->s_name));
-						}
-						else
-						{
-							Con_Printf("   %05.2f %s\n",
-								((float)bestFunc->profile
-								/(float)total)*100.0,
-								PR_GetString(bestFunc->s_name));
-						}
-					}
-					j++;
-					bestFunc->profile = 0;
-				}
-			} while(bestFunc);
-		}
-	} while(currentFile != INT_MAX);
-	if(*saveName)
-	{
-		fclose(saveFile);
-	}
-}
-
-//==========================================================================
-//
-// ProgsTimer
-//
-//==========================================================================
-
-//#ifdef TIMESNAP_ACTIVE
-//static unsigned int ProgsTimer(void)
-//{
-//	unsigned int c;
-//	unsigned int cycleCount;
-//	static unsigned int cycleTimer;
-//
-//	TIMESNAP(c);
-//	if(cycleTimer > c)
-//	{
-//		cycleCount = ((unsigned int)0xffffffff-(cycleTimer-c));
-//	}
-//	else
-//	{
-//		cycleCount = c-cycleTimer;
-//	}
-//	cycleTimer = c;
-//	return cycleCount>>8;
-//}
-//#endif
-
-/*
- * $Log: /H2 Mission Pack/PR_EXEC.C $
- * 
- * 5     3/06/98 12:35a Jmonroe
- * made caserange work, switched some more things
- * 
- * 4     2/24/98 5:09p Jmonroe
- * 
- * 3     2/24/98 5:09p Jmonroe
- * switch off of floats done
- * 
- * 2     2/17/98 6:45p Jmonroe
- * started work on the switch statements
- * 
- * 20    7/15/97 1:58p Bgokey
- * 
- * 14    6/11/97 4:28p Bgokey
- * 
- * 13    5/15/97 6:18p Bgokey
- * 
- * 12    4/09/97 11:33a Bgokey
- * 
- * 11    3/31/97 6:47p Bgokey
- * 
- * 10    3/28/97 10:24a Bgokey
- * 
- * 9     3/26/97 12:56p Bgokey
- * 
- * 8     3/25/97 5:11p Bgokey
- * 
- * 7     3/11/97 11:44a Bgokey
- * 
- * 6     3/10/97 1:14p Bgokey
- * 
- * 5     2/24/97 12:23p Bgokey
- * 
- * 4     2/20/97 11:17a Rjohnson
- * Id Updates
- */
 
 /*----------------------*/
 
