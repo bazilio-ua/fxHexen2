@@ -303,7 +303,7 @@ edict_t *ED_Alloc (void)
 	if (i == MAX_EDICTS)
 	{
 		SV_Edicts("edicts.txt");
-		Sys_Error ("ED_Alloc: no free edicts");
+		Host_Error ("ED_Alloc: no free edicts");
 	}
 		
 	sv.num_edicts++;
@@ -937,17 +937,17 @@ void ED_ParseGlobals (char *data)
 		if (com_token[0] == '}')
 			break;
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
 		strcpy (keyname, com_token);
 
 	// parse value	
 		data = COM_Parse (data);
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
 		if (com_token[0] == '}')
-			Sys_Error ("ED_ParseEntity: closing brace without data");
+			Host_Error ("ED_ParseEntity: closing brace without data");
 
 		key = ED_FindGlobal (keyname);
 		if (!key)
@@ -1100,7 +1100,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (com_token[0] == '}')
 			break;
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 		
 // anglehack is to allow QuakeEd to write single scalar angles
 // and allow them to be turned into vectors. (FIXME...)
@@ -1129,10 +1129,10 @@ if (!strcmp(com_token, "light"))
 	// parse value	
 		data = COM_Parse (data);
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
 		if (com_token[0] == '}')
-			Sys_Error ("ED_ParseEntity: closing brace without data");
+			Host_Error ("ED_ParseEntity: closing brace without data");
 
 		init = true;	
 
@@ -1456,7 +1456,7 @@ void PR_LoadProgs (void)
 
 	progs = (dprograms_t *)COM_LoadHunkFile (finalprogname, NULL);
 	if (!progs)
-		Sys_Error ("PR_LoadProgs: couldn't load %s",finalprogname);
+		Host_Error ("PR_LoadProgs: couldn't load %s",finalprogname);
 	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);
 
 // add prog crc to the serverinfo
@@ -1467,7 +1467,7 @@ void PR_LoadProgs (void)
 		((int *)progs)[i] = LittleLong ( ((int *)progs)[i] );
 
 	if (progs->version != PROG_VERSION)
-		Sys_Error ("%s is of unsupported version (%d, should be %d)", finalprogname, progs->version, PROG_VERSION);
+		Host_Error ("%s is of unsupported version (%d, should be %d)", finalprogname, progs->version, PROG_VERSION);
 
 	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
 	pr_strings = (char *)progs + progs->ofs_strings;
@@ -1495,7 +1495,7 @@ void PR_LoadProgs (void)
 		version = "H2MP/v1.12";
 		break;
 	default:
-		Sys_Error ("Unexpected CRC ( %d ) for %s", progs->crc, finalprogname);
+		Host_Error ("Unexpected CRC ( %d ) for %s", progs->crc, finalprogname);
 		return; // silence compiler
 	}
 
@@ -1537,7 +1537,7 @@ void PR_LoadProgs (void)
 	{
 		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
 		if (pr_fielddefs[i].type & DEF_SAVEGLOBAL)
-			Sys_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+			Host_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
 	}
@@ -1565,7 +1565,7 @@ void PR_LoadInfoStrings(void)
 
 	pr_global_info_strings = (char *)COM_LoadHunkFile ("infolist.txt", NULL);
 	if (!pr_global_info_strings)
-		Sys_Error ("PR_LoadInfoStrings: couldn't load infolist.txt");
+		Host_Error ("PR_LoadInfoStrings: couldn't load infolist.txt");
 
 	NewLineChar = -1;
 
@@ -1584,7 +1584,7 @@ void PR_LoadInfoStrings(void)
 
 	if (!count)
 	{
-		Sys_Error ("PR_LoadInfoStrings: no string lines found");
+		Host_Error ("PR_LoadInfoStrings: no string lines found");
 	}
 
 	pr_info_string_index = (int *)Hunk_AllocName ((count+1)*4, "info_string_index");
@@ -1616,7 +1616,7 @@ void PR_LoadStrings(void)
 
 	pr_global_strings = (char *)COM_LoadHunkFile ("strings.txt", NULL);
 	if (!pr_global_strings)
-		Sys_Error ("PR_LoadStrings: couldn't load strings.txt");
+		Host_Error ("PR_LoadStrings: couldn't load strings.txt");
 
 	NewLineChar = -1;
 
@@ -1635,7 +1635,7 @@ void PR_LoadStrings(void)
 
 	if (!count)
 	{
-		Sys_Error ("PR_LoadStrings: no string lines found");
+		Host_Error ("PR_LoadStrings: no string lines found");
 	}
 
 	pr_string_index = (int *)Hunk_AllocName ((count+1)*4, "string_index");
@@ -1691,7 +1691,7 @@ void PR_Init (void)
 edict_t *EDICT_NUM(int n)
 {
 	if (n < 0 || n >= sv.max_edicts)
-		Sys_Error ("EDICT_NUM: bad number %i", n);
+		Host_Error ("EDICT_NUM: bad number %i", n);
 	return (edict_t *)((byte *)sv.edicts+ (n)*pr_edict_size);
 }
 
