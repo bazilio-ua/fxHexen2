@@ -96,12 +96,14 @@ char *pr_opnames[] =
 char *PR_GlobalString (int ofs);
 char *PR_GlobalStringNoContents (int ofs);
 
-//==========================================================================
-//
-// PR_PrintStatement
-//
-//==========================================================================
 
+//=============================================================================
+
+/*
+=================
+PR_PrintStatement
+=================
+*/
 void PR_PrintStatement (dstatement_t *s)
 {
 	int i;
@@ -147,12 +149,11 @@ void PR_PrintStatement (dstatement_t *s)
 	Con_Printf("\n");
 }
 
-//==========================================================================
-//
-// PR_StackTrace
-//
-//==========================================================================
-
+/*
+============
+PR_StackTrace
+============
+*/
 void PR_StackTrace (void)
 {
 	int i;
@@ -179,12 +180,12 @@ void PR_StackTrace (void)
 	}
 }
 
-//==========================================================================
-//
-// PR_Profile_f
-//
-//==========================================================================
+/*
+============
+PR_Profile_f
 
+============
+*/
 void PR_Profile_f (void)
 {
 	int i, j;
@@ -367,12 +368,13 @@ void PR_Profile_f (void)
 	}
 }
 
-//==========================================================================
-//
-// PR_RunError
-//
-//==========================================================================
+/*
+============
+PR_RunError
 
+Aborts the currently executing function
+============
+*/
 void PR_RunError (char *error, ...)
 {
 	va_list argptr;
@@ -392,12 +394,21 @@ void PR_RunError (char *error, ...)
 	Host_Error("Program error");
 }
 
-//==========================================================================
-//
-// PR_EnterFunction
-//
-//==========================================================================
+/*
+============================================================================
+PR_ExecuteProgram
 
+The interpretation main loop
+============================================================================
+*/
+
+/*
+====================
+PR_EnterFunction
+
+Returns the new program statement counter
+====================
+*/
 int PR_EnterFunction (dfunction_t *f)
 {
 	int i, j, c, o;
@@ -438,12 +449,11 @@ int PR_EnterFunction (dfunction_t *f)
 	return f->first_statement - 1;	// offset the s++
 }
 
-//==========================================================================
-//
-// PR_LeaveFunction
-//
-//==========================================================================
-
+/*
+====================
+PR_LeaveFunction
+====================
+*/
 int PR_LeaveFunction (void)
 {
 	int i, c;
@@ -473,15 +483,16 @@ int PR_LeaveFunction (void)
 	return pr_stack[pr_depth].s;
 }
 
-//==========================================================================
-//
-// PR_ExecuteProgram
-//
-//==========================================================================
-
 //switch types
 enum {SWITCH_F,SWITCH_V,SWITCH_S,SWITCH_E,SWITCH_FNC};
 
+#define RUNAWAY	     100000
+
+/*
+====================
+PR_ExecuteProgram
+====================
+*/
 void PR_ExecuteProgram (func_t fnum)
 {
 	int i;
@@ -591,6 +602,7 @@ while (1)
 		c->_float = (int)a->_float | (int)b->_float;
 		break;
 
+
 	case OP_GE:
 		c->_float = a->_float >= b->_float;
 		break;
@@ -662,6 +674,7 @@ while (1)
 		c->_float = a->function != b->function;
 		break;
 
+//==================
 	case OP_STORE_F:
 	case OP_STORE_ENT:
 	case OP_STORE_FLD:		// integers
