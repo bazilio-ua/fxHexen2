@@ -483,28 +483,31 @@ PR_ExecuteProgram
 */
 void PR_ExecuteProgram (func_t fnum)
 {
-	int i;
 	int s;
 	eval_t *a, *b, *c;
-	eval_t *ptr;
 	dstatement_t *st;
 	dfunction_t *f, *newf;
+	int		profile, startprofile;
 	int runaway;
-	edict_t *ed;
+	int i;
+	edict_t *ed = NULL;
 	int exitdepth;
+	eval_t *ptr;
 	int startFrame;
 	int endFrame;
 	float val;
 	int case_type=-1;
 	float switch_float = 0;	// make compiler happy
 
-	if(!fnum || fnum >= progs->numfunctions)
+	if (!fnum || fnum < 0 || fnum >= progs->numfunctions)
 	{
-		if(*pr_global_struct.self)
-		{
-			ED_Print(PROG_TO_EDICT(*pr_global_struct.self));
-		}
-		Host_Error("PR_ExecuteProgram: NULL function");
+		if (*pr_global_struct.self)
+			ED_Print (PROG_TO_EDICT(*pr_global_struct.self));
+
+		if (!fnum)
+			Host_Error ("PR_ExecuteProgram: NULL function");
+		else
+			Host_Error ("PR_ExecuteProgram: invalid function (%d, max = %d)", fnum, progs->numfunctions);
 	}
 
 	f = &pr_functions[fnum];
@@ -514,7 +517,7 @@ void PR_ExecuteProgram (func_t fnum)
 
 	exitdepth = pr_depth;
 
-	s = PR_EnterFunction(f);
+	s = PR_EnterFunction (f);
 
 while (1)
 {
@@ -525,21 +528,19 @@ while (1)
 	b = (eval_t *)&pr_globals[(unsigned short)st->b];
 	c = (eval_t *)&pr_globals[(unsigned short)st->c];
 
-	if(!--runaway)
+	if (!--runaway)
 	{
-		PR_RunError("runaway loop error");
+		PR_RunError ("runaway loop error");
 	}
 
 	pr_xfunction->profile++;
 
 	pr_xstatement = s;
 	
-	if(pr_trace)
-	{
-		PR_PrintStatement(st);
-	}
+	if (pr_trace)
+		PR_PrintStatement (st);
 
-	switch(st->op)
+	switch (st->op)
 	{
 	case OP_ADD_F:
 		c->_float = a->_float + b->_float;
@@ -630,9 +631,9 @@ while (1)
 		c->_float = a->_float == b->_float;
 		break;
 	case OP_EQ_V:
-		c->_float = (a->vector[0] == b->vector[0])
-			&& (a->vector[1] == b->vector[1])
-			&& (a->vector[2] == b->vector[2]);
+		c->_float = (a->vector[0] == b->vector[0]) &&
+			(a->vector[1] == b->vector[1]) &&
+			(a->vector[2] == b->vector[2]);
 		break;
 	case OP_EQ_S:
 		c->_float = !strcmp(PR_GetString(a->string), PR_GetString(b->string));
@@ -644,13 +645,14 @@ while (1)
 		c->_float = a->function == b->function;
 		break;
 
+
 	case OP_NE_F:
 		c->_float = a->_float != b->_float;
 		break;
 	case OP_NE_V:
-		c->_float = (a->vector[0] != b->vector[0])
-			|| (a->vector[1] != b->vector[1])
-			|| (a->vector[2] != b->vector[2]);
+		c->_float = (a->vector[0] != b->vector[0]) ||
+			(a->vector[1] != b->vector[1]) ||
+			(a->vector[2] != b->vector[2]);
 		break;
 	case OP_NE_S:
 		c->_float = strcmp(PR_GetString(a->string), PR_GetString(b->string));
@@ -758,11 +760,13 @@ while (1)
 
 	case OP_ADDRESS:
 		ed = PROG_TO_EDICT(a->edict);
-		if(ed == (edict_t *)sv.edicts && sv.state == ss_active)
+
+		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 		{
-			PR_RunError("assignment to world entity");
+			PR_RunError ("assignment to world entity");
 		}
-		c->_int = (byte *)((int *)&ed->v + b->_int)-(byte *)sv.edicts;
+
+		c->_int = (byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts;
 		break;
 		
 	case OP_LOAD_F:
@@ -771,12 +775,14 @@ while (1)
 	case OP_LOAD_S:
 	case OP_LOAD_FNC:
 		ed = PROG_TO_EDICT(a->edict);
+
 		a = (eval_t *)((int *)&ed->v+b->_int);
 		c->_int = a->_int;
 		break;
 
 	case OP_LOAD_V:
 		ed = PROG_TO_EDICT(a->edict);
+
 		a = (eval_t *)((int *)&ed->v + b->_int);
 		c->vector[0] = a->vector[0];
 		c->vector[1] = a->vector[1];
@@ -788,18 +794,18 @@ while (1)
 	case OP_FETCH_GBL_E:
 	case OP_FETCH_GBL_FNC:
 		i = (int)b->_float;
-		if(i < 0 || i > G_INT((unsigned short)st->a - 1))
+		if (i < 0 || i > G_INT((unsigned short)st->a - 1))
 		{
-			PR_RunError("array index out of bounds: %d", i);
+			PR_RunError ("array index out of bounds: %d", i);
 		}
 		a = (eval_t *)&pr_globals[(unsigned short)st->a + i];
 		c->_int = a->_int;
 		break;
 	case OP_FETCH_GBL_V:
 		i = (int)b->_float;
-		if(i < 0 || i > G_INT((unsigned short)st->a - 1))
+		if (i < 0 || i > G_INT((unsigned short)st->a - 1))
 		{
-			PR_RunError("array index out of bounds: %d", i);
+			PR_RunError ("array index out of bounds: %d", i);
 		}
 		a = (eval_t *)&pr_globals[(unsigned short)st->a
 			+((int)b->_float)*3];
@@ -809,21 +815,17 @@ while (1)
 		break;
 
 	case OP_IFNOT:
-		if(!a->_int)
-		{
-			s += st->b-1; // -1 to offset the s++
-		}
+		if (!a->_int)
+			s += st->b - 1; // -1 to offset the s++
 		break;
 
 	case OP_IF:
-		if(a->_int)
-		{
-			s += st->b-1; // -1 to offset the s++
-		}
+		if (a->_int)
+			s += st->b - 1; // -1 to offset the s++
 		break;
 
 	case OP_GOTO:
-		s += st->a-1; // -1 to offset the s++
+		s += st->a - 1; // -1 to offset the s++
 		break;
 
 	case OP_CALL8:
@@ -837,24 +839,22 @@ while (1)
 	case OP_CALL1: // Copy first arg to shared space
 		VectorCopy(b->vector, G_VECTOR(OFS_PARM0));
 	case OP_CALL0:
-		pr_argc = st->op-OP_CALL0;
-		if(!a->function)
-		{
-			PR_RunError("NULL function");
-		}
+		pr_argc = st->op - OP_CALL0;
+		if (!a->function)
+			PR_RunError ("NULL function");
+
 		newf = &pr_functions[a->function];
-		if(newf->first_statement < 0)
+
+		if (newf->first_statement < 0)
 		{ // Built-in function
 			i = -newf->first_statement;
-			if(i >= pr_numbuiltins)
-			{
-				PR_RunError("Bad builtin call number");
-			}
-			pr_builtins[i]();
+			if (i >= pr_numbuiltins)
+				PR_RunError ("Bad builtin call number");
+			pr_builtins[i] ();
 			break;
 		}
 		// Normal function
-		s = PR_EnterFunction(newf);
+		s = PR_EnterFunction (newf);
 		break;
 
 	case OP_DONE:
@@ -862,8 +862,9 @@ while (1)
 		pr_globals[OFS_RETURN] = pr_globals[(unsigned short)st->a];
 		pr_globals[OFS_RETURN+1] = pr_globals[(unsigned short)st->a+1];
 		pr_globals[OFS_RETURN+2] = pr_globals[(unsigned short)st->a+2];
-		s = PR_LeaveFunction();
-		if(pr_depth == exitdepth)
+
+		s = PR_LeaveFunction ();
+		if (pr_depth == exitdepth)
 		{ // Done
 			return;
 		}
@@ -871,10 +872,8 @@ while (1)
 
 	case OP_STATE:
 		ed = PROG_TO_EDICT(*pr_global_struct.self);
-/* Id 1.07 changes
-*/
 		ed->v.nextthink = *pr_global_struct.time + HX_FRAME_TIME;
-		if(a->_float != ed->v.frame)
+		if (a->_float != ed->v.frame)
 		{
 			ed->v.frame = a->_float;
 		}
@@ -888,15 +887,15 @@ while (1)
 		*pr_global_struct.cycle_wrapped = false;
 		startFrame = (int)a->_float;
 		endFrame = (int)b->_float;
-		if(startFrame <= endFrame)
+		if (startFrame <= endFrame)
 		{ // Increment
-			if(ed->v.frame < startFrame || ed->v.frame > endFrame)
+			if (ed->v.frame < startFrame || ed->v.frame > endFrame)
 			{
 				ed->v.frame = startFrame;
 				break;
 			}
 			ed->v.frame++;
-			if(ed->v.frame > endFrame)
+			if (ed->v.frame > endFrame)
 			{
 				*pr_global_struct.cycle_wrapped = true;
 				ed->v.frame = startFrame;
@@ -904,13 +903,13 @@ while (1)
 			break;
 		}
 		// Decrement
-		if(ed->v.frame > startFrame || ed->v.frame < endFrame)
+		if (ed->v.frame > startFrame || ed->v.frame < endFrame)
 		{
 			ed->v.frame = startFrame;
 			break;
 		}
 		ed->v.frame--;
-		if(ed->v.frame < endFrame)
+		if (ed->v.frame < endFrame)
 		{
 			*pr_global_struct.cycle_wrapped = true;
 			ed->v.frame = startFrame;
@@ -924,16 +923,16 @@ while (1)
 		*pr_global_struct.cycle_wrapped = false;
 		startFrame = (int)a->_float;
 		endFrame = (int)b->_float;
-		if(startFrame <= endFrame)
+		if (startFrame <= endFrame)
 		{ // Increment
-			if(ed->v.weaponframe < startFrame
+			if (ed->v.weaponframe < startFrame
 				|| ed->v.weaponframe > endFrame)
 			{
 				ed->v.weaponframe = startFrame;
 				break;
 			}
 			ed->v.weaponframe++;
-			if(ed->v.weaponframe > endFrame)
+			if (ed->v.weaponframe > endFrame)
 			{
 				*pr_global_struct.cycle_wrapped = true;
 				ed->v.weaponframe = startFrame;
@@ -941,14 +940,14 @@ while (1)
 			break;
 		}
 		// Decrement
-		if(ed->v.weaponframe > startFrame
+		if (ed->v.weaponframe > startFrame
 			|| ed->v.weaponframe < endFrame)
 		{
 			ed->v.weaponframe = startFrame;
 			break;
 		}
 		ed->v.weaponframe--;
-		if(ed->v.weaponframe < endFrame)
+		if (ed->v.weaponframe < endFrame)
 		{
 			*pr_global_struct.cycle_wrapped = true;
 			ed->v.weaponframe = startFrame;
@@ -957,9 +956,9 @@ while (1)
 
 	case OP_THINKTIME:
 		ed = PROG_TO_EDICT(a->edict);
-		if(ed == (edict_t *)sv.edicts && sv.state == ss_active)
+		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 		{
-			PR_RunError("assignment to world entity");
+			PR_RunError ("assignment to world entity");
 		}
 		ed->v.nextthink = *pr_global_struct.time + b->_float;
 		break;
@@ -989,7 +988,7 @@ while (1)
 		G_FLOAT(OFS_RETURN) = val;
 		break;
 	case OP_RAND2:
-		if(a->_float < b->_float)
+		if (a->_float < b->_float)
 		{
 			val = a->_float+(rand()*(1.0/RAND_MAX)
 				*(b->_float-a->_float));
@@ -1018,9 +1017,9 @@ while (1)
 		G_FLOAT(OFS_RETURN+2) = val;
 		break;
 	case OP_RANDV2:
-		for(i = 0; i < 3; i++)
+		for (i = 0; i < 3; i++)
 		{
-			if(a->vector[i] < b->vector[i])
+			if (a->vector[i] < b->vector[i])
 			{
 				val = a->vector[i]+(rand()*(1.0/RAND_MAX)
 					*(b->vector[i]-a->vector[i]));
@@ -1039,22 +1038,22 @@ while (1)
 		s += st->b-1; // -1 to offset the s++
 		break;
 	case OP_SWITCH_V:
-		PR_RunError("switch v not done yet!");
+		PR_RunError ("switch v not done yet!");
 		break;
 	case OP_SWITCH_S:
-		PR_RunError("switch s not done yet!");
+		PR_RunError ("switch s not done yet!");
 		break;
 	case OP_SWITCH_E:
-		PR_RunError("switch e not done yet!");
+		PR_RunError ("switch e not done yet!");
 		break;
 	case OP_SWITCH_FNC:
-		PR_RunError("switch fnc not done yet!");
+		PR_RunError ("switch fnc not done yet!");
 		break;
 
 	case OP_CASERANGE:
 			if (case_type!=SWITCH_F)
-				PR_RunError("caserange fucked!");
-			if((switch_float >= a->_float) && (switch_float <= b->_float))
+				PR_RunError ("caserange fucked!");
+			if ((switch_float >= a->_float) && (switch_float <= b->_float))
 			{
 				s += st->c-1; // -1 to offset the s++
 			}
@@ -1063,7 +1062,7 @@ while (1)
 		switch (case_type)
 		{
 		case SWITCH_F:
-				if(switch_float == a->_float)
+				if (switch_float == a->_float)
 				{
 					s += st->b-1; // -1 to offset the s++
 				}
@@ -1072,21 +1071,20 @@ while (1)
 		case SWITCH_S:
 		case SWITCH_E:
 		case SWITCH_FNC:
-				PR_RunError("case not done yet!");
+				PR_RunError ("case not done yet!");
 				break;
 		default:
-				PR_RunError("fucked case!");
+				PR_RunError ("fucked case!");
 
 		}
 		break;
 
 	default:
-		PR_RunError("Bad opcode %i", st->op);
+		PR_RunError ("Bad opcode %i", st->op);
 	}
 }
 
 }
-
 
 /*----------------------*/
 
