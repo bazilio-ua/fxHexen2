@@ -441,7 +441,7 @@ int PR_EnterFunction (dfunction_t *f)
 	}
 
 	pr_xfunction = f;
-	return f->first_statement - 1;	// offset the s++
+	return f->first_statement - 1;	// -1 to offset the st++
 }
 
 /*
@@ -483,12 +483,10 @@ PR_ExecuteProgram
 */
 void PR_ExecuteProgram (func_t fnum)
 {
-	int s;
 	eval_t *a, *b, *c;
 	dstatement_t *st;
 	dfunction_t *f, *newf;
 	int		profile, startprofile;
-	int runaway;
 	int i;
 	edict_t *ed = NULL;
 	int exitdepth;
@@ -512,31 +510,29 @@ void PR_ExecuteProgram (func_t fnum)
 
 	f = &pr_functions[fnum];
 
-	runaway = 100000;
 	pr_trace = false;
 
+// make a stack frame
 	exitdepth = pr_depth;
+	pr_peakdepth = 0;
 
-	s = PR_EnterFunction (f);
+	st = &pr_statements[PR_EnterFunction (f)];
+	startprofile = profile = 0;
 
 while (1)
 {
-	s++; // Next statement
+	st++; // Next statement
 
-	st = &pr_statements[s];
 	a = (eval_t *)&pr_globals[(unsigned short)st->a];
 	b = (eval_t *)&pr_globals[(unsigned short)st->b];
 	c = (eval_t *)&pr_globals[(unsigned short)st->c];
 
-	if (!--runaway)
+	if (++profile > RUNAWAY)
 	{
-		PR_RunError ("runaway loop error");
+		pr_xstatement = st - pr_statements;
+		PR_RunError ("PR_ExecuteProgram: runaway loop error %d", RUNAWAY);
 	}
 
-	pr_xfunction->profile++;
-
-	pr_xstatement = s;
-	
 	if (pr_trace)
 		PR_PrintStatement (st);
 
@@ -702,11 +698,11 @@ while (1)
 		b->vector[2] *= a->_float;
 		break;
 	case OP_MULSTOREP_F: // e.f *= f
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->_float = (ptr->_float *= a->_float);
 		break;
 	case OP_MULSTOREP_V: // e.v *= f
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->vector[0] = (ptr->vector[0] *= a->_float);
 		c->vector[0] = (ptr->vector[1] *= a->_float);
 		c->vector[0] = (ptr->vector[2] *= a->_float);
@@ -716,7 +712,7 @@ while (1)
 		b->_float /= a->_float;
 		break;
 	case OP_DIVSTOREP_F: // e.f /= f
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->_float = (ptr->_float /= a->_float);
 		break;
 
@@ -729,11 +725,11 @@ while (1)
 		b->vector[2] += a->vector[2];
 		break;
 	case OP_ADDSTOREP_F: // e.f += f
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->_float = (ptr->_float += a->_float);
 		break;
 	case OP_ADDSTOREP_V: // e.v += v
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->vector[0] = (ptr->vector[0] += a->vector[0]);
 		c->vector[1] = (ptr->vector[1] += a->vector[1]);
 		c->vector[2] = (ptr->vector[2] += a->vector[2]);
@@ -748,11 +744,11 @@ while (1)
 		b->vector[2] -= a->vector[2];
 		break;
 	case OP_SUBSTOREP_F: // e.f -= f
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->_float = (ptr->_float -= a->_float);
 		break;
 	case OP_SUBSTOREP_V: // e.v -= v
-		ptr = (eval_t *)((byte *)sv.edicts+b->_int);
+		ptr = (eval_t *)((byte *)sv.edicts + b->_int);
 		c->vector[0] = (ptr->vector[0] -= a->vector[0]);
 		c->vector[1] = (ptr->vector[1] -= a->vector[1]);
 		c->vector[2] = (ptr->vector[2] -= a->vector[2]);
@@ -763,7 +759,8 @@ while (1)
 
 		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 		{
-			PR_RunError ("assignment to world entity");
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: assignment to world entity");
 		}
 
 		c->_int = (byte *)((int *)&ed->v + b->_int) - (byte *)sv.edicts;
@@ -776,17 +773,17 @@ while (1)
 	case OP_LOAD_FNC:
 		ed = PROG_TO_EDICT(a->edict);
 
-		a = (eval_t *)((int *)&ed->v+b->_int);
-		c->_int = a->_int;
+		ptr = (eval_t *)((int *)&ed->v + b->_int);
+		c->_int = ptr->_int;
 		break;
 
 	case OP_LOAD_V:
 		ed = PROG_TO_EDICT(a->edict);
 
-		a = (eval_t *)((int *)&ed->v + b->_int);
-		c->vector[0] = a->vector[0];
-		c->vector[1] = a->vector[1];
-		c->vector[2] = a->vector[2];
+		ptr = (eval_t *)((int *)&ed->v + b->_int);
+		c->vector[0] = ptr->vector[0];
+		c->vector[1] = ptr->vector[1];
+		c->vector[2] = ptr->vector[2];
 		break;
 
 	case OP_FETCH_GBL_F:
@@ -796,36 +793,37 @@ while (1)
 		i = (int)b->_float;
 		if (i < 0 || i > G_INT((unsigned short)st->a - 1))
 		{
-			PR_RunError ("array index out of bounds: %d", i);
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: array index out of bounds: %d", i);
 		}
-		a = (eval_t *)&pr_globals[(unsigned short)st->a + i];
-		c->_int = a->_int;
+		ptr = (eval_t *)&pr_globals[(unsigned short)st->a + i];
+		c->_int = ptr->_int;
 		break;
 	case OP_FETCH_GBL_V:
 		i = (int)b->_float;
 		if (i < 0 || i > G_INT((unsigned short)st->a - 1))
 		{
-			PR_RunError ("array index out of bounds: %d", i);
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: array index out of bounds: %d", i);
 		}
-		a = (eval_t *)&pr_globals[(unsigned short)st->a
-			+((int)b->_float)*3];
-		c->vector[0] = a->vector[0];
-		c->vector[1] = a->vector[1];
-		c->vector[2] = a->vector[2];
+		ptr = (eval_t *)&pr_globals[(unsigned short)st->a + ((int)b->_float)*3];
+		c->vector[0] = ptr->vector[0];
+		c->vector[1] = ptr->vector[1];
+		c->vector[2] = ptr->vector[2];
 		break;
 
 	case OP_IFNOT:
 		if (!a->_int)
-			s += st->b - 1; // -1 to offset the s++
+			st += st->b - 1; // -1 to offset the st++
 		break;
 
 	case OP_IF:
 		if (a->_int)
-			s += st->b - 1; // -1 to offset the s++
+			st += st->b - 1; // -1 to offset the st++
 		break;
 
 	case OP_GOTO:
-		s += st->a - 1; // -1 to offset the s++
+		st += st->a - 1; // -1 to offset the st++
 		break;
 
 	case OP_CALL8:
@@ -839,44 +837,51 @@ while (1)
 	case OP_CALL1: // Copy first arg to shared space
 		VectorCopy(b->vector, G_VECTOR(OFS_PARM0));
 	case OP_CALL0:
+		pr_xfunction->profile += profile - startprofile;
+		startprofile = profile;
+		pr_xstatement = st - pr_statements;
 		pr_argc = st->op - OP_CALL0;
 		if (!a->function)
-			PR_RunError ("NULL function");
+			PR_RunError ("PR_ExecuteProgram: NULL function");
 
 		newf = &pr_functions[a->function];
-
+		// negative statements are built in functions
 		if (newf->first_statement < 0)
 		{ // Built-in function
 			i = -newf->first_statement;
 			if (i >= pr_numbuiltins)
-				PR_RunError ("Bad builtin call number");
+				PR_RunError ("PR_ExecuteProgram: bad builtin call number (%d, max = %d)", i, pr_numbuiltins);
 			pr_builtins[i] ();
 			break;
 		}
 		// Normal function
-		s = PR_EnterFunction (newf);
+		st = &pr_statements[PR_EnterFunction (newf)];
 		break;
 
 	case OP_DONE:
 	case OP_RETURN:
+		pr_xfunction->profile += profile - startprofile;
+		startprofile = profile;
+		pr_xstatement = st - pr_statements;
 		pr_globals[OFS_RETURN] = pr_globals[(unsigned short)st->a];
 		pr_globals[OFS_RETURN+1] = pr_globals[(unsigned short)st->a+1];
 		pr_globals[OFS_RETURN+2] = pr_globals[(unsigned short)st->a+2];
 
-		s = PR_LeaveFunction ();
+		st = &pr_statements[PR_LeaveFunction ()];
 		if (pr_depth == exitdepth)
 		{ // Done
-			return;
+			// Check old limit
+			if (pr_peakdepth >= 32)
+				Con_DWarning ("PR_ExecuteProgram: stack depth exceeds standard limit (%d, normal max = %d)\n", pr_peakdepth, 32 - 1);
+
+			return;		// all done
 		}
 		break;
 
 	case OP_STATE:
 		ed = PROG_TO_EDICT(*pr_global_struct.self);
 		ed->v.nextthink = *pr_global_struct.time + HX_FRAME_TIME;
-		if (a->_float != ed->v.frame)
-		{
-			ed->v.frame = a->_float;
-		}
+		ed->v.frame = a->_float;
 		ed->v.think = b->function;
 		break;
 
@@ -958,7 +963,8 @@ while (1)
 		ed = PROG_TO_EDICT(a->edict);
 		if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
 		{
-			PR_RunError ("assignment to world entity");
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: assignment to world entity");
 		}
 		ed->v.nextthink = *pr_global_struct.time + b->_float;
 		break;
@@ -990,13 +996,11 @@ while (1)
 	case OP_RAND2:
 		if (a->_float < b->_float)
 		{
-			val = a->_float+(rand()*(1.0/RAND_MAX)
-				*(b->_float-a->_float));
+			val = a->_float+(rand()*(1.0/RAND_MAX)*(b->_float-a->_float));
 		}
 		else
 		{
-			val = b->_float+(rand()*(1.0/RAND_MAX)
-				*(a->_float-b->_float));
+			val = b->_float+(rand()*(1.0/RAND_MAX)*(a->_float-b->_float));
 		}
 		G_FLOAT(OFS_RETURN) = val;
 		break;
@@ -1021,13 +1025,11 @@ while (1)
 		{
 			if (a->vector[i] < b->vector[i])
 			{
-				val = a->vector[i]+(rand()*(1.0/RAND_MAX)
-					*(b->vector[i]-a->vector[i]));
+				val = a->vector[i]+(rand()*(1.0/RAND_MAX)*(b->vector[i]-a->vector[i]));
 			}
 			else
 			{
-				val = b->vector[i]+(rand()*(1.0/RAND_MAX)
-					*(a->vector[i]-b->vector[i]));
+				val = b->vector[i]+(rand()*(1.0/RAND_MAX)*(a->vector[i]-b->vector[i]));
 			}
 			G_FLOAT(OFS_RETURN+i) = val;
 		}
@@ -1035,52 +1037,71 @@ while (1)
 	case OP_SWITCH_F:
 		case_type = SWITCH_F;
 		switch_float = a->_float;
-		s += st->b-1; // -1 to offset the s++
+		st += st->b-1; // -1 to offset the st++
 		break;
 	case OP_SWITCH_V:
-		PR_RunError ("switch v not done yet!");
+		pr_xstatement = st - pr_statements;
+		PR_RunError ("PR_ExecuteProgram: switch v not done yet!");
 		break;
 	case OP_SWITCH_S:
-		PR_RunError ("switch s not done yet!");
+		pr_xstatement = st - pr_statements;
+		PR_RunError ("PR_ExecuteProgram: switch s not done yet!");
 		break;
 	case OP_SWITCH_E:
-		PR_RunError ("switch e not done yet!");
+		pr_xstatement = st - pr_statements;
+		PR_RunError ("PR_ExecuteProgram: switch e not done yet!");
 		break;
 	case OP_SWITCH_FNC:
-		PR_RunError ("switch fnc not done yet!");
+		pr_xstatement = st - pr_statements;
+		PR_RunError ("PR_ExecuteProgram: switch fnc not done yet!");
 		break;
 
 	case OP_CASERANGE:
-			if (case_type!=SWITCH_F)
-				PR_RunError ("caserange fucked!");
-			if ((switch_float >= a->_float) && (switch_float <= b->_float))
-			{
-				s += st->c-1; // -1 to offset the s++
-			}
+		if (case_type != SWITCH_F)
+		{
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: caserange fucked!");
+		}
+		if ((switch_float >= a->_float) && (switch_float <= b->_float))
+		{
+			st += st->c-1; // -1 to offset the st++
+		}
 		break;
 	case OP_CASE:
 		switch (case_type)
 		{
 		case SWITCH_F:
-				if (switch_float == a->_float)
-				{
-					s += st->b-1; // -1 to offset the s++
-				}
-				break;
+			if (switch_float == a->_float)
+			{
+				st += st->b-1; // -1 to offset the st++
+			}
+			break;
 		case SWITCH_V:
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: case switch v not done yet!");
+			break;
 		case SWITCH_S:
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: case switch s not done yet!");
+			break;
 		case SWITCH_E:
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: case switch e not done yet!");
+			break;
 		case SWITCH_FNC:
-				PR_RunError ("case not done yet!");
-				break;
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: case switch fnc not done yet!");
+			break;
 		default:
-				PR_RunError ("fucked case!");
+			pr_xstatement = st - pr_statements;
+			PR_RunError ("PR_ExecuteProgram: fucked case!");
 
 		}
 		break;
 
 	default:
-		PR_RunError ("Bad opcode %i", st->op);
+		pr_xstatement = st - pr_statements;
+		PR_RunError ("PR_ExecuteProgram: bad opcode %i", st->op);
 	}
 }
 
