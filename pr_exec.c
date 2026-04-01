@@ -193,19 +193,25 @@ void PR_Profile_f (void)
 	int tally;
 	char *s;
 
+	if (!progs)
+	{
+		Con_SafePrintf ("No progs loaded, can't profile\n");
+		return;
+	}
+
 	byHC = false;
 	funcCount = 10;
 	*saveName = 0;
-	for(i = 1; i < Cmd_Argc(); i++)
+	for (i = 1; i < Cmd_Argc(); i++)
 	{
 		s = Cmd_Argv(i);
-		if(tolower(*s) == 'h')
+		if (tolower(*s) == 'h')
 		{ // Sort by HC source file
 			byHC = true;
 		}
-		else if(tolower(*s) == 's')
+		else if (tolower(*s) == 's')
 		{ // Save to file
-			if(i+1 < Cmd_Argc() && !isdigit(*Cmd_Argv(i+1)))
+			if (i+1 < Cmd_Argc() && !isdigit(*Cmd_Argv(i+1)))
 			{
 				i++;
 				sprintf(saveName, "%s/%s", com_gamedir, Cmd_Argv(i));
@@ -215,10 +221,10 @@ void PR_Profile_f (void)
 				sprintf(saveName, "%s/profile.txt", com_gamedir);
 			}
 		}
-		else if(isdigit(*s))
+		else if (isdigit(*s))
 		{ // Specify function count
 			funcCount = atoi(Cmd_Argv(i));
-			if(funcCount < 1)
+			if (funcCount < 1)
 			{
 				funcCount = 1;
 			}
@@ -226,42 +232,42 @@ void PR_Profile_f (void)
 	}
 
 	total = 0;
-	for(i = 0; i < progs->numfunctions; i++)
+	for (i = 0; i < progs->numfunctions; i++)
 	{
 		total += pr_functions[i].profile;
 	}
 
-	if(*saveName)
+	if (*saveName)
 	{ // Create the output file
-		if((saveFile = fopen(saveName, "w")) == NULL)
+		if ((saveFile = fopen(saveName, "w")) == NULL)
 		{
-			Con_Printf("Could not open %s\n", saveName);
+			Con_SafePrintf("Could not open %s\n", saveName);
 			return;
 		}
 	}
 
 
-	if(byHC == false)
+	if (byHC == false)
 	{
 		j = 0;
 		do
 		{
 			max = 0;
 			bestFunc = NULL;
-			for(i = 0; i < progs->numfunctions; i++)
+			for (i = 0; i < progs->numfunctions; i++)
 			{
 				f = &pr_functions[i];
-				if(f->profile > max)
+				if (f->profile > max)
 				{
 					max = f->profile;
 					bestFunc = f;
 				}
 			}
-			if(bestFunc)
+			if (bestFunc)
 			{
-				if(j < funcCount)
+				if (j < funcCount)
 				{
-					if(*saveName)
+					if (*saveName)
 					{
 						fprintf(saveFile, "%05.2f %s\n",
 							((float)bestFunc->profile/(float)total)*100.0,
@@ -269,7 +275,7 @@ void PR_Profile_f (void)
 					}
 					else
 					{
-						Con_Printf("%05.2f %s\n",
+						Con_SafePrintf("%05.2f %s\n",
 							((float)bestFunc->profile/(float)total)*100.0,
 							PR_GetString(bestFunc->s_name));
 					}
@@ -277,8 +283,8 @@ void PR_Profile_f (void)
 				j++;
 				bestFunc->profile = 0;
 			}
-		} while(bestFunc);
-		if(*saveName)
+		} while (bestFunc);
+		if (*saveName)
 		{
 			fclose(saveFile);
 		}
@@ -290,50 +296,50 @@ void PR_Profile_f (void)
 	{
 		tally = 0;
 		bestFile = INT_MAX;
-		for(i = 0; i < progs->numfunctions; i++)
+		for (i = 0; i < progs->numfunctions; i++)
 		{
-			if(pr_functions[i].s_file > currentFile
+			if (pr_functions[i].s_file > currentFile
 				&& pr_functions[i].s_file < bestFile)
 			{
 				bestFile = pr_functions[i].s_file;
 				tally = pr_functions[i].profile;
 				continue;
 			}
-			if(pr_functions[i].s_file == bestFile)
+			if (pr_functions[i].s_file == bestFile)
 			{
 				tally += pr_functions[i].profile;
 			}
 		}
 		currentFile = bestFile;
-		if(tally && currentFile != INT_MAX)
+		if (tally && currentFile != INT_MAX)
 		{
-			if(*saveName)
+			if (*saveName)
 			{
 				fprintf(saveFile, "\"%s\"\n", PR_GetString(currentFile));
 			}
 			else
 			{
-				Con_Printf("\"%s\"\n", PR_GetString(currentFile));
+				Con_SafePrintf("\"%s\"\n", PR_GetString(currentFile));
 			}
 			j = 0;
 			do
 			{
 				max = 0;
 				bestFunc = NULL;
-				for(i = 0; i < progs->numfunctions; i++)
+				for (i = 0; i < progs->numfunctions; i++)
 				{
 					f = &pr_functions[i];
-					if(f->s_file == currentFile && f->profile > max)
+					if (f->s_file == currentFile && f->profile > max)
 					{
 						max = f->profile;
 						bestFunc = f;
 					}
 				}
-				if(bestFunc)
+				if (bestFunc)
 				{
-					if(j < funcCount)
+					if (j < funcCount)
 					{
-						if(*saveName)
+						if (*saveName)
 						{
 							fprintf(saveFile, "   %05.2f %s\n",
 								((float)bestFunc->profile
@@ -342,7 +348,7 @@ void PR_Profile_f (void)
 						}
 						else
 						{
-							Con_Printf("   %05.2f %s\n",
+							Con_SafePrintf("   %05.2f %s\n",
 								((float)bestFunc->profile
 								/(float)total)*100.0,
 								PR_GetString(bestFunc->s_name));
@@ -351,10 +357,10 @@ void PR_Profile_f (void)
 					j++;
 					bestFunc->profile = 0;
 				}
-			} while(bestFunc);
+			} while (bestFunc);
 		}
-	} while(currentFile != INT_MAX);
-	if(*saveName)
+	} while (currentFile != INT_MAX);
+	if (*saveName)
 	{
 		fclose(saveFile);
 	}
