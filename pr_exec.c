@@ -30,6 +30,7 @@ typedef struct
 #define MAX_STACK_DEPTH 	256 //32
 prstack_t pr_stack[MAX_STACK_DEPTH];
 int pr_depth;
+int	pr_peakdepth;
 
 #define LOCALSTACK_SIZE 2048
 int localstack[LOCALSTACK_SIZE];
@@ -413,29 +414,26 @@ int PR_EnterFunction (dfunction_t *f)
 	pr_stack[pr_depth].s = pr_xstatement;
 	pr_stack[pr_depth].f = pr_xfunction;
 	pr_depth++;
-	if(pr_depth >= MAX_STACK_DEPTH)
-	{
-		PR_RunError("stack overflow");
-	}
+	if (pr_depth >= MAX_STACK_DEPTH)
+		PR_RunError ("PR_EnterFunction: stack overflow (%d, max = %d)", pr_depth, MAX_STACK_DEPTH - 1);
+
+	if (pr_depth > pr_peakdepth)
+		pr_peakdepth = pr_depth; // Remember peak depth
 
 	// save off any locals that the new function steps on
 	c = f->locals;
-	if(localstack_used + c > LOCALSTACK_SIZE)
-	{
-		PR_RunError ("PR_ExecuteProgram: locals stack overflow\n");
-	}
+	if (localstack_used + c > LOCALSTACK_SIZE)
+		PR_RunError ("PR_EnterFunction: locals stack overflow (%d, max = %d)", localstack_used + c, LOCALSTACK_SIZE);
 
-	for(i = 0; i < c ; i++)
-	{
+	for (i=0 ; i < c ; i++)
 		localstack[localstack_used+i] = ((int *)pr_globals)[f->parm_start + i];
-	}
 	localstack_used += c;
 
 	// copy parameters
 	o = f->parm_start;
-	for(i = 0; i < f->numparms; i++)
+	for (i=0 ; i<f->numparms ; i++)
 	{
-		for(j = 0; j < f->parm_size[i]; j++)
+		for (j=0 ; j<f->parm_size[i] ; j++)
 		{
 			((int *)pr_globals)[o] = ((int *)pr_globals)[OFS_PARM0+i*3+j];
 			o++;
@@ -455,24 +453,17 @@ int PR_LeaveFunction (void)
 {
 	int i, c;
 
-	if(pr_depth <= 0)
-	{
-		Host_Error("prog stack underflow");
-	}
+	if (pr_depth <= 0)
+		PR_RunError ("PR_LeaveFunction: prog stack underflow (%d)", pr_depth);
 
 	// Restore locals from the stack
 	c = pr_xfunction->locals;
 	localstack_used -= c;
-	if(localstack_used < 0)
-	{
-		PR_RunError("PR_ExecuteProgram: locals stack underflow\n");
-	}
+	if (localstack_used < 0)
+		PR_RunError ("PR_LeaveFunction: locals stack underflow (%d)", localstack_used);
 
 	for (i=0 ; i < c ; i++)
-	{
-		((int *)pr_globals)[pr_xfunction->parm_start+i] =
-			localstack[localstack_used+i];
-	}
+		((int *)pr_globals)[pr_xfunction->parm_start + i] = localstack[localstack_used+i];
 
 	// up stack
 	pr_depth--;
