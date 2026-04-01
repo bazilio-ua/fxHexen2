@@ -99,22 +99,22 @@ void GL_Overbright (void)
 
 /*
 ====================
-R_TranslucentAlpha
+R_TransAlpha
 ====================
 */
-void R_TranslucentAlpha (void)
+void R_TransAlpha (void)
 {
-	map_translucentalpha = CLAMP(0.0, r_translucentalpha.value, 1.0);
+	map_transalpha = CLAMP(0.0, r_transalpha.value, 1.0);
 }
 
 /*
 ====================
-R_TransparentAlpha
+R_TableAlpha -- set transparency for table values
 ====================
 */
-void R_TransparentAlpha (void)
+void R_TableAlpha (void)
 {
-	map_transparentalpha = CLAMP(0.0, r_transparentalpha.value, 1.0);
+	map_tablealpha = CLAMP(0.0, r_tablealpha.value, 1.0);
 	
 	V_ReloadPalette ();
 }
@@ -191,8 +191,8 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_drawviewmodel);
 	Cvar_RegisterVariable (&r_waterquality);
 	Cvar_RegisterVariableCallback (&r_wateralpha, R_WaterAlpha);
-	Cvar_RegisterVariableCallback (&r_translucentalpha, R_TranslucentAlpha);
-	Cvar_RegisterVariableCallback (&r_transparentalpha, R_TransparentAlpha);
+	Cvar_RegisterVariableCallback (&r_transalpha, R_TransAlpha);
+	Cvar_RegisterVariableCallback (&r_tablealpha, R_TableAlpha);
 	Cvar_RegisterVariableCallback (&r_spritealpha, R_SpriteAlpha);
 	Cvar_RegisterVariable (&r_lockalpha);
 	Cvar_RegisterVariableCallback (&r_lavaalpha, R_LavaAlpha);
@@ -364,8 +364,8 @@ void R_InitSkyBoxTextures (void)
 }
 
 float	map_wateralpha, map_lavaalpha, map_telealpha, map_slimealpha;
-float	map_translucentalpha = 0.6f;
-float	map_transparentalpha = 0.5f;
+float	map_transalpha = 0.6f;
+float	map_tablealpha = 0.5f;
 float	map_spritealpha = 1.0f;
 
 /*
