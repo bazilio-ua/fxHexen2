@@ -376,20 +376,19 @@ Aborts the currently executing function
 void PR_RunError (char *error, ...)
 {
 	va_list argptr;
-	char string[1024];
+	char string[MAX_PRINTMSG]; //1024
 
-	va_start(argptr,error);
-	vsprintf(string,error,argptr);
-	va_end(argptr);
+	va_start (argptr,error);
+	vsprintf (string,error,argptr);
+	va_end (argptr);
 
-	PR_PrintStatement(pr_statements + pr_xstatement);
-	PR_StackTrace();
-
-	Con_Printf("%s\n", string);
+	PR_PrintStatement (pr_statements + pr_xstatement);
+	PR_StackTrace ();
+	Con_SafePrintf ("%s\n", string);
 
 	pr_depth = 0; // dump the stack so host_error can shutdown functions
 
-	Host_Error("Program error");
+	Host_Error ("Program error");
 }
 
 /*
