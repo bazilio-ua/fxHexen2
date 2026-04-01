@@ -148,27 +148,27 @@ PR_StackTrace
 */
 void PR_StackTrace (void)
 {
-	int i;
 	dfunction_t	*f;
+	int i;
 
-	if(pr_depth == 0)
+	if (pr_depth <= 0)
 	{
-		Con_Printf("<NO STACK>\n");
+		Con_SafePrintf ("<NO STACK>\n");
 		return;
 	}
 
+	if (pr_depth > MAX_STACK_DEPTH)
+		pr_depth = MAX_STACK_DEPTH;
+
+	pr_stack[pr_depth].s = pr_xstatement;
 	pr_stack[pr_depth].f = pr_xfunction;
-	for(i = pr_depth; i >= 0; i--)
+	for (i=pr_depth ; i>0 ; i--)
 	{
 		f = pr_stack[i].f;
-		if(!f)
-		{
-			Con_Printf("<NO FUNCTION>\n");
-		}
+		if (!f)
+			Con_SafePrintf ("<NO FUNCTION>\n");
 		else
-		{
-			Con_Printf("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
-		}
+			Con_SafePrintf ("%12s : %s\n", PR_GetString(f->s_file), PR_GetString(f->s_name));
 	}
 }
 
