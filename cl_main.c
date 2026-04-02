@@ -814,8 +814,97 @@ void CL_RelinkEntities (void)
 					CL_ColorDlightPaletteLength (dl, DL_COLOR_YELLOWRED_FLASH);
 			}
 			else
+			if (!strcmp (ent->model->name, "models/drgnball.mdl"))
 			{
-//				Con_Printf("model: %s\n", ent->model->name);
+				
+			}
+			else if (!strcmp (ent->model->name, "models/eidoball.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/lavaball.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/glowball.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/fireball.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/famshot.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/pestshot.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/mumshot.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/scrbstp1.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/scrbpbdy.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/iceshot2.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/iceshot1.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/flaming.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/sucwp1p.mdl")) // portals
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/sucwp2p.mdl")) // portals
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/goop.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/purfir1.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/golemmis.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/shard.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/shardice.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/snakearr.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/spit.mdl"))
+			{
+				
+			}
+			else if (!strcmp (ent->model->name, "models/spike.mdl"))
+			{
+				
 			}
 		}
 
