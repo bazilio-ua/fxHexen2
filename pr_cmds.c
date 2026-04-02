@@ -288,7 +288,7 @@ void PF_setpuzzlemodel (void)
 
 	if (!*check)
 	{
-//		PR_RunError ("no precache: %s\n", NewName);
+//		PR_RunError ("PF_setpuzzlemodel: no precache: %s\n", NewName);
 		Con_Printf("**** NO PRECACHE FOR PUZZLE PIECE:");
 		Con_Printf("**** %s\n",NewName);
 
@@ -786,11 +786,9 @@ void PF_break (void)
 
 		Con_Printf ("break statement\n");
 
-//		DebugBreak();//WIN32
-
 		//*(int *)-4 = 0;	// dump to debugger
 	}
-//	PR_RunError ("break statement");
+//	PR_RunError ("PF_break: break statement");
 }
 
 void PR_SetTrace (trace_t trace)
@@ -1073,7 +1071,7 @@ void PF_stuffcmd (void)
 	
 	entnum = G_EDICTNUM(OFS_PARM0);
 	if (entnum < 1 || entnum > svs.maxclients)
-		PR_RunError ("Parm 0 not a client");
+		PR_RunError ("PF_stuffcmd: parm 0 not a client");
 	str = G_STRING(OFS_PARM1);	
 	
 	old = host_client;
@@ -1365,7 +1363,7 @@ void PF_FindFloat (void)
 void PR_CheckEmptyString (char *s)
 {
 	if (s[0] <= ' ')
-		PR_RunError ("Bad string");
+		PR_RunError ("PR_CheckEmptyString: bad string");
 }
 
 void PF_precache_file (void)
@@ -1380,7 +1378,7 @@ void PF_precache_sound (void)
 	int		i;
 	
 	if (sv.state != ss_loading && !ignore_precache)
-		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
+		PR_RunError ("PF_precache_sound: precache can only be done in spawn functions");
 		
 	s = G_STRING(OFS_PARM0);
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
@@ -1430,7 +1428,7 @@ void PF_precache_model (void)
 	int		i;
 	
 	if (sv.state != ss_loading && !ignore_precache)
-		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
+		PR_RunError ("PF_precache_model: precache can only be done in spawn functions");
 		
 	s = G_STRING(OFS_PARM0);
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
@@ -1482,7 +1480,7 @@ void PF_precache_puzzle_model (void)
 	char	*s,temp[256],*m;
 	
 	if (sv.state != ss_loading && !ignore_precache)
-		PR_RunError ("PF_Precache_*: Precache can only be done in spawn functions");
+		PR_RunError ("PF_precache_puzzle_model: precache can only be done in spawn functions");
 		
 	m = G_STRING(OFS_PARM0);
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
@@ -2074,7 +2072,7 @@ void PF_setspawnparms (void)
 	ent = G_EDICT(OFS_PARM0);
 	i = NUM_FOR_EDICT(ent);
 	if (i < 1 || i > svs.maxclients)
-		PR_RunError ("Entity is not a client");
+		PR_RunError ("PF_setspawnparms: entity is not a client");
 
 	// copy spawn parms out of the client_t
 	client = svs.clients + (i-1);
@@ -2123,7 +2121,7 @@ void PF_sqrt (void)
 
 void PF_Fixme (void)
 {
-	PR_RunError ("unimplemented builtin");
+	PR_RunError ("PF_Fixme: unimplemented builtin");
 }
 
 
