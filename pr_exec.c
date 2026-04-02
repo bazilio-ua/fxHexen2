@@ -1040,20 +1040,11 @@ while (1)
 		st += st->b-1; // -1 to offset the st++
 		break;
 	case OP_SWITCH_V:
-		pr_xstatement = st - pr_statements;
-		PR_RunError ("PR_ExecuteProgram: switch v not done yet!");
-		break;
 	case OP_SWITCH_S:
-		pr_xstatement = st - pr_statements;
-		PR_RunError ("PR_ExecuteProgram: switch s not done yet!");
-		break;
 	case OP_SWITCH_E:
-		pr_xstatement = st - pr_statements;
-		PR_RunError ("PR_ExecuteProgram: switch e not done yet!");
-		break;
 	case OP_SWITCH_FNC:
 		pr_xstatement = st - pr_statements;
-		PR_RunError ("PR_ExecuteProgram: switch fnc not done yet!");
+		PR_RunError ("PR_ExecuteProgram: %s not done yet!", pr_opnames[st->op]);
 		break;
 
 	case OP_CASERANGE:
@@ -1077,20 +1068,11 @@ while (1)
 			}
 			break;
 		case SWITCH_V:
-			pr_xstatement = st - pr_statements;
-			PR_RunError ("PR_ExecuteProgram: case switch v not done yet!");
-			break;
 		case SWITCH_S:
-			pr_xstatement = st - pr_statements;
-			PR_RunError ("PR_ExecuteProgram: case switch s not done yet!");
-			break;
 		case SWITCH_E:
-			pr_xstatement = st - pr_statements;
-			PR_RunError ("PR_ExecuteProgram: case switch e not done yet!");
-			break;
 		case SWITCH_FNC:
 			pr_xstatement = st - pr_statements;
-			PR_RunError ("PR_ExecuteProgram: case switch fnc not done yet!");
+			PR_RunError ("PR_ExecuteProgram: OP_CASE for %s not done yet!", pr_opnames[case_type + OP_SWITCH_F - SWITCH_F]);
 			break;
 		default:
 			pr_xstatement = st - pr_statements;
