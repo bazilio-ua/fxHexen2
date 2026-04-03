@@ -836,15 +836,15 @@ void CL_RelinkEntities (void)
 
 				CL_ColorDlightPaletteIndices (dl, DL_COLOR_GLOWBALL);
 			}
-			else if (!strcmp (ent->model->name, "models/fireball.mdl"))
-			{
-				dl = CL_AllocDlight (key);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 200;
-				dl->die = cl.time + 0.01;
-
-				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
-			}
+//			else if (!strcmp (ent->model->name, "models/fireball.mdl"))
+//			{
+//				dl = CL_AllocDlight (key);
+//				VectorCopy (ent->origin,  dl->origin);
+//				dl->radius = 200;
+//				dl->die = cl.time + 0.01;
+//
+//				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
+//			}
 			else if (!strcmp (ent->model->name, "models/famshot.mdl"))
 			{
 				dl = CL_AllocDlight (key);
@@ -916,15 +916,15 @@ void CL_RelinkEntities (void)
 
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME5);
 			}
-			else if (!strcmp (ent->model->name, "models/sucwp2p.mdl")) // portals
-			{
-				dl = CL_AllocDlight (key);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 200;
-				dl->die = cl.time + 0.01;
-
-				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ACIDSHOT);
-			}
+//			else if (!strcmp (ent->model->name, "models/sucwp2p.mdl")) // portals
+//			{
+//				dl = CL_AllocDlight (key);
+//				VectorCopy (ent->origin,  dl->origin);
+//				dl->radius = 200;
+//				dl->die = cl.time + 0.01;
+//
+//				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ACIDSHOT);
+//			}
 			else if (!strcmp (ent->model->name, "models/goop.mdl"))
 			{
 				dl = CL_AllocDlight (key);
@@ -975,15 +975,15 @@ void CL_RelinkEntities (void)
 
 				CL_ColorDlightPaletteIndices (dl, DL_COLOR_SNAKEARR);
 			}
-			else if (!strcmp (ent->model->name, "models/spit.mdl"))
-			{
-				dl = CL_AllocDlight (key);
-				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 200;
-				dl->die = cl.time + 0.01;
-
-				CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
-			}
+//			else if (!strcmp (ent->model->name, "models/spit.mdl"))
+//			{
+//				dl = CL_AllocDlight (key);
+//				VectorCopy (ent->origin,  dl->origin);
+//				dl->radius = 200;
+//				dl->die = cl.time + 0.01;
+//
+//				CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
+//			}
 			else if (!strcmp (ent->model->name, "models/spike.mdl"))
 			{
 				dl = CL_AllocDlight (key);
@@ -1070,8 +1070,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin,  dl->origin);
 				dl->radius = 200;
 				dl->die = cl.time + 0.001;
-				
-				// orange
+
+				CL_ColorDlightPalette (dl, DL_COLOR_31); // uncoloured (white light)
 			}
 		}
 		if (ent->effects & EF_MUZZLEFLASH)
@@ -1187,8 +1187,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
-				
-				// red
+				// "models/fireball.mdl"
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
 			}
 		}
 		else if (ent->model->flags & EF_ACIDBALL)
@@ -1200,8 +1200,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 120 - (rand() % 20);
 				dl->die = cl.time + 0.01;
-				
-				// green
+				// "models/sucwp2p.mdl"
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ACIDSHOT);
 			}
 		}
 		else if (ent->model->flags & EF_ICE)
@@ -1217,8 +1217,8 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = -120 - (rand() % 20);
 				dl->die = cl.time + 0.05;
-				
-				// green
+				// "models/spit.mdl"
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
 			}
 		}
 		else if (ent->model->flags & EF_SPELL)
