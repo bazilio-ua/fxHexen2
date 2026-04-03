@@ -1257,7 +1257,7 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = 240 - (rand() % 20);
 				dl->die = cl.time + 0.01;
-				
+				// "models/scrbstp1.mdl"
 				CL_ColorDlightPalette (dl, DL_COLOR_120);
 			}
 		}
