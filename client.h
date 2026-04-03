@@ -167,6 +167,7 @@ typedef struct
 #define DL_COLOR_LIGHTNING	147, 13
 #define DL_COLOR_TELERED	131, 13
 #define DL_COLOR_REDCLOUD	136, 8
+#define DL_COLOR_FAMSHOT	136, 8
 
 #define DL_COLOR_SPELL		39, 3
 #define DL_COLOR_SPELL_M	132, 5
@@ -187,6 +188,7 @@ typedef struct
 #define DL_COLOR_FLAME2		174, 2
 #define DL_COLOR_FLAME3		168, 8
 #define DL_COLOR_FLAME4		170, 6
+#define DL_COLOR_FLAME5		164, 12
 #define DL_COLOR_SUN		169, 7
 #define DL_COLOR_FLAMEWALL	162, 13
 #define DL_COLOR_FLAMEWALL2	162, 14
@@ -210,6 +212,12 @@ typedef struct
 #define DL_COLOR_G_ORANGE	251, 4	// glow orange
 #define DL_COLOR_BLDRN_EXPL	251, 5
 #define DL_COLOR_ACID_EXPL	186, 6
+#define DL_COLOR_GOLEMMIS	128, 16	// all red
+#define DL_COLOR_SPIKE		169, 4
+
+#define DL_COLOR_SHARD0	(int []) {27, 47, 249, 250}, 4
+#define DL_COLOR_SHARD1	(int []) {13, 14, 15, 16, 17, 20, 21}, 7
+#define DL_COLOR_SHARD2	(int []) {211, 212, 213, 226}, 4
 
 #define DL_COLOR_LBALL_EXPL	(int []) {28, 31, 44, 45, 46, 47}, 6
 #define DL_COLOR_BOMB		(int []) {170, 171, 172, 173, 174, 175, 255}, 7
@@ -218,6 +226,14 @@ typedef struct
 #define DL_COLOR_MM_EXPLOSION	(int []) {28, 31, 47, 159}, 4
 #define DL_COLOR_MEZZO_REF	(int []) {135, 139, 140, 143}, 4
 #define DL_COLOR_RED_ARROW	(int []) {135, 137, 140, 143}, 4	// red arrow, skin1
+#define DL_COLOR_FIREBALL	(int []) {163, 165, 167, 169, 171, 173, 175, 252, 254}, 9
+#define DL_COLOR_GLOWBALL	(int []) {249, 250, 255}, 3
+#define DL_COLOR_PESTSHOT	(int []) {185, 186, 187, 188, 189, 190, 191, 243, 244, 245, 246}, 11
+#define DL_COLOR_ICESHOT1	(int []) {28, 47, 149, 151, 152, 153, 154, 155, 156, 157, 159}, 11
+#define DL_COLOR_ICESHOT2	(int []) {25, 26, 27, 28, 29, 30, 31, 255}, 8
+#define DL_COLOR_GOOP		(int []) {131, 133, 135, 137, 139, 141, 143, 252, 254}, 9
+#define DL_COLOR_SNAKEARR	(int []) {183, 184, 185, 186, 187, 188, 189, 190, 191, 245, 246}, 11
+#define DL_COLOR_ACIDSHOT	(int []) {108, 109, 110, 111, 185, 186, 187, 188, 189, 190, 243, 244, 245, 246}, 14
 
 #define	MAX_EFRAGS	8192 // fx 4096 // was 2048 // orig. was 640
 

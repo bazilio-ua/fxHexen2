@@ -770,9 +770,9 @@ void CL_RelinkEntities (void)
 				CL_ColorDlightPalette (dl, DL_COLOR_175);
 			}
 			else if (!strcmp (ent->model->name, "models/cflmtrch.mdl") || // blackmarsh castle (in the 'portals' mission pack, this is not a static model)
-					 !strcmp (ent->model->name, "models/mflmtrch.mdl") || // meso
-					 !strcmp (ent->model->name, "models/eflmtrch.mdl") || // egypt
-					 !strcmp (ent->model->name, "models/rflmtrch.mdl"))   // romeric
+					 !strcmp (ent->model->name, "models/mflmtrch.mdl") || // meso (Mazaera)
+					 !strcmp (ent->model->name, "models/eflmtrch.mdl") || // egypt (Thysis)
+					 !strcmp (ent->model->name, "models/rflmtrch.mdl"))   // romeric (Septimus)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
@@ -813,98 +813,185 @@ void CL_RelinkEntities (void)
 				else if (ent->skinnum == 2)
 					CL_ColorDlightPaletteLength (dl, DL_COLOR_YELLOWRED_FLASH);
 			}
-			else
-			if (!strcmp (ent->model->name, "models/drgnball.mdl"))
+			else if (!strcmp (ent->model->name, "models/drgnball.mdl") ||
+					 !strcmp (ent->model->name, "models/eidoball.mdl")) // almost identical
 			{
-				// fire ball
-			}
-			else if (!strcmp (ent->model->name, "models/eidoball.mdl"))
-			{
-				// fire ball
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 250;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_FIREBALL);
 			}
 			else if (!strcmp (ent->model->name, "models/lavaball.mdl"))
 			{
-				
+				// not used in h2?
 			}
 			else if (!strcmp (ent->model->name, "models/glowball.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 300;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_GLOWBALL);
 			}
 			else if (!strcmp (ent->model->name, "models/fireball.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
 			}
 			else if (!strcmp (ent->model->name, "models/famshot.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FAMSHOT);
 			}
 			else if (!strcmp (ent->model->name, "models/pestshot.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_PESTSHOT);
 			}
 			else if (!strcmp (ent->model->name, "models/mumshot.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME5);
 			}
 			else if (!strcmp (ent->model->name, "models/scrbstp1.mdl"))
 			{
-				
+				// just flying scarab
 			}
 			else if (!strcmp (ent->model->name, "models/scrbpbdy.mdl"))
 			{
-				
+				// just flying scarab
 			}
 			else if (!strcmp (ent->model->name, "models/iceshot2.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 150;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ICESHOT2);
 			}
 			else if (!strcmp (ent->model->name, "models/iceshot1.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 150;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ICESHOT1);
 			}
 			else if (!strcmp (ent->model->name, "models/flaming.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME3);
 			}
 			else if (!strcmp (ent->model->name, "models/sucwp1p.mdl")) // portals
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME5);
 			}
 			else if (!strcmp (ent->model->name, "models/sucwp2p.mdl")) // portals
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ACIDSHOT);
 			}
 			else if (!strcmp (ent->model->name, "models/goop.mdl"))
 			{
-				
-			}
-			else if (!strcmp (ent->model->name, "models/purfir1.mdl"))
-			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_GOOP);
 			}
 			else if (!strcmp (ent->model->name, "models/golemmis.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_GOLEMMIS);
 			}
 			else if (!strcmp (ent->model->name, "models/shard.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin, dl->origin);
+				dl->radius = 100;
+				dl->die = cl.time + 0.1;
+
+				if (ent->skinnum == 0) // skin0 ice
+					CL_ColorDlightPaletteIndices (dl, DL_COLOR_SHARD0);
+				else if (ent->skinnum == 1) // skin1 rock
+					CL_ColorDlightPaletteIndices (dl, DL_COLOR_SHARD1);
+				else if (ent->skinnum == 2) // skin2 ashes
+					CL_ColorDlightPaletteIndices (dl, DL_COLOR_SHARD2);
 			}
 			else if (!strcmp (ent->model->name, "models/shardice.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
 			}
 			else if (!strcmp (ent->model->name, "models/snakearr.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteIndices (dl, DL_COLOR_SNAKEARR);
 			}
 			else if (!strcmp (ent->model->name, "models/spit.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 200;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
 			}
 			else if (!strcmp (ent->model->name, "models/spike.mdl"))
 			{
-				
+				dl = CL_AllocDlight (key);
+				VectorCopy (ent->origin,  dl->origin);
+				dl->radius = 50;
+				dl->die = cl.time + 0.01;
+
+				CL_ColorDlightPaletteLength (dl, DL_COLOR_SPIKE);
 			}
 		}
 
@@ -936,7 +1023,7 @@ void CL_RelinkEntities (void)
 
 				
 				if (!strcmp (ent->model->name, "models/drgnball.mdl"))
-					CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME);
+					CL_ColorDlightPaletteIndices (dl, DL_COLOR_FIREBALL);
 				else
 					CL_ColorDlightPalette (dl, DL_COLOR_255); // uncoloured (full white)
 			}
