@@ -261,7 +261,10 @@ void CL_ParseServerInfo (void)
 	if (i != PROTOCOL_RAVEN_111 && 
 		i != PROTOCOL_RAVEN_112 && 
 		i != PROTOCOL_UQE_113)
+	{
+		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
 		Host_Error ("Server returned version %i, not %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+	}
 
 	cl.protocol = i;
 

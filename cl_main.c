@@ -816,11 +816,11 @@ void CL_RelinkEntities (void)
 			else
 			if (!strcmp (ent->model->name, "models/drgnball.mdl"))
 			{
-				
+				// fire ball
 			}
 			else if (!strcmp (ent->model->name, "models/eidoball.mdl"))
 			{
-				
+				// fire ball
 			}
 			else if (!strcmp (ent->model->name, "models/lavaball.mdl"))
 			{
