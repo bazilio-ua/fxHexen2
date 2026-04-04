@@ -441,6 +441,7 @@ extern	cvar_t	cl_prettylights;
 extern	cvar_t	cl_coloredlight;
 extern	cvar_t	cl_extradlight;
 extern	cvar_t	cl_extradlightstatic;
+extern	cvar_t	cl_extradlighteffect;
 
 extern	cvar_t	cl_pitchdriftspeed;
 extern	cvar_t	lookspring;

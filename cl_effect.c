@@ -288,7 +288,7 @@ void CL_ParseEffect(void)
 				if ((cl.Effects[index].type == CE_WHITE_SMOKE) || 
 					(cl.Effects[index].type == CE_SLOW_WHITE_SMOKE))
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -303,7 +303,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_GREEN_SMOKE)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -318,7 +318,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_GREY_SMOKE)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -333,7 +333,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_RED_SMOKE)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -348,7 +348,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_TELESMK1)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -363,7 +363,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_TELESMK2)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -378,7 +378,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_REDCLOUD)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -393,7 +393,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FLAMESTREAM)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -408,7 +408,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_ACID_MUZZFL)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -425,7 +425,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FLAMEWALL)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -440,7 +440,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FLAMEWALL2)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -457,7 +457,7 @@ void CL_ParseEffect(void)
 				{	// portals
 					float rdm = rand() & 3;
 
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -492,7 +492,7 @@ void CL_ParseEffect(void)
 
 				if (cl.Effects[index].type == CE_GHOST)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -555,7 +555,7 @@ void CL_ParseEffect(void)
 
 				if (cl.Effects[index].type == CE_BLUESPARK)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -570,7 +570,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_YELLOWSPARK)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -585,7 +585,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_SM_CIRCLE_EXP)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -600,7 +600,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BG_CIRCLE_EXP)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -615,7 +615,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_SM_WHITE_FLASH)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -630,7 +630,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_YELLOWRED_FLASH)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -646,7 +646,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_SM_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -661,7 +661,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_LG_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -676,7 +676,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -691,7 +691,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FLOOR_EXPLOSION3)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -706,7 +706,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BLUE_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -721,7 +721,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_REDSPARK)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -736,7 +736,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_GREENSPARK)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -751,7 +751,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_ICEHIT)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -766,7 +766,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_MEDUSA_HIT)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -781,7 +781,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_MEZZO_REFLECT)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -800,7 +800,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_XBOW_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -815,7 +815,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_NEW_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -830,7 +830,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_MAGIC_MISSILE_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -845,7 +845,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BONE_EXPLOSION)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -860,7 +860,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BLDRN_EXPL)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -875,7 +875,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_ACID_HIT)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -890,7 +890,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_ACID_SPLAT)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -905,7 +905,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_ACID_EXPL)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -922,7 +922,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FBOOM)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -937,7 +937,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BOMB)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -952,7 +952,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_LBALL_EXPL)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -967,7 +967,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_SMALL)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -982,7 +982,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_MEDIUM)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -997,7 +997,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_FIREWALL_LARGE)
 				{	// portals
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1012,7 +1012,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BRN_BOUNCE)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1027,7 +1027,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_LSHOCK)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1065,7 +1065,7 @@ void CL_ParseEffect(void)
 
 				if (cl.Effects[index].type == CE_WHITE_FLASH)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1080,7 +1080,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_BLUE_FLASH)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1095,7 +1095,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_SM_BLUE_FLASH)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1110,7 +1110,7 @@ void CL_ParseEffect(void)
 				}
 				else if (cl.Effects[index].type == CE_RED_FLASH)
 				{
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1171,7 +1171,7 @@ void CL_ParseEffect(void)
 					cl.Effects[index].effect.Teleporter.velocity[i][2] = 0;
 					dir += 45;
 
-					if (cl_extradlight.value)
+					if (cl_extradlighteffect.value)
 					{
 						dl = CL_AllocDlight (0);
 						VectorCopy (ent->origin, dl->origin);
@@ -1206,7 +1206,7 @@ void CL_ParseEffect(void)
 				ent = &EffectEntities[cl.Effects[index].effect.Teleporter.entity_index[0]];
 				VectorCopy(cl.Effects[index].effect.Teleporter.origin, ent->origin);
 				
-				if (cl_extradlight.value)
+				if (cl_extradlighteffect.value)
 				{
 					dl = CL_AllocDlight (0);
 					VectorCopy (ent->origin, dl->origin);
