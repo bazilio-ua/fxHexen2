@@ -235,8 +235,6 @@ cvar_t	cl_minpitch = {"cl_minpitch", "-90", CVAR_NONE}; // variable pitch clampi
 
 cvar_t	cl_anglespeedkey = {"cl_anglespeedkey","1.5", CVAR_NONE};
 
-cvar_t	cl_prettylights = {"cl_prettylights","1", CVAR_NONE};
-
 /*
 ================
 CL_AdjustAngles

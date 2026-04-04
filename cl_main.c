@@ -33,6 +33,8 @@ cvar_t	cl_shownet = {"cl_shownet","0", CVAR_NONE};	// can be 0, 1, or 2
 cvar_t	cl_nolerp = {"cl_nolerp","0", CVAR_NONE};
 cvar_t	cl_lerpmuzzleflash = {"cl_lerpmuzzleflash","0", CVAR_NONE};
 
+cvar_t	cl_prettylights = {"cl_prettylights","1", CVAR_NONE};
+
 cvar_t	cl_coloredlight = {"cl_coloredlight","0", CVAR_ARCHIVE};
 cvar_t	cl_extradlight = {"cl_extradlight","0", CVAR_ARCHIVE};
 cvar_t	cl_extradlightstatic = {"cl_extradlightstatic","0", CVAR_ARCHIVE};
@@ -872,14 +874,14 @@ void CL_RelinkEntities (void)
 
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_FLAME5);
 			}
-			else if (!strcmp (ent->model->name, "models/scrbstp1.mdl"))
-			{
-				// just flying scarab
-			}
-			else if (!strcmp (ent->model->name, "models/scrbpbdy.mdl"))
-			{
-				// just flying scarab
-			}
+//			else if (!strcmp (ent->model->name, "models/scrbstp1.mdl"))
+//			{
+//				// just flying scarab
+//			}
+//			else if (!strcmp (ent->model->name, "models/scrbpbdy.mdl"))
+//			{
+//				// just flying scarab
+//			}
 			else if (!strcmp (ent->model->name, "models/iceshot2.mdl"))
 			{
 				dl = CL_AllocDlight (key);
@@ -1011,7 +1013,6 @@ void CL_RelinkEntities (void)
 				dl->radius = 400 + (rand()&31);
 				dl->die = cl.time + 0.001;
 				
-				
 				if (i == cl.viewentity)
 				{
 					// white
@@ -1020,7 +1021,6 @@ void CL_RelinkEntities (void)
 				{
 					
 				}
-
 				
 				if (!strcmp (ent->model->name, "models/drgnball.mdl"))
 					CL_ColorDlightPaletteIndices (dl, DL_COLOR_FIREBALL);
@@ -1046,7 +1046,6 @@ void CL_RelinkEntities (void)
 				{
 					
 				}
-
 				
 				CL_ColorDlightPalette (dl, DL_COLOR_29); // uncoloured (dim white)
 			}
@@ -1178,29 +1177,29 @@ void CL_RelinkEntities (void)
 			
 			// todo color
 		}
-		else if (ent->model->flags & EF_FIREBALL)
+		else if (ent->model->flags & EF_FIREBALL) // "models/fireball.mdl"
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_fireball);
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->radius = 120 - (rand() % 20);
+				dl->radius = 220 - (rand() % 20);
 				dl->die = cl.time + 0.01;
-				// "models/fireball.mdl"
+				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_G_ORANGE);
 			}
 		}
-		else if (ent->model->flags & EF_ACIDBALL)
+		else if (ent->model->flags & EF_ACIDBALL) // "models/sucwp2p.mdl"
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_acidball);
 			if (cl_prettylights.value)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->radius = 120 - (rand() % 20);
+				dl->radius = 220 - (rand() % 20);
 				dl->die = cl.time + 0.01;
-				// "models/sucwp2p.mdl"
+				
 				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ACIDSHOT);
 			}
 		}
@@ -1208,7 +1207,7 @@ void CL_RelinkEntities (void)
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_ice);
 		}
-		else if (ent->model->flags & EF_SPIT)
+		else if (ent->model->flags & EF_SPIT) // "models/spit.mdl"
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_spit);
 			if (cl_prettylights.value)
@@ -1217,7 +1216,7 @@ void CL_RelinkEntities (void)
 				VectorCopy (ent->origin, dl->origin);
 				dl->radius = -120 - (rand() % 20);
 				dl->die = cl.time + 0.05;
-				// "models/spit.mdl"
+				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_ICE);
 			}
 		}
@@ -1233,7 +1232,7 @@ void CL_RelinkEntities (void)
 		{
 			R_RocketTrail (oldorg, ent->origin, 6);
 		}
-		else if (ent->model->flags & EF_VORP_MISSILE)
+		else if (ent->model->flags & EF_VORP_MISSILE) // "models/vorpshot.mdl"
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_vorpal);
 			
@@ -1241,13 +1240,13 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->radius = 240 - (rand() % 20);
+				dl->radius = 220 - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_V_SHOT);
 			}
 		}
-		else if (ent->model->flags & EF_SET_STAFF)
+		else if (ent->model->flags & EF_SET_STAFF) // "models/scrbstp1.mdl"
 		{
 			R_RocketTrail (oldorg, ent->origin,rt_setstaff);
 			
@@ -1255,13 +1254,13 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->radius = 240 - (rand() % 20);
+				dl->radius = 220 - (rand() % 20);
 				dl->die = cl.time + 0.01;
-				// "models/scrbstp1.mdl"
+				
 				CL_ColorDlightPalette (dl, DL_COLOR_120);
 			}
 		}
-		else if (ent->model->flags & EF_MAGICMISSILE)
+		else if (ent->model->flags & EF_MAGICMISSILE) // "models/ball.mdl"
 		{
 			if ((rand() & 3) < 1)
 				R_RocketTrail (oldorg, ent->origin, rt_magicmissile);
@@ -1270,8 +1269,8 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-//				dl->radius = 240 - (rand() % 20);
-				dl->radius = ((ent->effects & EF_DIMLIGHT) ? 340 : 240) - (rand() % 20);
+//				dl->radius = 220 - (rand() % 20);
+				dl->radius = ((ent->effects & EF_DIMLIGHT) ? 320 : 220) - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
 				CL_ColorDlightPaletteLength (dl, DL_COLOR_BALL);
@@ -1281,7 +1280,7 @@ void CL_RelinkEntities (void)
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_boneshard);
 		}
-		else if (ent->model->flags & EF_SCARAB)
+		else if (ent->model->flags & EF_SCARAB) // "models/scrbpwng.mdl"
 		{
 			R_RocketTrail (oldorg, ent->origin, rt_scarab);
 			
@@ -1289,7 +1288,7 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin, dl->origin);
-				dl->radius = 240 - (rand() % 20);
+				dl->radius = 220 - (rand() % 20);
 				dl->die = cl.time + 0.01;
 				
 				CL_ColorDlightPalette (dl, DL_COLOR_27);
@@ -1531,6 +1530,8 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&cl_nolerp);
 	Cvar_RegisterVariable (&cl_lerpmuzzleflash);
 
+	Cvar_RegisterVariable (&cl_prettylights);
+
 	Cvar_RegisterVariable (&cl_coloredlight);
 	Cvar_RegisterVariable (&cl_extradlight);
 	Cvar_RegisterVariable (&cl_extradlightstatic);
@@ -1543,7 +1544,6 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&m_yaw);
 	Cvar_RegisterVariable (&m_forward);
 	Cvar_RegisterVariable (&m_side);
-	Cvar_RegisterVariable (&cl_prettylights);
 
 	
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
