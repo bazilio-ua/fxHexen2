@@ -887,7 +887,7 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 150;
+				dl->radius = 200;
 				dl->die = cl.time + 0.01;
 
 				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ICESHOT2);
@@ -896,7 +896,7 @@ void CL_RelinkEntities (void)
 			{
 				dl = CL_AllocDlight (key);
 				VectorCopy (ent->origin,  dl->origin);
-				dl->radius = 150;
+				dl->radius = 100;
 				dl->die = cl.time + 0.01;
 
 				CL_ColorDlightPaletteIndices (dl, DL_COLOR_ICESHOT1);
