@@ -2493,7 +2493,7 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-byte		player_texels[MAX_PLAYER_CLASS][620*245];
+//byte		player_texels[MAX_PLAYER_CLASS][620*245];
 
 /*
 =================
