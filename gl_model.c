@@ -2681,9 +2681,12 @@ Mod_LoadAllSkins
 */
 void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 {
-	int		i, size;
+	int		i, j, k, size;
 	char	skinname[64];
 	byte	*texels;
+	daliasskingroup_t		*pinskingroup;
+	int		groupskins;
+	daliasskininterval_t	*pinskinintervals;
 	uintptr_t				offset; //johnfitz
 	unsigned int			texflags = TEXPREF_PAD;
 
@@ -2704,51 +2707,99 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 	for (i=0 ; i<numskins ; i++)
 	{
-		// save 8 bit texels for the player model to remap
-/*		if (!strcmp(loadmodel->name, "models/paladin.mdl") ||
-			!strcmp(loadmodel->name, "models/crusader.mdl") ||
-			!strcmp(loadmodel->name, "models/necro.mdl") ||
-			!strcmp(loadmodel->name, "models/assassin.mdl") ||
-			!strcmp(loadmodel->name, "models/succubus.mdl"))
-*/		{
-			texels = Hunk_AllocName(size, loadname);
-			pheader->texels[i] = texels - (byte *)pheader;
-			memcpy (texels, (byte *)(pskintype + 1), size);
-		}
-
-		offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
-		if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
+		if (pskintype->type == ALIAS_SKIN_SINGLE) 
 		{
-			if (texflags & TEXPREF_SPECIAL_TRANS) goto special;
-			
-			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
-			pheader->base[i][0] =
-			pheader->base[i][1] =
-			pheader->base[i][2] =
-			pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_NOBRIGHT);
+			// save 8 bit texels for the player model to remap
+/*			if (!strcmp(loadmodel->name, "models/paladin.mdl") ||
+				!strcmp(loadmodel->name, "models/crusader.mdl") ||
+				!strcmp(loadmodel->name, "models/necro.mdl") ||
+				!strcmp(loadmodel->name, "models/assassin.mdl") ||
+				!strcmp(loadmodel->name, "models/succubus.mdl"))
+*/			{
+				texels = Hunk_AllocName(size, loadname);
+				pheader->texels[i] = texels - (byte *)pheader;
+				memcpy (texels, (byte *)(pskintype + 1), size);
+			}
 
-			sprintf (skinname, "%s:frame%i_glow", loadmodel->name, i);
-			pheader->glow[i][0] =
-			pheader->glow[i][1] =
-			pheader->glow[i][2] =
-			pheader->glow[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_FULLBRIGHT);
-		}
-		else
-		{
+			offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
+			if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
+			{
+				if (texflags & TEXPREF_SPECIAL_TRANS) goto special;
+				
+				sprintf (skinname, "%s:frame%i", loadmodel->name, i);
+				pheader->base[i][0] =
+				pheader->base[i][1] =
+				pheader->base[i][2] =
+				pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_NOBRIGHT);
+
+				sprintf (skinname, "%s:frame%i_glow", loadmodel->name, i);
+				pheader->glow[i][0] =
+				pheader->glow[i][1] =
+				pheader->glow[i][2] =
+				pheader->glow[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_FULLBRIGHT);
+			}
+			else
+			{
 special:
-			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
-			pheader->base[i][0] =
-			pheader->base[i][1] =
-			pheader->base[i][2] =
-			pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags);
-			
-			pheader->glow[i][0] =
-			pheader->glow[i][1] =
-			pheader->glow[i][2] =
-			pheader->glow[i][3] = NULL;
-		}
+				sprintf (skinname, "%s:frame%i", loadmodel->name, i);
+				pheader->base[i][0] =
+				pheader->base[i][1] =
+				pheader->base[i][2] =
+				pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags);
+				
+				pheader->glow[i][0] =
+				pheader->glow[i][1] =
+				pheader->glow[i][2] =
+				pheader->glow[i][3] = NULL;
+			}
 
-		pskintype = (daliasskintype_t *)((byte *)(pskintype + 1) + size);
+			pskintype = (daliasskintype_t *)((byte *)(pskintype + 1) + size);
+		}
+		else 
+		{
+			// animating skin group.  yuck.
+			pskintype++;
+			pinskingroup = (daliasskingroup_t *)pskintype;
+			groupskins = LittleLong (pinskingroup->numskins);
+			pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
+
+			pskintype = (void *)(pinskinintervals + groupskins);
+
+			for (j=0 ; j<groupskins ; j++)
+			{
+				if (j == 0) 
+				{
+					texels = Hunk_AllocName(size, loadname);
+					pheader->texels[i] = texels - (byte *)pheader;
+					memcpy (texels, (byte *)(pskintype), size);
+				}
+
+				offset = (uintptr_t)(pskintype) - (uintptr_t)mod_base; //johnfitz
+				if (Mod_HasFullbrights ((byte *)(pskintype), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
+				{
+					if (texflags & TEXPREF_SPECIAL_TRANS) goto special2;
+
+					sprintf (skinname, "%s:frame%i_%i", loadmodel->name, i,j);
+					pheader->base[i][j&3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype), loadmodel->name, offset, texflags | TEXPREF_NOBRIGHT);
+
+					sprintf (skinname, "%s:frame%i_%i_glow", loadmodel->name, i,j);
+					pheader->glow[i][j&3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype), loadmodel->name, offset, texflags | TEXPREF_FULLBRIGHT);
+				}
+				else
+				{
+special2:
+					sprintf (skinname, "%s:frame%i_%i", loadmodel->name, i,j);
+					pheader->base[i][j&3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype), loadmodel->name, offset, texflags);
+
+					pheader->glow[i][j&3] = NULL;
+				}
+
+				pskintype = (daliasskintype_t *)((byte *)(pskintype) + size);
+			}
+			k = j;
+			for (/* */; j < 4; j++)
+				pheader->base[i][j&3] = pheader->base[i][j - k]; 
+		}
 	}
 
 	return (void *)pskintype;
