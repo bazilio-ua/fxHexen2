@@ -293,7 +293,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 256"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 128"

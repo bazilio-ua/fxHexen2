@@ -1209,7 +1209,7 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message\n");
+			Host_Error ("CL_ParseServerMessage: Illegible server message (%d)\n", cmd);
 			break;
 			
 		case svc_nop:
