@@ -571,7 +571,8 @@ void Mod_LoadTextures (lump_t *l)
 				mark = Hunk_LowMark ();
 				
 				if (tx->name[0] == '{') // holey texture (fence)
-					extraflags |= TEXPREF_ALPHA;
+//					extraflags |= TEXPREF_ALPHA;
+					extraflags |= TEXPREF_HOLEY;
 
 				offset = (uintptr_t)(mt+1) - (uintptr_t)mod_base;
 				if (Mod_HasFullbrights ((byte *)(tx+1), tx->width*tx->height))
