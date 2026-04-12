@@ -527,3 +527,6 @@ byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 byte	*Mod_NoVisPVS (model_t *model);
 
 void	Mod_FloodFillSkin (byte *skin, int skinwidth, int skinheight, char *name);
+
+float	Mod_PimpModel (edict_t *ed, float color[3]);
+

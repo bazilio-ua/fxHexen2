@@ -688,6 +688,43 @@ char *PR_GlobalStringNoContents (int ofs)
 	return line;
 }
 
+/*
+=============
+ED_GetEdictProperty
+
+Get the value of an edict property by name
+=============
+*/
+char *ED_GetEdictProperty (edict_t *ed, char *prop)
+{
+	static char	ret[1];
+	ddef_t	*d;
+	int		*v;
+	int		i;
+	char	*name;
+
+	ret[0] = '\0';
+
+	if (ed->free)
+		return ret;
+
+	for (i=1 ; i<progs->numfielddefs ; i++)
+	{
+		d = &pr_fielddefs[i];
+		name = PR_GetString(d->s_name);
+
+		if (!strncasecmp(name, prop, strlen(prop)))
+		{
+			v = (int *)((char *)&ed->v + d->ofs*4);
+			return PR_ValueString(d->type, (eval_t *)v);
+		}
+		else
+			continue;
+	}
+
+	return ret;
+}
+
 
 /*
 =============

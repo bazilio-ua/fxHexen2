@@ -2658,6 +2658,10 @@ void PF_doWhiteFlash(void)
 	MSG_WriteString (&sv.reliable_datagram, "wf\n");
 }
 
+void PF_pimpmodel (void)
+{
+	G_FLOAT(OFS_RETURN) = Mod_PimpModel(G_EDICT(OFS_PARM0), G_VECTOR(OFS_PARM1));
+}
 
 builtin_t pr_builtin[] =
 {
@@ -2792,7 +2796,7 @@ builtin_t pr_builtin[] =
 	PF_Fixme,
 	PF_Fixme,
 	PF_Fixme,
-	PF_Fixme,
+	PF_pimpmodel,   // float(entity e)  = #111
 	PF_Fixme,
 	PF_Fixme
 

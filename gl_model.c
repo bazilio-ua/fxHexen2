@@ -3437,6 +3437,51 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 
 /*
 ================
+Mod_PimpModel
+
+returns 1 if everything is ok, 0 otherwise (notably if it comes too early and the precaches are not done)
+================
+*/
+float Mod_PimpModel (edict_t *ed, float color[3])
+{
+	// Get handle on target model
+	int i = atoi(ED_GetEdictProperty(ed, "model"));
+	model_t *mod = cl.model_precache[i];
+
+	if (mod == NULL)
+		return 0;
+
+	// Replace the original mdl flags by those of the entity
+	mod->flags = atoi(ED_GetEdictProperty(ed, "flags"));
+
+//	// Retrieve the spawnflags
+//	int spawnflags = atoi(ED_GetEdictProperty(ed, "spawnflags"));
+//
+//	//Alpha
+//	float alpha = atof(ED_GetEdictProperty(ed, "abslight"));
+//
+//	// Orb offset
+//	vec3_t view_ofs;
+//	view_ofs[0] = atof(ED_GetEdictProperty(ed, "view_ofs_x"));
+//	view_ofs[1] = atof(ED_GetEdictProperty(ed, "view_ofs_y"));
+//	view_ofs[2] = atof(ED_GetEdictProperty(ed, "view_ofs_z"));
+//
+//	// Orb radius
+//	float radius = atof(ED_GetEdictProperty(ed, "health"));
+//
+//	// Light style
+//	int lightstyle = atoi(ED_GetEdictProperty(ed, "style"));
+//
+//	// Light radius
+//	int lightradius = atoi(ED_GetEdictProperty(ed, "max_health"));
+
+	return 1;
+}
+
+//=============================================================================
+
+/*
+================
 Mod_Print
 ================
 */
