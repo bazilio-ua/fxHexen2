@@ -72,6 +72,10 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-dedicated"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-mem 72"
             isEnabled = "NO">
          </CommandLineArgument>
@@ -80,7 +84,7 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "+playerclass 5 +map demo1 +chase_active 0"
+            argument = "+playerclass 5 +map demo1 +chase_active 1"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
