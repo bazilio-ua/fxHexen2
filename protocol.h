@@ -248,8 +248,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svc_update_kingofhill		51
 #define svc_toggle_statbar			52
 #define svc_sound_update_pos		53	//[short] ent+channel [coord3] pos
-#define	svc_mod_name		54	// [string] name (UQE v1.13 by Korax, music file name)
-#define	svc_skybox		55	// [string] name (UQE v1.13 by Korax, skybox name)
+
+#define	svc_mod_name				54	// [string] name (UQE v1.13 by Korax, music file name)
+#define	svc_skybox					55	// [string] name (UQE v1.13 by Korax, skybox name)
 
 
 //

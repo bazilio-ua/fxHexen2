@@ -72,6 +72,10 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
+            argument = "-dedicated"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
             argument = "-mem 72"
             isEnabled = "NO">
          </CommandLineArgument>

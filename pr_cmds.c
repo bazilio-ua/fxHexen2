@@ -651,26 +651,27 @@ void PF_ambientsound (void)
 	float		*pos;
 	float 		vol, attenuation;
 	int			i, soundnum;
-	int		SOUNDS_MAX; /* just to be on the safe side */
 
-	pos = G_VECTOR (OFS_PARM0);			
+	pos = G_VECTOR(OFS_PARM0);
 	samp = G_STRING(OFS_PARM1);
 	vol = G_FLOAT(OFS_PARM2);
 	attenuation = G_FLOAT(OFS_PARM3);
 	
 // check to see if samp was properly precached
-	SOUNDS_MAX = (sv.protocol == PROTOCOL_RAVEN_111) ? MAX_SOUNDS_OLD : MAX_SOUNDS;
-	for (soundnum=0, check = sv.sound_precache ; 
-		soundnum < SOUNDS_MAX && *check ; soundnum++, check++)
-	{
+	for (soundnum=0, check = sv.sound_precache ; *check ; check++, soundnum++)
 		if (!strcmp(*check,samp))
 			break;
-	}
 		
-	if (soundnum == SOUNDS_MAX || !*check)
+	if (!*check)
 	{
-		Con_Printf ("no precache: %s\n", samp);
+		Con_SafePrintf ("PF_ambientsound: no precache: %s\n", samp);
 		return;
+	}
+
+	if (soundnum > 255)
+	{
+		if (sv.protocol == PROTOCOL_RAVEN_111)
+			return; // don't send any info protocol can't support
 	}
 
 // add an svc_spawnambient command to the level signon packet
@@ -1374,18 +1375,16 @@ void PF_precache_file (void)
 void PF_precache_sound (void)
 {
 	char	*s;
-	int		SOUNDS_MAX; /* just to be on the safe side */
 	int		i;
 	
 	if (sv.state != ss_loading && !ignore_precache)
 		PR_RunError ("PF_precache_sound: precache can only be done in spawn functions");
-		
+
 	s = G_STRING(OFS_PARM0);
 	G_INT(OFS_RETURN) = G_INT(OFS_PARM0);
 	PR_CheckEmptyString (s);
 	
-	SOUNDS_MAX = (sv.protocol == PROTOCOL_RAVEN_111) ? MAX_SOUNDS_OLD : MAX_SOUNDS;
-	for (i=0 ; i<SOUNDS_MAX ; i++)
+	for (i=0 ; i < ((sv.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS) ; i++)
 	{
 		if (!sv.sound_precache[i])
 		{
@@ -1395,7 +1394,7 @@ void PF_precache_sound (void)
 		if (!strcmp(sv.sound_precache[i], s))
 			return;
 	}
-	PR_RunError ("PF_precache_sound: overflow");
+	PR_RunError ("PF_precache_sound: overflow, max = %d", (sv.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS);
 }
 
 void PF_precache_sound2 (void)

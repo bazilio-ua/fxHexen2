@@ -159,14 +159,17 @@ void CL_ParseStartSoundPacket(void)
 	channel = MSG_ReadShort (net_message);
 	sound_num = MSG_ReadByte (net_message);
 
-    if (field_mask & SND_OVERFLOW)
-		sound_num += MAX_SOUNDS_OLD;
+	if (field_mask & SND_OVERFLOW)
+		sound_num += 256;
 
 	ent = channel >> 3;
 	channel &= 7;
 
-	if (ent > MAX_EDICTS)
-		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+	if (sound_num >= MAX_SOUNDS)
+		Host_Error ("CL_ParseStartSoundPacket: invalid sound_num (%d, max = %d)", sound_num, MAX_SOUNDS);
+
+	if (ent < 0 || ent >= MAX_EDICTS)
+		Host_Error ("CL_ParseStartSoundPacket: invalid edict (%d, max = %d)", ent, MAX_EDICTS);
 	
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord (net_message);
@@ -263,7 +266,7 @@ void CL_ParseServerInfo (void)
 		i != PROTOCOL_UQE_113)
 	{
 		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
-		Host_Error ("Server returned version %i, not %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		Host_Error ("Server returned version %i, not %i or %i - %i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 	}
 
 	cl.protocol = i;
@@ -1231,7 +1234,7 @@ void CL_ParseServerMessage (void)
 			if (i != PROTOCOL_RAVEN_111 && 
 				i != PROTOCOL_RAVEN_112 && 
 				i != PROTOCOL_UQE_113)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i - %i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 			cl.protocol = i;
 			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
 			break;
@@ -1777,10 +1780,11 @@ void CL_ParseServerMessage (void)
 				break;
 
 		case svc_mod_name:
+			MSG_ReadString(net_message);
+			Con_DPrintf ("Ignored server msg %d (%s)\n", cmd, svc_strings[cmd]);
+			break;
 		case svc_skybox:
 			R_LoadSkyBox (MSG_ReadString(net_message));
-//			MSG_ReadString(net_message);
-//			Con_DPrintf ("Ignored server msg %d (%s)\n", cmd, svc_strings[cmd]);
 			break;
 		}
 	}
