@@ -266,7 +266,7 @@ void CL_ParseServerInfo (void)
 		i != PROTOCOL_UQE_113)
 	{
 		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
-		Host_Error ("Server returned version %i, not %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		Host_Error ("Server returned version %i, not %i or %i - %i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 	}
 
 	cl.protocol = i;
@@ -1234,7 +1234,7 @@ void CL_ParseServerMessage (void)
 			if (i != PROTOCOL_RAVEN_111 && 
 				i != PROTOCOL_RAVEN_112 && 
 				i != PROTOCOL_UQE_113)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i - %i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 			cl.protocol = i;
 			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
 			break;
