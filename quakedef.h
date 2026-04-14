@@ -95,28 +95,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	ON_EPSILON		0.1			// point on plane side epsilon
 #define	DIST_EPSILON		(0.03125)	// 1/32 epsilon to keep floating point happy (moved from world.c)
 
-//#define	MAX_MSGLEN		8000		// max length of a reliable message
-//#define	MAX_MSGLEN		16000		// max length of a reliable message
-#define	MAX_MSGLEN		20000		// for mission pack tibet2
+#define	MAX_MSGLEN			65528 // NETFLAG_DATA - NET_HEADERSIZE // (orig. 8000, H2/v1.11 16000, H2MP/v1.12 for mission pack tibet2 20000) // max length of a reliable message
+#define	MAX_DATAGRAM		65528 // NETFLAG_DATA - NET_HEADERSIZE // (orig. 1024, TEMP: This only for E3 2048) // max length of unreliable message
+// (driver MTU may be lower)
+#define DATAGRAM_MTU		1450 // EER1 -- increase MTU to 1450 as QW, was 1400 // actual limit for unreliable messages to nonlocal clients
+#define DATAGRAM_MTU_NQ		1032 // set MTU as orig NQ MAX_DATAGRAM + NET_HEADERSIZE, so old clients can connect
 
-#define	MAX_DATAGRAM	1024		// max length of unreliable message
-//#define	MAX_DATAGRAM	2048		// max length of unreliable message  TEMP: This only for E3
-
-#define	MAX_PRINTMSG	4096
+#define	MAX_PRINTMSG		8192
 
 //
 // per-level limits
 //
-#define MAX_EDICTS      600	// More than 8192 requires protocol change
+#define MAX_EDICTS			8192 // was 600		// More than 8192 requires protocol change	// protocol limit, ents past 8192 can't play sounds in the standard protocol
 #define	MAX_LIGHTSTYLES	64
-
-#define	MAX_MODELS	512		/* Sent over the net as a word */
-#define	MAX_SOUNDS_OLD	256		/* Hexen2 v1.11 (protocol 18) and older: sent as a byte	*/
-#define	MAX_SOUNDS_H2MP	512		/* Mission Pack (protocol 19), messy thing:		*/
-					/* SV_StartSound sends it as a byte, but PF_ambientsound
-					   sends it as a word.					*/
-#define	MAX_SOUNDS	(MAX_SOUNDS_H2MP)
-
+// protocol limit values - bumped
+#define	MAX_MODELS			2048 // was 512		// Sent over the net as a word
+#define	MAX_SOUNDS			2048 // was 512		// Sent over the net as a byte
+												// Hexen2 v1.11 (protocol 18) and older: sent as a byte
+												// Mission Pack (protocol 19), messy thing: SV_StartSound sends it as a byte, but PF_ambientsound sends it as a word.
+// Model and sound limits depend on the net protocol version being used
+// Standard protocol sends the model/sound index as a byte (max = 256), but
+// other protocols may send as a short (up to 65536, potentially).
 
 #define	SAVEGAME_COMMENT_LENGTH	39
 

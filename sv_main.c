@@ -387,6 +387,7 @@ already running on that entity/channel pair.
 
 An attenuation of 0 will play full volume everywhere in the level.
 Larger attenuations will drop off.  (max 4 attenuation)
+
 ==================
 */  
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, float attenuation)
@@ -395,7 +396,8 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	int			field_mask;
 	int			i;
 	int			ent;
-	
+	static float lastmsg = 0;
+
 	if (strcasecmp(sample,"misc/null.wav") == 0)
 	{
 		SV_StopSound(entity,channel);
@@ -403,15 +405,23 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	}
 
 	if (volume < 0 || volume > 255)
-		Host_Error ("SV_StartSound: volume = %i", volume);
-
+	{
+		Con_Warning ("SV_StartSound: volume = %d, max = %d\n", volume, 255);
+		volume = CLAMP(0, volume, 255);
+	}
 	if (attenuation < 0 || attenuation > 4)
-		Host_Error ("SV_StartSound: attenuation = %f", attenuation);
-
+	{
+		Con_Warning ("SV_StartSound: attenuation = %f, max = %d\n", attenuation, 4);
+		attenuation = CLAMP(0, attenuation, 4);
+	}
 	if (channel < 0 || channel > 7)
-		Host_Error ("SV_StartSound: channel = %i", channel);
+	{
+		Con_Warning ("SV_StartSound: channel = %i, max = %d\n", channel, 7);
+		channel = CLAMP(0, channel, 7);
+	}
 
-	if (sv.datagram.cursize > MAX_DATAGRAM-16)
+// drop silently if there is no room
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 16)
 		return;	
 
 // find precache number for sound
@@ -419,11 +429,15 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
         if (!strcmp(sample, sv.sound_precache[sound_num]))
             break;
     
-    if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
-    {
-        Con_Printf ("SV_StartSound: %s not precached\n", sample);
-        return;
-    }
+	if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
+	{
+		if (IsTimeout (&lastmsg, 2))
+		{
+			// let's not upset and annoy the user
+			Con_DPrintf ("SV_StartSound: %s not precached\n", sample);
+		}
+		return;
+	}
     
 	ent = NUM_FOR_EDICT(entity);
 
@@ -434,16 +448,16 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		field_mask |= SND_VOLUME;
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
 		field_mask |= SND_ATTENUATION;
-	if (sound_num >= MAX_SOUNDS_OLD)
+
+	if (sound_num >= 256)
 	{
 		if (sv.protocol == PROTOCOL_RAVEN_111)
 		{
-			Con_DPrintf("SV_StartSound: protocol 18 violation: %s sound_num == %i >= %i\n",
-					sample, sound_num, MAX_SOUNDS_OLD);
+			Con_DPrintf ("SV_StartSound: protocol 18 violation: %s sound_num == %i >= %i\n", sample, sound_num, 256);
 			return;
 		}
 		field_mask |= SND_OVERFLOW;
-		sound_num -= MAX_SOUNDS_OLD;
+		sound_num -= 256;
 	}
 
 // directed messages go only to the entity the are targeted on
@@ -453,10 +467,12 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		MSG_WriteByte (&sv.datagram, volume);
 	if (field_mask & SND_ATTENUATION)
 		MSG_WriteByte (&sv.datagram, attenuation*64);
+
 	MSG_WriteShort (&sv.datagram, channel);
 	MSG_WriteByte (&sv.datagram, sound_num);
-	for (i = 0; i < 3; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i] + 0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+
+	for (i=0 ; i<3 ; i++)
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
 }
 
 /*

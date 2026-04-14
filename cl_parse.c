@@ -159,14 +159,17 @@ void CL_ParseStartSoundPacket(void)
 	channel = MSG_ReadShort (net_message);
 	sound_num = MSG_ReadByte (net_message);
 
-    if (field_mask & SND_OVERFLOW)
-		sound_num += MAX_SOUNDS_OLD;
+	if (field_mask & SND_OVERFLOW)
+		sound_num += 256;
 
 	ent = channel >> 3;
 	channel &= 7;
 
-	if (ent > MAX_EDICTS)
-		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+	if (sound_num >= MAX_SOUNDS)
+		Host_Error ("CL_ParseStartSoundPacket: invalid sound_num (%d, max = %d)", sound_num, MAX_SOUNDS);
+
+	if (ent < 0 || ent >= MAX_EDICTS)
+		Host_Error ("CL_ParseStartSoundPacket: invalid edict (%d, max = %d)", ent, MAX_EDICTS);
 	
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord (net_message);
