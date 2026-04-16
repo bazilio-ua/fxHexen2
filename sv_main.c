@@ -574,8 +574,8 @@ void SV_ConnectClient (int clientnum)
 	int				edictnum;
 	struct qsocket_s *netconnection;
 	float			spawn_parms[NUM_SPAWN_PARMS];
-	int				entnum;
-	edict_t			*svent;
+//	int				entnum;
+//	edict_t			*svent;
 
 	client = svs.clients + clientnum;
 
@@ -876,15 +876,16 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 			goto skipA;
 		}
 
-		// ignore if not touching a PV leaf
 		if (ent != clent)	// clent is ALWAYS sent
-		{	// ignore ents without visible models
+		{
+			// ignore ents without visible models
 			if (!ent->v.modelindex || !*PR_GetString(ent->v.model))
 			{
 				DoRemove = true;
 				goto skipA;
 			}
 
+			// ignore if not touching a PV leaf
 			for (i=0 ; i < ent->num_leafs ; i++)
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;

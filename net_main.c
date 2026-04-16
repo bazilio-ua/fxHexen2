@@ -649,11 +649,6 @@ qboolean NET_CanSendMessage (qsocket_t *sock)
 	return r;
 }
 
-
-//int NET_SendToAll(sizebuf_t *data, int blocktime)
-//{
-//	return NET_SendToAll2 (data, blocktime, false);
-//}
 /*
 ==================
 NET_SendToAll
