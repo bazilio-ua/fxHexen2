@@ -704,9 +704,6 @@ void PF_StopSound(void)
 	entity = G_EDICT(OFS_PARM0);
 	channel = G_FLOAT(OFS_PARM1);
 	
-	if (channel < 0 || channel > 7)
-		Host_Error ("SV_StartSound: channel = %i", channel);
-
 	SV_StopSound (entity, channel);
 }
 
@@ -724,9 +721,6 @@ void PF_UpdateSoundPos(void)
 	entity = G_EDICT(OFS_PARM0);
 	channel = G_FLOAT(OFS_PARM1);
 	
-	if (channel < 0 || channel > 7)
-		Host_Error ("SV_StartSound: channel = %i", channel);
-
 	SV_UpdateSoundPos (entity, channel);
 }
 
@@ -759,15 +753,6 @@ void PF_sound (void)
 	volume = G_FLOAT(OFS_PARM3) * 255;
 	attenuation = G_FLOAT(OFS_PARM4);
 	
-	if (volume < 0 || volume > 255)
-		Host_Error ("SV_StartSound: volume = %i", volume);
-
-	if (attenuation < 0 || attenuation > 4)
-		Host_Error ("SV_StartSound: attenuation = %f", attenuation);
-
-	if (channel < 0 || channel > 7)
-		Host_Error ("SV_StartSound: channel = %i", channel);
-
 	SV_StartSound (entity, channel, sample, volume, attenuation);
 }
 
@@ -1530,7 +1515,7 @@ void PF_walkmove (void)
 ===============
 PF_droptofloor
 
-void() droptofloor
+float() droptofloor
 ===============
 */
 void PF_droptofloor (void)
@@ -1815,10 +1800,10 @@ void PF_aim (void)
 		dist = DotProduct (dir, *pr_global_struct.v_forward);
 		if (dist < bestdist)
 			continue;	// to far to turn
-	save_hull = ent->v.hull;
-	ent->v.hull = 0;
+		save_hull = ent->v.hull;
+		ent->v.hull = 0;
 		tr = SV_Move (start, vec3_origin, vec3_origin, end, false, ent);
-	ent->v.hull = save_hull;
+		ent->v.hull = save_hull;
 		if (tr.ent == check)
 		{	// can shoot at this one
 			bestdist = dist;
@@ -1864,7 +1849,7 @@ void PF_changeyaw (void)
 	
 	if (current == ideal)
 	{
-	   G_FLOAT(OFS_RETURN) = 0;
+		G_FLOAT(OFS_RETURN) = 0;
 		return;
 	}
 	move = ideal - current;
@@ -1880,7 +1865,7 @@ void PF_changeyaw (void)
 			move = move + 360;
 	}
 
-   G_FLOAT(OFS_RETURN) = move;
+	G_FLOAT(OFS_RETURN) = move;
 
 	if (move > 0)
 	{
@@ -1977,6 +1962,7 @@ void PF_WriteString (void)
 {
 	MSG_WriteString (WriteDest(), G_STRING(OFS_PARM1));
 }
+
 
 void PF_WriteEntity (void)
 {

@@ -343,6 +343,12 @@ void SV_StopSound (edict_t *entity, int channel)
 {
 	int			ent;
 
+	if (channel < 0 || channel > 7)
+	{
+		Con_Warning ("SV_StopSound: channel = %i, max = %d\n", channel, 7);
+		channel = CLAMP(0, channel, 7);
+	}
+
 	if (sv.datagram.cursize > MAX_DATAGRAM-4)
 		return;	
 
@@ -362,6 +368,12 @@ void SV_UpdateSoundPos (edict_t *entity, int channel)
 {
 	int			ent;
     int			i;
+
+	if (channel < 0 || channel > 7)
+	{
+		Con_Warning ("SV_UpdateSoundPos: channel = %i, max = %d\n", channel, 7);
+		channel = CLAMP(0, channel, 7);
+	}
 
 	if (sv.datagram.cursize > MAX_DATAGRAM-4)
 		return;	
