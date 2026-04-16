@@ -40,12 +40,24 @@ extern int	 pr_info_string_count;
 char *PF_VarString (int	first)
 {
 	int		i;
-	static char out[256];
+	static char out[1024];
+	char	*s;
+	size_t 	l;
 	
 	out[0] = 0;
 	for (i=first ; i<pr_argc ; i++)
 	{
-		strcat (out, G_STRING((OFS_PARM0+i*3)));
+		s = G_STRING(OFS_PARM0+i*3);
+		l = strlen (s);
+		strncat (out, s, sizeof(out) - 1);
+		if (l > sizeof(out) - 1)
+		{
+			Con_SafePrintf ("\n");
+			Con_Warning("PF_VarString: overflow (string truncated)\n");
+			return out;
+		}
+		if (l > 255)
+			Con_DWarning("PF_VarString: %i characters exceeds standard limit of 255 (max = %d).\n", (int) l, (int)(sizeof(out) - 1));
 	}
 	return out;
 }
