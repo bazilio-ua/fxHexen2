@@ -48,7 +48,7 @@ void Sv_Edicts_f(void);
 SV_Protocol_f
 ===============
 */
-int sv_protocol = PROTOCOL_VERSION;
+int sv_protocol = PROTOCOL_RAVEN_112;
 void SV_Protocol_f (void)
 {
 	int i;
@@ -75,10 +75,9 @@ void SV_Protocol_f (void)
 		break;
 	case 2:
 		i = atoi(Cmd_Argv(1));
-		if (i != PROTOCOL_RAVEN_111 &&
-			i != PROTOCOL_RAVEN_112 &&
-			i != PROTOCOL_UQE_113)
-			Con_Printf ("sv_protocol must be %i or %i - %i\n", PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_UQE_113)
+			Con_Printf ("sv_protocol must be %i, %i or %i\n",
+						PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 		else
 		{
 			sv_protocol = i;
@@ -241,6 +240,7 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
 {
 	int		i, v;
 
+// drop silently if there is no room
 	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 16)
 		return;
 
@@ -270,6 +270,7 @@ Make sure the event gets sent to all clients
 */
 void SV_StartParticle2 (vec3_t org, vec3_t dmin, vec3_t dmax, int color, int effect, int count)
 {
+// drop silently if there is no room
 	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 36)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle2);
@@ -297,6 +298,7 @@ Make sure the event gets sent to all clients
 */
 void SV_StartParticle3 (vec3_t org, vec3_t box, int color, int effect, int count)
 {
+// drop silently if there is no room
 	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 15)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle3);
@@ -321,6 +323,7 @@ Make sure the event gets sent to all clients
 */
 void SV_StartParticle4 (vec3_t org, float radius, int color, int effect, int count)
 {
+// drop silently if there is no room
 	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 13)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle4);
@@ -349,6 +352,7 @@ void SV_StopSound (edict_t *entity, int channel)
 		channel = CLAMP(0, channel, 7);
 	}
 
+// drop silently if there is no room
 	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 4)
 		return;
 
@@ -375,8 +379,9 @@ void SV_UpdateSoundPos (edict_t *entity, int channel)
 		channel = CLAMP(0, channel, 7);
 	}
 
+// drop silently if there is no room
 	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 4)
-		return;	
+		return;
 
 	ent = NUM_FOR_EDICT(entity);
 	channel = (ent<<3) | channel;
@@ -514,7 +519,7 @@ void SV_SendServerinfo (client_t *client)
 	MSG_WriteString (&client->message,message);
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
-	MSG_WriteLong (&client->message, sv.protocol);
+	MSG_WriteLong (&client->message, sv.protocol); // use sv.protocol instead of PROTOCOL_VERSION
 	MSG_WriteByte (&client->message, svs.maxclients);
 
 	if (!coop.value && deathmatch.value)
@@ -536,14 +541,17 @@ void SV_SendServerinfo (client_t *client)
 		MSG_WriteString (&client->message, PR_GetString(sv.edicts->v.netname));
 	}
 
-	for (i = 1, s = sv.model_precache+1 ; i < MAX_MODELS && *s ; s++)
+	//johnfitz -- only send the first 256 sound precaches if protocol is 18
+	for (i=0,s = sv.model_precache+1 ; *s ; s++,i++)
 		MSG_WriteString (&client->message, *s);
 	MSG_WriteByte (&client->message, 0);
 
-	for (i = 1, s = sv.sound_precache+1 ; i < MAX_SOUNDS && *s ; s++)
-		MSG_WriteString (&client->message, *s);
+	for (i=0,s = sv.sound_precache+1 ; *s ; s++,i++)
+		if (sv.protocol > PROTOCOL_RAVEN_111 || i < 256) // MAX_SOUNDS for PROTOCOL_RAVEN_111
+			MSG_WriteString (&client->message, *s);
 	MSG_WriteByte (&client->message, 0);
-
+	//johnfitz
+	
 // send music
 	MSG_WriteByte (&client->message, svc_cdtrack);
 	MSG_WriteByte (&client->message, sv.cd_track);
@@ -591,7 +599,11 @@ void SV_ConnectClient (int clientnum)
 
 	client = svs.clients + clientnum;
 
-	Con_DPrintf ("Client %s connected\n", client->netconnection->address);
+	// JPG - added ProQuake dprint
+	if (client->netconnection->mod == MOD_PROQUAKE && sv.protocol <= PROTOCOL_RAVEN_112)
+		Con_DPrintf ("ProQ/ProHexen Client %s connected\n", client->netconnection->address);
+	else
+		Con_DPrintf ("Client %s connected\n", client->netconnection->address);
 
 	edictnum = clientnum+1;
 
@@ -659,7 +671,7 @@ void SV_CheckForNewClients (void)
 			if (!svs.clients[i].active)
 				break;
 		if (i == svs.maxclients)
-			Sys_Error ("Host_CheckForNewClients: no free clients");
+			Host_Error ("Host_CheckForNewClients: no free clients");
 		
 		svs.clients[i].netconnection = ret;
 		SV_ConnectClient (i);	
@@ -865,7 +877,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 	MSG_WriteByte (msg, client->current_frame);
 	MSG_WriteByte (msg, client->current_sequence);
 
-	// find the client's PVS
+// find the client's PVS
 	if (clent->v.cameramode)
 	{
 		ent = PROG_TO_EDICT(clent->v.cameramode);
@@ -876,7 +888,7 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 
 	pvs = SV_FatPVS (org, sv.worldmodel);
 
-	// send over all entities (except the client) that touch the pvs
+// send over all entities (except the client) that touch the pvs
 	ent = NEXT_EDICT(sv.edicts);
 	for (e=1 ; e<sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
 	{
@@ -902,8 +914,14 @@ void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 				if (pvs[ent->leafnums[i] >> 3] & (1 << (ent->leafnums[i]&7) ))
 					break;
 				
-			if (i == ent->num_leafs)
-			{
+			// ericw -- added ent->num_leafs < MAX_ENT_LEAFS condition.
+			//
+			// if ent->num_leafs == MAX_ENT_LEAFS, the ent is visible from too many leafs
+			// for us to say whether it's in the PVS, so don't try to vis cull it.
+			// this commonly happens with rotators, because they often have huge bboxes
+			// spanning the entire map, or really tall lifts, etc.
+			if (i == ent->num_leafs && ent->num_leafs < MAX_ENT_LEAFS)
+			{	// not visible
 				DoRemove = true;
 				goto skipA;
 			}
@@ -997,7 +1015,7 @@ skipA:
 		if (IgnoreEnt)
 			continue;
 
-		// send an update
+// send an update
 		for (i=0 ; i<3 ; i++)
 		{
 			miss = ent->v.origin[i] - ref_ent->origin[i];
@@ -1653,11 +1671,12 @@ SV_SendClientDatagram
 */
 qboolean SV_SendClientDatagram (client_t *client)
 {
-	byte		buf[NET_MAXMESSAGE];
+	byte		buf[MAX_DATAGRAM]; //was NET_MAXMESSAGE
 	sizebuf_t	msg;
+	static float lastmsg = 0;
 	
 	msg.data = buf;
-	msg.maxsize = sizeof(buf);
+	msg.maxsize = client->netconnection->mtu;
 	msg.cursize = 0;
 
 	MSG_WriteByte (&msg, svc_time);
@@ -1665,13 +1684,13 @@ qboolean SV_SendClientDatagram (client_t *client)
 
 // add the client specific data to the datagram
 	SV_WriteClientdataToMessage (client, client->edict, &msg);
-
 	SV_PrepareClientEntities (client, client->edict, &msg);
 
-/*	if ((rand() & 0xff) < 200)
+	if (msg.cursize > 1024) // old limit warning
 	{
-		return true;
-	}*/
+		if (IsTimeout (&lastmsg, 10))
+			Con_DWarning ("SV_SendClientDatagram: byte packet exceeds standard limit (%d, normal max = %d)\n", msg.cursize, 1024);
+	}
 
 // copy the server datagram if there is space
 	if (msg.cursize + sv.datagram.cursize < msg.maxsize)
@@ -1682,15 +1701,15 @@ qboolean SV_SendClientDatagram (client_t *client)
 
 	SZ_Clear(&client->datagram);
 
-	//if (msg.cursize > 300)
-	//{
-	//	Con_DPrintf("WARNING: packet size is %i\n",msg.cursize);
-	//}
+//	if (msg.cursize > 300)
+//	{
+//		Con_DPrintf("WARNING: packet size is %i\n",msg.cursize);
+//	}
 
 // send the datagram
 	if (NET_SendUnreliableMessage (client->netconnection, &msg) == -1)
 	{
-		SV_DropClient (true);// if the message couldn't send, kick off
+		SV_DropClient (true); // if the message couldn't send, kick off
 		return false;
 	}
 	
@@ -1718,7 +1737,6 @@ void SV_UpdateToReliableMessages (void)
 			{
 				if (!client->active)
 					continue;
-
 				MSG_WriteByte (&client->message, svc_updatefrags);
 				MSG_WriteByte (&client->message, i);
 				MSG_WriteShort (&client->message, host_client->edict->v.frags);
@@ -1801,7 +1819,7 @@ void SV_SendClientMessages (void)
 			}
 		}
 
-		// NAT fix
+		// ProQuake NAT fix
 		if (host_client->netconnection->net_wait)
 			continue;
 
@@ -1819,7 +1837,7 @@ void SV_SendClientMessages (void)
 		{
 			if (!NET_CanSendMessage (host_client->netconnection))
 			{
-//				I_Printf ("can't write\n");
+//				Con_DPrintf ("SV_SendClientMessages: can't write\n");
 				continue;
 			}
 
@@ -1866,11 +1884,7 @@ int SV_ModelIndex (char *name)
 		if (!strcmp(sv.model_precache[i], name))
 			return i;
 	if (i==MAX_MODELS || !sv.model_precache[i])
-	{
-		Con_Printf("SV_ModelIndex: model %s not precached\n", name);
-		return 0;
-	}
-
+		Host_Error ("SV_ModelIndex: model %s not precached", name);
 	return i;
 }
 
@@ -1907,14 +1921,15 @@ void SV_CreateBaseline (void)
 		svent->baseline.abslight = (int)(svent->v.abslight*255.0)&255;
 		if (entnum > 0	&& entnum <= svs.maxclients)
 		{
+			// player model
 			svent->baseline.colormap = entnum;
 			svent->baseline.modelindex = 0;//SV_ModelIndex("models/paladin.mdl");
 		}
 		else
 		{
+			// other model
 			svent->baseline.colormap = 0;
-			svent->baseline.modelindex =
-				SV_ModelIndex(PR_GetString(svent->v.model));
+			svent->baseline.modelindex = SV_ModelIndex(PR_GetString(svent->v.model));
 		}
 		memset (svent->baseline.ClearCount,99,sizeof(svent->baseline.ClearCount));
 		
@@ -1949,15 +1964,20 @@ Tell all the clients that the server is changing levels
 */
 void SV_SendReconnect (void)
 {
-	byte	data[128];
+	char	data[128];
 	sizebuf_t	msg;
 
-	msg.data = data;
+	msg.data = (byte *)data;
 	msg.cursize = 0;
 	msg.maxsize = sizeof(data);
 
 	MSG_WriteChar (&msg, svc_stufftext);
 	MSG_WriteString (&msg, "reconnect\n");
+
+	// Don't send a reconnect message to a local client; it can cause problems if coming
+	// after the client has already reached signon 4. In that case, the client will behave
+	// as if reconnect is entered in the console while playing; the loading plaque will
+	// display and the client is detached from the game (which will continue)
 	NET_SendToAll (&msg, 5, true);
 	
 	if (cls.state != ca_dedicated)
@@ -2006,6 +2026,10 @@ void SV_SpawnServer (char *server, char *startspot)
 	// let's not have any servers with no name
 	if (hostname.string[0] == 0)
 		Cvar_Set ("hostname", "UNNAMED");
+
+	// remove all center prints
+	con_lastcenterstring[0] = 0;
+	scr_centerstring[0] = 0;
 	scr_centertime_off = 0;
 
 	Con_DPrintf ("SpawnServer: %s\n",server);
@@ -2032,7 +2056,6 @@ void SV_SpawnServer (char *server, char *startspot)
 //
 	if (coop.value)
 		Cvar_SetValue ("deathmatch", 0);
-
 	current_skill = (int)(skill.value + 0.5);
 	if (current_skill < 0)
 		current_skill = 0;
@@ -2045,7 +2068,8 @@ void SV_SpawnServer (char *server, char *startspot)
 // set up the new server
 //
 	Host_ClearMemory ();
-	//memset (&sv, 0, sizeof(sv));
+	
+//	memset (&sv, 0, sizeof(sv));
 
 	strcpy (sv.name, server);
 	sv.protocol = sv_protocol;
@@ -2116,7 +2140,6 @@ void SV_SpawnServer (char *server, char *startspot)
 	
 	strcpy (sv.name, server);
 	sprintf (sv.modelname,"maps/%s.bsp", server);
-
 	sv.worldmodel = Mod_ForName (sv.modelname, false);
 	if (!sv.worldmodel)
 	{
@@ -2182,6 +2205,13 @@ void SV_SpawnServer (char *server, char *startspot)
 
 // create a baseline for more efficient communications
 	SV_CreateBaseline ();
+
+	// Check normal signon size (8192) and normal MAX_MSGLEN-2 (8000-2),
+	// the latter limit being lower and occurring in Host_PreSpawn_f
+	if (sv.signon.cursize > 8000 - 2)
+	{	// warn if signon buffer larger than standard server can handle 
+		Con_DWarning ("SV_SpawnServer: excessive signon buffer size (%d, normal max = %d)\n", sv.signon.cursize , 8000 - 2);
+	}
 
 // send serverinfo to all connected clients
 	for (i=0,host_client = svs.clients ; i<svs.maxclients ; i++, host_client++)

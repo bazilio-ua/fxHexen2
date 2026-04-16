@@ -19,14 +19,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // protocol.h -- communications protocols
 
-#define	PROTOCOL_RAVEN_107		15	/* cd version, aka 1.03 (not supported) */
-#define	PROTOCOL_RAVEN_109		17	/* official 1.09 update (not supported) */
+// PROTOCOL_RAVEN
+#define	PROTOCOL_RAVEN_107		15	// cd version, aka 1.03 (not supported)
+#define	PROTOCOL_RAVEN_109		17	// official 1.09 update (not supported)
 #define	PROTOCOL_RAVEN_111		18	// official 1.11 update, without mission pack
-#define	PROTOCOL_RAVEN_112		19	// official 1.12, with mission pack
+#define	PROTOCOL_RAVEN_112		19	// official 1.12, with mission pack (Standard Hexen II protocol)
+
 #define	PROTOCOL_UQE_113		20	// Korax UQE patch 1.13
 
-// the default protocol
-#define	PROTOCOL_VERSION		(PROTOCOL_RAVEN_112) // Standard Hexen II protocol
 
 // if the high bit of the servercmd is set, the low bits are fast update flags:
 #define	U_MOREBITS	(1<<0)
