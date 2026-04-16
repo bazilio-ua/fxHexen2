@@ -43,7 +43,6 @@ cvar_t	cl_extradlighteffect = {"cl_extradlighteffect","0", CVAR_ARCHIVE};
 cvar_t	lookspring = {"lookspring","0", CVAR_ARCHIVE};
 cvar_t	lookstrafe = {"lookstrafe","0", CVAR_ARCHIVE};
 cvar_t	sensitivity = {"sensitivity","3", CVAR_ARCHIVE};
-//static float save_sensitivity;
 
 cvar_t	m_pitch = {"m_pitch","0.022", CVAR_ARCHIVE};
 cvar_t	m_yaw = {"m_yaw","0.022", CVAR_ARCHIVE};
@@ -263,7 +262,11 @@ void CL_EstablishConnection (char *host)
 	if (!cls.netcon)
 		Host_Error ("CL_EstablishConnection: connect failed");
 
-	Con_DPrintf ("Connected to server %s\n", host);
+	// JPG - ProQuake dprint
+	if (cls.netcon->mod == MOD_PROQUAKE && cl.protocol <= PROTOCOL_RAVEN_112)
+		Con_DPrintf ("Connected to ProQ/ProHexen server %s\n", host);
+	else
+		Con_DPrintf ("Connected to server %s\n", host);
 	
 	cls.demonum = -1;			// not in the demo loop now
 	cls.state = ca_connected;
@@ -1425,20 +1428,6 @@ void CL_SendCmd (void)
 	SZ_Clear (&cls.message);
 }
 
-//void CL_Sensitivity_save_f (void)
-//{
-//	if (Cmd_Argc() != 2)
-//	{
-//		Con_Printf ("sensitivity_save <save/restore>\n");
-//		return;
-//	}
-//
-//	if (strcasecmp(Cmd_Argv(1),"save") == 0)
-//		save_sensitivity = sensitivity.value;
-//	else if (strcasecmp(Cmd_Argv(1),"restore") == 0)
-//		Cvar_SetValue ("sensitivity", save_sensitivity);
-//}
-
 /*
 =============
 CL_Tracepos_f
@@ -1508,7 +1497,6 @@ void CL_Init (void)
 	CL_InitInput ();
 	CL_InitTEnts ();
 	CL_InitEffects();
-
 	
 //
 // register our commands
@@ -1547,13 +1535,11 @@ void CL_Init (void)
 	Cvar_RegisterVariable (&m_forward);
 	Cvar_RegisterVariable (&m_side);
 
-	
 	Cmd_AddCommand ("entities", CL_PrintEntities_f);
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("stop", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_PlayDemo_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
-//	Cmd_AddCommand ("sensitivity_save", CL_Sensitivity_save_f);
 	Cmd_AddCommand ("tracepos", CL_Tracepos_f); // fitz
 	Cmd_AddCommand ("viewpos", CL_Viewpos_f);
 	Cmd_AddCommand ("staticents", CL_StaticEnts_f);

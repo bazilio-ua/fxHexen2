@@ -1269,10 +1269,26 @@ void CL_ParseServerMessage (void)
 			vid.recalc_refdef = true;	// leave intermission full screen
 			break;
 			
-		case svc_setangle:
+		case svc_setangle: // JPG - added mviewangles for smooth chasecam, set last_angle_time
 			for (i=0 ; i<3 ; i++)
 				cl.viewangles[i] = MSG_ReadAngle (net_message);
 
+			if (!cls.demoplayback)
+			{
+				VectorCopy (cl.mviewangles[0], cl.mviewangles[1]);
+
+				// JPG - hack with last_angle_time to autodetect continuous svc_setangles (From ProQuake)
+				if (cl.last_angle_time > cl.time - 0.3)
+					cl.last_angle_time = cl.time + 0.3;
+				else if (cl.last_angle_time > cl.time - 0.6)
+					cl.last_angle_time = cl.time;
+				else
+					cl.last_angle_time = cl.time - 0.3;
+
+				for (i=0 ; i<3 ; i++)
+					cl.mviewangles[0][i] = cl.viewangles[i];
+			}
+			cl.fixangle = true;
 			break;
 
 		case svc_setangle_interpolate:
@@ -1316,12 +1332,14 @@ void CL_ParseServerMessage (void)
 			
 		case svc_setview:
 			cl.viewentity = MSG_ReadShort (net_message);
+			if (cl.viewentity >= MAX_EDICTS)
+				Host_Error ("CL_ParseServerMessage: svc_setview %d >= MAX_EDICTS (%d)", cl.viewentity, MAX_EDICTS);
 			break;
 					
 		case svc_lightstyle:
 			i = MSG_ReadByte (net_message);
 			if (i >= MAX_LIGHTSTYLES)
-				Sys_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
+				Host_Error ("CL_ParseServerMessage: svc_lightstyle %d >= MAX_LIGHTSTYLES (%d)", i, MAX_LIGHTSTYLES);
 			strcpy (cl_lightstyle[i].map,  MSG_ReadString(net_message));
 			cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 			break;
@@ -1360,10 +1378,10 @@ void CL_ParseServerMessage (void)
 			break;
 		
 		case svc_updatename:
-			Sbar_Changed();
+			Sbar_Changed ();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatename > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updatename %d >= cl.maxclients (%d)", i, cl.maxclients);
 			strcpy (cl.scores[i].name, MSG_ReadString (net_message));
 			break;
 
@@ -1371,7 +1389,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updateclass > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updateclass %d >= cl.maxclients (%d)", i, cl.maxclients);
 			cl.scores[i].playerclass = (float)MSG_ReadByte(net_message);
 			CL_NewTranslation(i); // update the color
 			break;
@@ -1380,7 +1398,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updatefrags %d >= cl.maxclients (%d)", i, cl.maxclients);
 			cl.scores[i].frags = MSG_ReadShort (net_message);
 			break;			
 
@@ -1392,7 +1410,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatecolors > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updatecolors %d >= cl.maxclients (%d)", i, cl.maxclients);
 			cl.scores[i].colors = MSG_ReadByte (net_message);
 			CL_NewTranslation (i);
 			break;
@@ -1439,7 +1457,7 @@ void CL_ParseServerMessage (void)
 		case svc_signonnum:
 			i = MSG_ReadByte (net_message);
 			if (i <= cls.signon)
-				Host_Error ("Received signon %i when at %i", i, cls.signon);
+				Host_Error ("CL_ParseServerMessage: Received signon %i when at %i", i, cls.signon);
 			cls.signon = i;
 			CL_SignonReply ();
 			break;
@@ -1454,8 +1472,8 @@ void CL_ParseServerMessage (void)
 
 		case svc_updatestat:
 			i = MSG_ReadByte (net_message);
-			if (i < 0 || i >= MAX_CL_STATS)
-				Sys_Error ("svc_updatestat: %i is invalid", i);
+			if (i >= MAX_CL_STATS)
+				Host_Error ("CL_ParseServerMessage: invalid svc_updatestat (%d, max = %d)", i, MAX_CL_STATS);
 			cl.stats[i] = MSG_ReadLong (net_message);;
 			break;
 			

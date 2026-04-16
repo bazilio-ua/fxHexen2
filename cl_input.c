@@ -393,8 +393,16 @@ void CL_SendMove (usercmd_t *cmd)
 
 		MSG_WriteFloat (&buf, cl.mtime[0]);	// so server can get ping times
 
-		for (i=0 ; i<3 ; i++)
-			MSG_WriteAngle (&buf, cl.viewangles[i]);
+		if (!cls.demoplayback && (cls.netcon->mod == MOD_PROQUAKE) && (cl.protocol <= PROTOCOL_RAVEN_112)) // precise aim for ProQuake
+		{
+			for (i=0 ; i<3 ; i++)
+				MSG_WritePreciseAngle (&buf, cl.viewangles[i]);
+		}
+		else
+		{
+			for (i=0 ; i<3 ; i++)
+				MSG_WriteAngle (&buf, cl.viewangles[i]);
+		}
 		
 		MSG_WriteShort (&buf, cmd->forwardmove);
 		MSG_WriteShort (&buf, cmd->sidemove);
