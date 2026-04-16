@@ -241,8 +241,8 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
 {
 	int		i, v;
 
-	if (sv.datagram.cursize > MAX_DATAGRAM-16)
-		return;	
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 16)
+		return;
 
 	MSG_WriteByte (&sv.datagram, svc_particle);
 	MSG_WriteCoord (&sv.datagram, org[0]);
@@ -270,8 +270,8 @@ Make sure the event gets sent to all clients
 */
 void SV_StartParticle2 (vec3_t org, vec3_t dmin, vec3_t dmax, int color, int effect, int count)
 {
-	if (sv.datagram.cursize > MAX_DATAGRAM-36)
-		return;	
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 36)
+		return;
 	MSG_WriteByte (&sv.datagram, svc_particle2);
 	MSG_WriteCoord (&sv.datagram, org[0]);
 	MSG_WriteCoord (&sv.datagram, org[1]);
@@ -297,8 +297,8 @@ Make sure the event gets sent to all clients
 */
 void SV_StartParticle3 (vec3_t org, vec3_t box, int color, int effect, int count)
 {
-	if (sv.datagram.cursize > MAX_DATAGRAM-15)
-		return;	
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 15)
+		return;
 	MSG_WriteByte (&sv.datagram, svc_particle3);
 	MSG_WriteCoord (&sv.datagram, org[0]);
 	MSG_WriteCoord (&sv.datagram, org[1]);
@@ -321,8 +321,8 @@ Make sure the event gets sent to all clients
 */
 void SV_StartParticle4 (vec3_t org, float radius, int color, int effect, int count)
 {
-	if (sv.datagram.cursize > MAX_DATAGRAM-13)
-		return;	
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 13)
+		return;
 	MSG_WriteByte (&sv.datagram, svc_particle4);
 	MSG_WriteCoord (&sv.datagram, org[0]);
 	MSG_WriteCoord (&sv.datagram, org[1]);
@@ -349,8 +349,8 @@ void SV_StopSound (edict_t *entity, int channel)
 		channel = CLAMP(0, channel, 7);
 	}
 
-	if (sv.datagram.cursize > MAX_DATAGRAM-4)
-		return;	
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 4)
+		return;
 
 	ent = NUM_FOR_EDICT(entity);
 	channel = (ent<<3) | channel;
@@ -375,7 +375,7 @@ void SV_UpdateSoundPos (edict_t *entity, int channel)
 		channel = CLAMP(0, channel, 7);
 	}
 
-	if (sv.datagram.cursize > MAX_DATAGRAM-4)
+	if (sv.datagram.cursize > ((sv.protocol == PROTOCOL_RAVEN_111) ? 1024 : MAX_DATAGRAM) - 4)
 		return;	
 
 	ent = NUM_FOR_EDICT(entity);
