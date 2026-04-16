@@ -677,6 +677,7 @@ void PF_ambientsound (void)
 // add an svc_spawnambient command to the level signon packet
 
 	MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+
 	for (i=0 ; i<3 ; i++)
 		MSG_WriteCoord(&sv.signon, pos[i]);
 
@@ -875,48 +876,6 @@ void PF_tracearea (void)
 }
 
 
-
-//struct PointInfo_t
-//{
-//   char Found,NumFound,MarkedWhen;
-//   struct PointInfo_t *FromPos, *Next;
-//};
-//
-//#define MAX_POINT_X 21
-//#define MAX_POINT_Y 21
-//#define MAX_POINT_Z 11
-//#define MAX_POINT (MAX_POINT_X * MAX_POINT_Y * MAX_POINT_Z)
-//
-//#define POINT_POS(x,y,z) ((z*ZOffset)+(y*YOffset)+(x))
-//
-//#define POINT_X_SIZE 160
-//#define POINT_Y_SIZE 160
-//#define POINT_Z_SIZE 50
-//
-//#define POINT_MAX_DEPTH 5
-//
-//struct PointInfo_t PI[MAX_POINT];
-//int ZOffset,YOffset;
-//
-//extern particle_t	*active_particles, *free_particles;
-//
-//void AddParticle(float *Org, float color)
-//{
-//	particle_t	*p;
-//
-//	p = free_particles;
-//	free_particles = p->next;
-//	p->next = active_particles;
-//	active_particles = p;
-//
-//	p->die = 99999;
-//	p->color = color;
-//	p->type = pt_static;
-//	VectorCopy (vec3_origin, p->vel);
-//	VectorCopy (Org, p->org);
-//}
-
-
 /*
 =================
 PF_checkpos
@@ -929,6 +888,7 @@ scalar checkpos (entity, vector)
 */
 void PF_checkpos (void)
 {
+	
 }
 
 //============================================================================
@@ -1224,8 +1184,9 @@ void PF_ftos (void)
 	float	v;
 	char	*s;
 
-	v = G_FLOAT(OFS_PARM0);
 	s = PR_GetTempString();
+
+	v = G_FLOAT(OFS_PARM0);
 	if (v == (int)v)
 		sprintf (s, "%d",(int)v);
 	else
@@ -1364,7 +1325,7 @@ void PF_FindFloat (void)
 void PR_CheckEmptyString (char *s)
 {
 	if (s[0] <= ' ')
-		PR_RunError ("PR_CheckEmptyString: bad string");
+		PR_RunError ("PR_CheckEmptyString: bad string (0x%02x)", (byte)s[0]);
 }
 
 void PF_precache_file (void)
@@ -1442,12 +1403,9 @@ void PF_precache_model (void)
 			return;
 		}
 		if (!strcmp(sv.model_precache[i], s))
-		{
-//			Con_DPrintf("duplicate precache: %s!\n",s);
 			return;
-		}
 	}
-	PR_RunError ("PF_precache_model: overflow");
+	PR_RunError ("PF_precache_model: overflow, max = %d", MAX_MODELS);
 }
 
 void PF_precache_model2 (void)
@@ -1500,7 +1458,7 @@ void PF_precache_puzzle_model (void)
 		if (!strcmp(sv.model_precache[i], s))
 			return;
 	}
-	PR_RunError ("PF_precache_puzzle_model: overflow");
+	PR_RunError ("PF_precache_puzzle_model: overflow, max = %d", MAX_MODELS);
 }
 
 
@@ -1978,7 +1936,7 @@ sizebuf_t *WriteDest (void)
 		return &sv.signon;
 
 	default:
-		PR_RunError ("WriteDest: bad destination");
+		PR_RunError ("WriteDest: bad destination %d", dest);
 		break;
 	}
 	
@@ -2102,6 +2060,7 @@ void PF_changelevel (void)
 		Cbuf_AddText (va("changelevel2 %s %s\n",s1, s2));
 }
 
+//=============================================================================
 
 void PF_sin (void)
 {
@@ -2118,6 +2077,13 @@ void PF_sqrt (void)
 	G_FLOAT(OFS_RETURN) = sqrt(G_FLOAT(OFS_PARM0));
 }
 
+//=============================================================================
+
+/*
+=========
+PF_Fixme
+=========
+*/
 void PF_Fixme (void)
 {
 	PR_RunError ("PF_Fixme: unimplemented builtin");
@@ -2662,16 +2628,15 @@ void PF_pimpmodel (void)
 	G_FLOAT(OFS_RETURN) = Mod_PimpModel(G_EDICT(OFS_PARM0), G_VECTOR(OFS_PARM1));
 }
 
+// builtin functions
 builtin_t pr_builtin[] =
 {
 	PF_Fixme,
-
 	PF_makevectors,		// void(entity e) makevectors		= #1
 	PF_setorigin,		// void(entity e, vector o) setorigin	= #2
 	PF_setmodel,		// void(entity e, string m) setmodel	= #3
 	PF_setsize,		// void(entity e, vector min, vector max) setsize	= #4
-	PF_lightstylestatic,	// 5
-
+	PF_lightstylestatic,	// #5
 	PF_break,		// void() break				= #6
 	PF_random,		// float() random			= #7
 	PF_sound,		// void(entity e, float chan, string samp) sound	= #8
@@ -2699,8 +2664,7 @@ builtin_t pr_builtin[] =
 	PF_traceoff,		// PF_traceoff	= #30
 	PF_eprint,		// void(entity e) debug print an entire entity	= #31
 	PF_walkmove,		// float(float yaw, float dist) walkmove	= #32
-	PF_tracearea,		// float(vector v1, vector v2, vector mins, vector maxs, 
-				//		float tryents) traceline	= #33
+	PF_tracearea,		// float(vector v1, vector v2, vector mins, vector maxs, float tryents) traceline	= #33
 	PF_droptofloor,		// PF_droptofloor = #34
 	PF_lightstyle,		// 35
 	PF_rint,		// 36
@@ -2737,13 +2701,11 @@ builtin_t pr_builtin[] =
 	PF_dprintv,		// void(string s1, string s2) dprint	= #64
 	PF_RewindFrame,		// 65
 	PF_setclass,
-
 	SV_MoveToGoal,
 	PF_precache_file,
 	PF_makestatic,
 
 	PF_changelevel,
-
 	PF_lightstylevalue,	// 71
 
 	PF_cvar_set,
