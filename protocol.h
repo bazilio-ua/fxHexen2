@@ -45,7 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_CLEAR_ENT		(1<<11)
 #define U_ENT_OFF       (1<<13)
 #define	U_LONGENTITY	(1<<14)
-#define U_MOREBITS2     (1<<15)
+#define U_MOREBITS2     (1<<15)	// U_EXTEND1
 
 #define	U_SKIN			(1<<16)
 #define	U_EFFECTS		(1<<17)
