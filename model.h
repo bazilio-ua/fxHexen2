@@ -278,8 +278,7 @@ SPRITE MODELS
 // FIXME: shorten these?
 typedef struct mspriteframe_s
 {
-	short	width;
-	short	height;
+	int		width, height;		// h2 was short
 	float	up, down, left, right;
 	float	smax, tmax; // image might be padded
 	struct	gltexture_s	*gltexture;
@@ -287,7 +286,7 @@ typedef struct mspriteframe_s
 
 typedef struct
 {
-	short			numframes;
+	int			numframes;		// h2 was short
 	float			*intervals;
 	mspriteframe_t	*frames[1];
 } mspritegroup_t;
@@ -300,10 +299,10 @@ typedef struct
 
 typedef struct
 {
-	short				type;
-	short				maxwidth;
-	short				maxheight;
-	short				numframes;
+	int				type;		// h2 was short
+	int				maxwidth;	// h2 was short
+	int				maxheight;	// h2 was short
+	int				numframes;	// h2 was short
 	float				beamlength;		// remove?
 	mspriteframedesc_t	frames[1];
 } msprite_t;
