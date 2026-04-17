@@ -20,15 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_parse.c  -- parse a message received from the server
 
 #include "quakedef.h"
-//#include "r_shared.h"
-
-#ifdef _WIN32
-#include "winquake.h"
-#endif
-
-//extern	cvar_t	sv_flypitch;
-//extern	cvar_t	sv_walkpitch;
-extern 	cvar_t	bgmtype;
 
 char *svc_strings[] =
 {
@@ -254,6 +245,12 @@ void CL_ParseServerInfo (void)
 	char	sound_precache[MAX_SOUNDS][MAX_QPATH];
 	
 	Con_DPrintf ("\nServerinfo packet received.\n");
+
+// ericw -- bring up loading plaque for map changes within a demo.
+//          it will be hidden in CL_SignonReply.
+    if (cls.demoplayback)
+        SCR_BeginLoadingPlaque();
+
 //
 // wipe the client_state_t struct
 //
@@ -261,16 +258,14 @@ void CL_ParseServerInfo (void)
 
 // parse protocol version number
 	i = MSG_ReadLong (net_message);
-	if (i != PROTOCOL_RAVEN_111 && 
-		i != PROTOCOL_RAVEN_112 && 
-		i != PROTOCOL_UQE_113)
+	if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_UQE_113)
 	{
 		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
-		Host_Error ("Server returned version %i, not %i or %i - %i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i, %i or %i", i,
+					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 	}
 
 	cl.protocol = i;
-
 	Con_DPrintf ("Server protocol is %i", i);
 
 // parse maxclients
@@ -311,8 +306,8 @@ void CL_ParseServerInfo (void)
 		str = MSG_ReadString (net_message);
 		if (!str[0])
 			break;
-		if (nummodels==MAX_MODELS)
-			Host_Error ("Server sent too many model precaches (max = %d)", MAX_MODELS);
+		if (nummodels == MAX_MODELS)
+			Host_Error ("CL_ParseServerInfo: Server sent too many model precaches (max = %d)", MAX_MODELS);
 		strcpy (model_precache[nummodels], str);
 		Mod_TouchModel (str);
 	}
@@ -324,12 +319,17 @@ void CL_ParseServerInfo (void)
 		str = MSG_ReadString (net_message);
 		if (!str[0])
 			break;
-		if (numsounds==MAX_SOUNDS)
-			Host_Error ("Server sent too many sound precaches (max = %d)", MAX_SOUNDS);
+		if (numsounds == ((cl.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS))
+			Host_Error ("CL_ParseServerInfo: Server sent too many sound precaches (max = %d)", (cl.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS);
 		strcpy (sound_precache[numsounds], str);
 		S_TouchSound (str);
 	}
 
+	//johnfitz -- check for excessive sounds
+	if (numsounds >= 256)
+		Con_DWarning ("CL_ParseServerInfo: sounds exceeds standard old limit (%d, normal max = %d)\n", numsounds, 256);
+	//johnfitz
+	
 	// Baker: maps/e1m1.bsp ---> e1m1
 	// We need this early for external vis to know if a model is worldmodel or not
 	COM_StripExtension (COM_SkipPath(model_precache[1]), cl.worldname);
@@ -450,6 +450,7 @@ void CL_ParseUpdate (int bits)
 		num = MSG_ReadShort (net_message);
 	else
 		num = MSG_ReadByte (net_message);
+
 	ent = CL_EntityNum (num);
 
 	ent->baseline.flags |= BE_ON;
@@ -523,8 +524,9 @@ void CL_ParseUpdate (int bits)
 	if (bits & U_MODEL)
 	{
 		modnum = MSG_ReadShort (net_message);
-		if (modnum >= MAX_MODELS)
-			Host_Error ("CL_ParseModel: bad modnum");
+		
+		if (modnum < 0 || modnum >= MAX_MODELS)
+			Host_Error ("CL_ParseUpdate: invalid model (%d, max = %d)", modnum, MAX_MODELS);
 	}
 	else
 		modnum = ref_ent->modelindex;
@@ -772,9 +774,12 @@ CL_ParseClientdata
 Server information pertaining to this client only
 ==================
 */
-void CL_ParseClientdata (int bits)
+void CL_ParseClientdata (void)
 {
 	int		i, j;
+	int		bits;
+
+	bits = (unsigned short)MSG_ReadShort (net_message); // read bits here isntead of in CL_ParseServerMessage()
 
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar (net_message);
@@ -1131,6 +1136,24 @@ void CL_ParseRainEffect(void)
 	R_RainEffect(org,e_size,x_dir,y_dir,color,count);
 }
 
+/*
+===================
+Svc_Name
+===================
+*/
+static char *Svc_Name (int cmd)
+{
+	if (cmd == -1)
+		return "none";
+
+	cmd &= 255;
+
+	if (cmd & 128)
+		return "fast update";
+
+	return svc_strings[cmd];
+}
+
 #define SHOWNET(x) if(cl_shownet.value==2)Con_Printf ("%3i:%s\n", net_message->readcount - 1, x);
 
 /*
@@ -1140,7 +1163,9 @@ CL_ParseServerMessage
 */
 void CL_ParseServerMessage (void)
 {
-	int			cmd;
+	int		cmd = -1;
+	int		lastpos = 0, lastcmd;
+	char	*str; //johnfitz
 	int			i,j,k;
 	int			EntityCount = 0;
 	int			EntitySize = 0;
@@ -1169,7 +1194,8 @@ void CL_ParseServerMessage (void)
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");
 	
-	cl.onground = false;	// unless the server says otherwise	
+//	cl.onground = false;	// unless the server says otherwise
+	
 //
 // parse the message
 //
@@ -1178,7 +1204,15 @@ void CL_ParseServerMessage (void)
 	while (1)
 	{
 		if (net_message->badread)
-			Host_Error ("CL_ParseServerMessage: Bad server message");
+		{
+			char s[512];
+
+			sprintf (s, "CL_ParseServerMessage: insufficient data in service '%s', size %d", Svc_Name(cmd), net_message->readcount - lastpos);
+			Host_Error (s);
+		}
+
+		lastpos = net_message->readcount;
+		lastcmd = cmd;
 
 		cmd = MSG_ReadByte (net_message);
 
@@ -1192,7 +1226,7 @@ void CL_ParseServerMessage (void)
 		}
 
 	// if the high bit of the command byte is set, it is a fast update
-		if (cmd & 128)
+		if (cmd & U_SIGNAL) // was 128, changed for clarity
 		{
 			before = net_message->readcount;
 			SHOWNET("fast update");
@@ -1212,7 +1246,7 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message (%d)\n", cmd);
+			Host_Error ("CL_ParseServerMessage: Illegible server message (service %d, last service '%s')", cmd, Svc_Name(lastcmd));
 			break;
 			
 		case svc_nop:
@@ -1222,19 +1256,20 @@ void CL_ParseServerMessage (void)
 		case svc_time:
 			cl.mtime[1] = cl.mtime[0];
 			cl.mtime[0] = MSG_ReadFloat (net_message);
+			cl.fixangle = false;
 			break;
 			
 		case svc_clientdata:
-			i = MSG_ReadShort (net_message);
-			CL_ParseClientdata (i);
+			CL_ParseClientdata (); //johnfitz -- removed bits parameter, we will read this inside CL_ParseClientdata()
 			break;
 		
 		case svc_version:
+			// svc_version is never used in the engine. wtf? maybe it's from an older version of stuff?
+			// don't read flags anyway for compatibility as we have no control over what sent the message
 			i = MSG_ReadLong (net_message);
-			if (i != PROTOCOL_RAVEN_111 && 
-				i != PROTOCOL_RAVEN_112 && 
-				i != PROTOCOL_UQE_113)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i - %i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+			if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_UQE_113)
+				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i, %i or %i", i,
+							PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
 			cl.protocol = i;
 			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
 			break;
@@ -1255,9 +1290,17 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_stufftext:
-			cls.stufftext_frame = host_framecount;	// allow full frame update
-								// on stuff messages. Pa3PyX
-			Cbuf_AddText (MSG_ReadString (net_message));
+			// ericw -- hack - only wait for the full frame update if the stufftext
+			// contains "reconnect". some mods, e.g. honey, send stufftext every frame;
+			// if we were to set cls.stufftext_frame every frame, that would break
+			// the playback rate control (causing demos to play back in slow-motion
+			// if the client can't keep up)
+			str = MSG_ReadString (net_message);
+			if (strstr (str, "reconnect") != NULL)
+			{
+				cls.stufftext_frame = host_framecount;	// Pa3PyX: allow full frame update on stuff messages in demo playback.
+			}
+			Cbuf_AddText (str);
 			break;
 			
 		case svc_damage:
@@ -1363,7 +1406,7 @@ void CL_ParseServerMessage (void)
 			channel &= 7;
 			
 			if (ent > MAX_EDICTS)
-				Host_Error ("svc_sound_update_pos: ent = %i", ent);
+				Host_Error ("CL_ParseServerMessage: svc_sound_update_pos ent %i > MAX_EDICTS (%i)", ent, MAX_EDICTS);
 			
 			for (i=0 ; i<3 ; i++)
 				pos[i] = MSG_ReadCoord (net_message);
