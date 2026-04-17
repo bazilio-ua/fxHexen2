@@ -25,8 +25,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	PROTOCOL_RAVEN_111		18	// official 1.11 update, without mission pack
 #define	PROTOCOL_RAVEN_112		19	// official 1.12, with mission pack (Standard Hexen II protocol)
 
+// these protocols are read-only on the client and exist for the sole purpose of playing demos
 #define	PROTOCOL_UQE_113		20	// Korax UQE patch 1.13
-
+#define	PROTOCOL_UH2_114		21	// Shanjaq uHexen 1.14 update
 
 // if the high bit of the servercmd is set, the low bits are fast update flags:
 #define	U_MOREBITS	(1<<0)
@@ -251,6 +252,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	svc_mod_name				54	// [string] name (UQE v1.13 by Korax, music file name)
 #define	svc_skybox					55	// [string] name (UQE v1.13 by Korax, skybox name)
+#define	svc_fog						56	// [byte] density [byte] red [byte] green [byte] blue [float] time
 
 
 //

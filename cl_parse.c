@@ -84,8 +84,9 @@ char *svc_strings[] =
 	"svc_update_kingofhill",
 	"svc_toggle_statbar",
 	"svc_sound_update_pos",
-	"svc_mod_name",	// UQE v1.13 by Korax, music file name
-	"svc_skybox"	// UQE v1.13 by Korax, skybox name
+	"svc_mod_name",		// UQE v1.13 by Korax, music file name
+	"svc_skybox",		// UQE v1.13 by Korax, skybox name
+	"svc_fog"				// [byte] density [byte] red [byte] green [byte] blue [float] time
 };
 
 char *puzzle_strings;
@@ -240,7 +241,9 @@ void CL_ParseServerInfo (void)
 {
 	char	*str;
 	int		i;
+	int		j;
 	int		nummodels, numsounds;
+	int		numfx;
 	char	model_precache[MAX_MODELS][MAX_QPATH];
 	char	sound_precache[MAX_SOUNDS][MAX_QPATH];
 	
@@ -258,11 +261,15 @@ void CL_ParseServerInfo (void)
 
 // parse protocol version number
 	i = MSG_ReadLong (net_message);
-	if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_UQE_113)
+	if (i == PROTOCOL_UQE_113 || i == PROTOCOL_UH2_114)
+		Con_SafePrintf ("\nusing UQE/UH2 demo protocol %i\n", i);
+	//johnfitz -- support multiple protocols
+	else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
 	{
 		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
-		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i, %i or %i", i,
-					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i or %i", i,
+//		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i, %i or %i", i,
+					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
 	}
 
 	cl.protocol = i;
@@ -276,6 +283,13 @@ void CL_ParseServerInfo (void)
 		return;
 	}
 	cl.scores = Hunk_AllocName (cl.maxclients*sizeof(*cl.scores), "scores");
+
+// parse gamedir
+	if (cl.protocol == PROTOCOL_UH2_114)
+	{
+		str = MSG_ReadString (net_message);
+		Con_DPrintf ("CL_ParseServerInfo: Ignored server msg 'gamedir' (%s)\n", str);
+	}
 
 // parse gametype
 	cl.gametype = MSG_ReadByte (net_message);
@@ -374,6 +388,47 @@ void CL_ParseServerInfo (void)
 	player_models[3] = (model_t *)Mod_FindName ("models/assassin.mdl");
 	if (portals)
 		player_models[4] = (model_t *)Mod_FindName ("models/succubus.mdl");
+
+	if (cl.protocol == PROTOCOL_UH2_114)
+	{
+		// load model fx from server
+		for (numfx = 1; ; numfx++)
+		{
+			str = MSG_ReadString (net_message);
+			if (!str[0])
+				break;
+			if (numfx == MAX_MODELS)
+			{
+				Con_SafePrintf ("Server sent too many model effects\n");
+				return;
+			}
+			for (j = 2; j < nummodels; j++)
+			{
+				if (!strcmp(cl.model_precache[j]->name, str))
+				{
+//					#ifdef GLQUAKE
+//					cl.model_precache[j]->ex_flags = MSG_ReadShort();
+//					cl.model_precache[j]->glow_settings[COLOR_R] = MSG_ReadFloat();
+//					cl.model_precache[j]->glow_settings[COLOR_G] = MSG_ReadFloat();
+//					cl.model_precache[j]->glow_settings[COLOR_B] = MSG_ReadFloat();
+//					cl.model_precache[j]->glow_settings[COLOR_A] = MSG_ReadFloat();
+//					#endif
+					
+					// just parsing ...
+					MSG_ReadShort (net_message);
+					MSG_ReadFloat (net_message);
+					MSG_ReadFloat (net_message);
+					MSG_ReadFloat (net_message);
+					MSG_ReadFloat (net_message);
+				}
+			}
+		}
+
+		if (precache.value)
+		{
+			total_loading_size = nummodels + numsounds + numfx;
+		}
+	}
 
 	for (i=1 ; i<numsounds ; i++)
 	{
@@ -1267,11 +1322,16 @@ void CL_ParseServerMessage (void)
 			// svc_version is never used in the engine. wtf? maybe it's from an older version of stuff?
 			// don't read flags anyway for compatibility as we have no control over what sent the message
 			i = MSG_ReadLong (net_message);
-			if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_UQE_113)
-				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i, %i or %i", i,
-							PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+			if (i == PROTOCOL_UQE_113 || i == PROTOCOL_UH2_114)
+				Con_SafePrintf ("using UQE/UH2 demo protocol version %i\n", i);
+			//johnfitz -- support multiple protocols
+			else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
+				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i or %i", i,
+//				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i, %i or %i", i,
+							PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
 			cl.protocol = i;
 			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
+			//johnfitz
 			break;
 			
 		case svc_disconnect:
@@ -1382,7 +1442,15 @@ void CL_ParseServerMessage (void)
 		case svc_lightstyle:
 			i = MSG_ReadByte (net_message);
 			if (i >= MAX_LIGHTSTYLES)
-				Host_Error ("CL_ParseServerMessage: svc_lightstyle %d >= MAX_LIGHTSTYLES (%d)", i, MAX_LIGHTSTYLES);
+			{
+				if (cl.protocol == PROTOCOL_UH2_114)
+				{
+					MSG_ReadString(net_message);
+					break;
+				}
+				else
+					Host_Error ("CL_ParseServerMessage: svc_lightstyle %d >= MAX_LIGHTSTYLES (%d)", i, MAX_LIGHTSTYLES);
+			}
 			strcpy (cl_lightstyle[i].map,  MSG_ReadString(net_message));
 			cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 			break;
@@ -1846,6 +1914,9 @@ void CL_ParseServerMessage (void)
 			break;
 		case svc_skybox:
 			R_LoadSkyBox (MSG_ReadString(net_message));
+			break;
+		case svc_fog:
+			R_FogParseServerMessage ();
 			break;
 		}
 	}

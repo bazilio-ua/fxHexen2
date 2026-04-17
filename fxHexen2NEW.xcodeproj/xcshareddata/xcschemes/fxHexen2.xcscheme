@@ -93,7 +93,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-portals"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-nehahra +map neh1m1"
@@ -297,7 +297,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 256"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 128"
@@ -305,7 +305,7 @@
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 512"
-            isEnabled = "NO">
+            isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "-mem 2000"
