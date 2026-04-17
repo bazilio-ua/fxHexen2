@@ -42,7 +42,7 @@ static int	mod_novis_capacity;
 static byte	*mod_decompressed;
 static int	mod_decompressed_capacity;
 
-#define	MAX_MOD_KNOWN	2048 // was 1500
+#define	MAX_MOD_KNOWN	4096 // was 1500
 model_t	mod_known[MAX_MOD_KNOWN];
 int		mod_numknown;
 
