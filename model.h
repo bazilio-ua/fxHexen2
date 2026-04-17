@@ -131,13 +131,11 @@ typedef struct texture_s
 typedef struct
 {
 	unsigned int	v[2];
-//	unsigned int	cachededgeoffset;
 } medge_t;
 
 typedef struct
 {
 	float		vecs[2][4];
-//	float		mipadjust;
 	texture_t	*texture;
 	int			flags;
 } mtexinfo_t;
@@ -245,7 +243,6 @@ typedef struct
 	int			lastclipnode;
 	vec3_t		clip_mins;
 	vec3_t		clip_maxs;
-//	int			available;
 } hull_t;
 
 

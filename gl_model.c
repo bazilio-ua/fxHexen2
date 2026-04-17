@@ -1106,7 +1106,6 @@ void Mod_LoadTexinfo (lump_t *l)
 	texinfo_t *in;
 	mtexinfo_t *out;
 	int 	i, j, count, miptex;
-//	float	len1, len2;
 
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1126,17 +1125,6 @@ void Mod_LoadTexinfo (lump_t *l)
 			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
 			out->vecs[1][j] = LittleFloat (in->vecs[1][j]);
 		}
-//		len1 = VectorLength (out->vecs[0]);
-//		len2 = VectorLength (out->vecs[1]);
-//		len1 = (len1 + len2)/2;
-//		if (len1 < 0.32)
-//			out->mipadjust = 4;
-//		else if (len1 < 0.49)
-//			out->mipadjust = 3;
-//		else if (len1 < 0.99)
-//			out->mipadjust = 2;
-//		else
-//			out->mipadjust = 1;
 
 		miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);
@@ -1957,10 +1945,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 //	hull->firstclipnode = 0;
 //	hull->lastclipnode = count-1;
 //	hull->planes = loadmodel->planes;
-//
 //	VectorSet (hull->clip_mins, -16, -16, -24);
 //	VectorSet (hull->clip_maxs,  16,  16,  32);
-//	hull->available = true;
 //
 //	// Monster hull
 //	hull = &loadmodel->hulls[2];
@@ -1968,10 +1954,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 //	hull->firstclipnode = 0;
 //	hull->lastclipnode = count-1;
 //	hull->planes = loadmodel->planes;
-//
 //	VectorSet (hull->clip_mins, -32, -32, -24);
 //	VectorSet (hull->clip_maxs,  32,  32,  64);
-//	hull->available = true;
 	
 	
 //player
@@ -1986,7 +1970,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 16;
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 32;
-//	hull->available = true;
 	
 //scorpion	
 	hull = &loadmodel->hulls[2];
@@ -2000,7 +1983,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 24;
 	hull->clip_maxs[1] = 24;
 	hull->clip_maxs[2] = 20;
-//	hull->available = true;
 	
 //crouch
 	hull = &loadmodel->hulls[3];
@@ -2014,7 +1996,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 16;
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 16;
-//	hull->available = true;
 	
 //hydra -changing in MP to '-8 -8 -8', '8 8 8' for pentacles (was: '-40 -40 -42', '40 40 42')
 	hull = &loadmodel->hulls[4];
@@ -2028,7 +2009,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 8;
 	hull->clip_maxs[1] = 8;
 	hull->clip_maxs[2] = 8;
-//	hull->available = true;
 	
 //golem - maybe change to '-28 -28 -40', '28 28 40' for Yakman
 	hull = &loadmodel->hulls[5];
@@ -2049,7 +2029,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 48;
 	hull->clip_maxs[1] = 48;
 	hull->clip_maxs[2] = 50;
-//	hull->available = true;
 	
 }
 
