@@ -406,14 +406,6 @@ void CL_ParseServerInfo (void)
 			{
 				if (!strcmp(cl.model_precache[j]->name, str))
 				{
-//					#ifdef GLQUAKE
-//					cl.model_precache[j]->ex_flags = MSG_ReadShort();
-//					cl.model_precache[j]->glow_settings[COLOR_R] = MSG_ReadFloat();
-//					cl.model_precache[j]->glow_settings[COLOR_G] = MSG_ReadFloat();
-//					cl.model_precache[j]->glow_settings[COLOR_B] = MSG_ReadFloat();
-//					cl.model_precache[j]->glow_settings[COLOR_A] = MSG_ReadFloat();
-//					#endif
-					
 					// just parsing ...
 					MSG_ReadShort (net_message);
 					MSG_ReadFloat (net_message);
