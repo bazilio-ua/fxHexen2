@@ -42,7 +42,10 @@ typedef struct edict_s
 	int		leafnums[MAX_ENT_LEAFS]; // ericw -- leafnums array in edict_t needs to be int, not short
 
 	entity_state_t	baseline;
-	
+	qboolean	sendinterval;		// johnfitz -- send time until nextthink to client for better lerp timing
+	float		oldframe;
+	float		oldthinktime;
+
 	float		freetime;			// sv.time when the object was freed
 	float		alloctime;			// sv.time when the object was allocated
 	entvars_t	v;					// C exported fields from progs

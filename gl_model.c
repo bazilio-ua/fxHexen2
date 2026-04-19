@@ -2855,6 +2855,37 @@ void Mod_SetExtraFlags (model_t *mod)
 	// and visa verse for standard hexen2. So we set it both
 	if (mod->flags & EF_MAGICMISSILE)
 		mod->flags |= (EF_HOLEY|EF_FACE_VIEW);
+	
+	// This should include all torches in data1, portals, which look bad when lerped, and the 'ros' flames, which also look bad lerped.
+	if (!strcmp (mod->name, "models/flame.mdl") || // data1
+		!strcmp (mod->name, "models/cflmtrch.mdl") ||
+		!strcmp (mod->name, "models/mflmtrch.mdl") ||
+		!strcmp (mod->name, "models/eflmtrch.mdl") ||
+		!strcmp (mod->name, "models/rflmtrch.mdl") ||
+		!strcmp (mod->name, "models/candle.mdl") || // portals
+		!strcmp (mod->name, "models/lantern.mdl") ||
+		!strcmp (mod->name, "models/newfire.mdl") ||
+		!strcmp (mod->name, "models/flame1.mdl") || // ros
+		!strcmp (mod->name, "models/flame2.mdl") ||
+		!strcmp (mod->name, "models/flame3.mdl") ||
+		!strcmp (mod->name, "models/flame4.mdl") ||
+		!strcmp (mod->name, "models/flame5.mdl") ||
+		!strcmp (mod->name, "models/flame6.mdl") ||
+		!strcmp (mod->name, "models/flame7.mdl") ||
+		!strcmp (mod->name, "models/flame7_red.mdl") ||
+		!strcmp (mod->name, "models/flame7_violet.mdl") ||
+		!strcmp (mod->name, "models/flame8.mdl") ||
+		!strcmp (mod->name, "models/flame9.mdl") ||
+		!strcmp (mod->name, "models/flame9_2.mdl") ||
+		!strcmp (mod->name, "models/flame10.mdl") ||
+		!strcmp (mod->name, "models/flame11.mdl") ||
+		!strcmp (mod->name, "models/flame12.mdl") ||
+		!strcmp (mod->name, "models/flame12_violet.mdl") ||
+		!strcmp (mod->name, "models/flame12a.mdl") ||
+		!strcmp (mod->name, "models/flame13.mdl"))
+	{
+		mod->flags |= MOD_NOLERP; // nolerp flag
+	}
 }
 
 /*

@@ -420,6 +420,9 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 
 #define  EF_MIP_MAP_FAR	  0x1000000	// Set per frame, this model will use the far mip map
 
+//johnfitz -- extra flags for rendering
+#define	MOD_NOLERP		0x2000000		// don't lerp when animating
+//johnfitz
 
 
 typedef struct model_s
