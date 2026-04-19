@@ -943,6 +943,7 @@ void VID_Shutdown (void)
 		}
 		
 		if (window) {
+			[window setLevel:NSNormalWindowLevel];
 			[window release];
 			window = nil;
 		}
@@ -972,11 +973,17 @@ void VID_Shutdown (void)
 				Con_Printf("Unable to release display\n");
 		}
 		
-		if (desktopMode)
+		if (desktopMode) {
 			CGDisplayModeRelease (desktopMode);
+			desktopMode = NULL;
+		}
 		
-		if (displayModes)
+		if (displayModes) {
 			CFRelease (displayModes);
+			displayModes = NULL;
+		}
+		
+		display = 0;
 	}
 	
 	vid.fullscreen = false;
