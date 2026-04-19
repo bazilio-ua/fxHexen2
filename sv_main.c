@@ -787,12 +787,13 @@ byte *SV_FatPVS (vec3_t org, model_t *worldmodel) //johnfitz -- added worldmodel
 // SV_WriteEntitiesToClient (Q1)
 void SV_PrepareClientEntities (client_t *client, edict_t	*clent, sizebuf_t *msg)
 {
-	int		e, i;
+	int		e, i, packetsize;
 	int		bits;
 	byte	*pvs;
 	vec3_t	org;
 	float	miss;
 	edict_t	*ent;
+	static float lastmsg = 0;
 	int		temp_index;
 	char	NewName[MAX_QPATH];
 	long	flagtest;
@@ -1126,6 +1127,20 @@ skipA:
 
 		if (bits >= 65536)
 			bits |= U_MOREBITS2;
+
+		// PROTOCOL_VERSION
+		{
+			//johnfitz -- max size for protocol 15 (17,18,19) is 18 bytes, not 16 as originally assumed here.
+			packetsize = 16 + 2; // Original + missing for worst case
+
+			if (msg->maxsize - msg->cursize < packetsize)
+			{
+				if (IsTimeout (&lastmsg, 2))
+					Con_Printf ("packet overflow\n");
+
+				return;
+			}
+		}
 
 	//
 	// write the message
