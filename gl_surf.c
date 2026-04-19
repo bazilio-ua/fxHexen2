@@ -350,9 +350,19 @@ void R_AddDynamicLights (msurface_t *surf)
 				// lit support via lordhavoc
 				{
 					brightness = rad - dist;
-					bl[0] += (int) (brightness * r);
-					bl[1] += (int) (brightness * g);
-					bl[2] += (int) (brightness * b);
+					if (cl_dlights[lnum].dark)
+					{
+						// clamp to 0
+						bl[0] -= (int) (((brightness * r) < bl[0]) ? (brightness * r) : bl[0]);
+						bl[1] -= (int) (((brightness * g) < bl[1]) ? (brightness * g) : bl[1]);
+						bl[2] -= (int) (((brightness * b) < bl[2]) ? (brightness * b) : bl[2]);
+					}
+					else
+					{
+						bl[0] += (int) (brightness * r);
+						bl[1] += (int) (brightness * g);
+						bl[2] += (int) (brightness * b);
+					}
 				}
 				bl += 3;
 			}
