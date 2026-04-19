@@ -130,7 +130,7 @@ typedef struct texture_s
 
 typedef struct
 {
-	unsigned int	v[2];
+	unsigned int	v[2]; // bsp2 support. was (short)
 } medge_t;
 
 typedef struct
@@ -168,8 +168,8 @@ typedef struct msurface_s
 	int			firstedge;	// look up in model->surfedges[], negative numbers
 	int			numedges;	// are backwards edges
 	
-	int		texturemins[2];
-	int		extents[2];
+	int		texturemins[2]; // q1 was (short), h2 bsp2 support
+	int		extents[2]; // q1 was (short), h2 bsp2 support
 
 	int			light_s, light_t;	// gl lightmap coordinates
 
@@ -202,8 +202,8 @@ typedef struct mnode_s
 	mplane_t	*plane;
 	struct mnode_s	*children[2];	
 
-	unsigned int		firstsurface;
-	unsigned int		numsurfaces;
+	unsigned int		firstsurface; // bsp2 support. was (short)
+	unsigned int		numsurfaces; // bsp2 support. was (short)
 } mnode_t;
 
 
