@@ -403,7 +403,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 // clear to no light
 		memset (&blocklights[0], 0, size * 3 * sizeof (unsigned int)); // lit support via lordhavoc
 
-		// clear to ambient
+// clear to ambient
 		bl = blocklights;
 		ambient_light = (unsigned int)(max(0, r_ambient.value)) << 8;
 		for (i = 0; i < size; i++)
@@ -414,28 +414,28 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 		}
 		
 // add all the lightmaps
-	if (lightmap)
-		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
-		{
-			scale = d_lightstyle[surf->styles[maps]];
-			surf->cached_light[maps] = scale;	// 8.8 fraction
+		if (lightmap)
+			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
+			{
+				scale = d_lightstyle[surf->styles[maps]];
+				surf->cached_light[maps] = scale;	// 8.8 fraction
 				// lit support via lordhavoc
 				bl = blocklights;
-			for (i=0 ; i<size ; i++)
+				for (i=0 ; i<size ; i++)
 				{
 					*bl++ += *lightmap++ * scale;
 					*bl++ += *lightmap++ * scale;
 					*bl++ += *lightmap++ * scale;
 				}
-		}
+			}
 
 // add all the dynamic lights
-	if (surf->dlightframe == r_framecount)
-		R_AddDynamicLights (surf);
+		if (surf->dlightframe == r_framecount)
+			R_AddDynamicLights (surf);
 	}
 	else
 	{
-		// set to full bright if no light data
+// set to full bright if no light data
 		memset (&blocklights[0], 255, size * 3 * sizeof (unsigned int)); // lit support via lordhavoc
 	}
 
