@@ -20,15 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_parse.c  -- parse a message received from the server
 
 #include "quakedef.h"
-//#include "r_shared.h"
-
-#ifdef _WIN32
-#include "winquake.h"
-#endif
-
-//extern	cvar_t	sv_flypitch;
-//extern	cvar_t	sv_walkpitch;
-extern 	cvar_t	bgmtype;
 
 char *svc_strings[] =
 {
@@ -93,8 +84,9 @@ char *svc_strings[] =
 	"svc_update_kingofhill",
 	"svc_toggle_statbar",
 	"svc_sound_update_pos",
-	"svc_mod_name",	// UQE v1.13 by Korax, music file name
-	"svc_skybox"	// UQE v1.13 by Korax, skybox name
+	"svc_mod_name",		// UQE v1.13 by Korax, music file name
+	"svc_skybox",		// UQE v1.13 by Korax, skybox name
+	"svc_fog"				// [byte] density [byte] red [byte] green [byte] blue [float] time
 };
 
 char *puzzle_strings;
@@ -159,14 +151,17 @@ void CL_ParseStartSoundPacket(void)
 	channel = MSG_ReadShort (net_message);
 	sound_num = MSG_ReadByte (net_message);
 
-    if (field_mask & SND_OVERFLOW)
-		sound_num += MAX_SOUNDS_OLD;
+	if (field_mask & SND_OVERFLOW)
+		sound_num += 256;
 
 	ent = channel >> 3;
 	channel &= 7;
 
-	if (ent > MAX_EDICTS)
-		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+	if (sound_num >= MAX_SOUNDS)
+		Host_Error ("CL_ParseStartSoundPacket: invalid sound_num (%d, max = %d)", sound_num, MAX_SOUNDS);
+
+	if (ent < 0 || ent >= MAX_EDICTS)
+		Host_Error ("CL_ParseStartSoundPacket: invalid edict (%d, max = %d)", ent, MAX_EDICTS);
 	
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord (net_message);
@@ -246,11 +241,19 @@ void CL_ParseServerInfo (void)
 {
 	char	*str;
 	int		i;
+	int		j;
 	int		nummodels, numsounds;
+	int		numfx;
 	char	model_precache[MAX_MODELS][MAX_QPATH];
 	char	sound_precache[MAX_SOUNDS][MAX_QPATH];
 	
 	Con_DPrintf ("\nServerinfo packet received.\n");
+
+// ericw -- bring up loading plaque for map changes within a demo.
+//          it will be hidden in CL_SignonReply.
+    if (cls.demoplayback)
+        SCR_BeginLoadingPlaque();
+
 //
 // wipe the client_state_t struct
 //
@@ -258,13 +261,18 @@ void CL_ParseServerInfo (void)
 
 // parse protocol version number
 	i = MSG_ReadLong (net_message);
-	if (i != PROTOCOL_RAVEN_111 && 
-		i != PROTOCOL_RAVEN_112 && 
-		i != PROTOCOL_UQE_113)
-		Host_Error ("Server returned version %i, not %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+	if (i == PROTOCOL_UQE_113 || i == PROTOCOL_UH2_114)
+		Con_SafePrintf ("\nusing UQE/UH2 demo protocol %i\n", i);
+	//johnfitz -- support multiple protocols
+	else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
+	{
+		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
+		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i or %i", i,
+//		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i, %i or %i", i,
+					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+	}
 
 	cl.protocol = i;
-
 	Con_DPrintf ("Server protocol is %i", i);
 
 // parse maxclients
@@ -275,6 +283,13 @@ void CL_ParseServerInfo (void)
 		return;
 	}
 	cl.scores = Hunk_AllocName (cl.maxclients*sizeof(*cl.scores), "scores");
+
+// parse gamedir
+	if (cl.protocol == PROTOCOL_UH2_114)
+	{
+		str = MSG_ReadString (net_message);
+		Con_DPrintf ("CL_ParseServerInfo: Ignored server msg 'gamedir' (%s)\n", str);
+	}
 
 // parse gametype
 	cl.gametype = MSG_ReadByte (net_message);
@@ -305,8 +320,8 @@ void CL_ParseServerInfo (void)
 		str = MSG_ReadString (net_message);
 		if (!str[0])
 			break;
-		if (nummodels==MAX_MODELS)
-			Host_Error ("Server sent too many model precaches (max = %d)", MAX_MODELS);
+		if (nummodels == MAX_MODELS)
+			Host_Error ("CL_ParseServerInfo: Server sent too many model precaches (max = %d)", MAX_MODELS);
 		strcpy (model_precache[nummodels], str);
 		Mod_TouchModel (str);
 	}
@@ -318,12 +333,17 @@ void CL_ParseServerInfo (void)
 		str = MSG_ReadString (net_message);
 		if (!str[0])
 			break;
-		if (numsounds==MAX_SOUNDS)
-			Host_Error ("Server sent too many sound precaches (max = %d)", MAX_SOUNDS);
+		if (numsounds == ((cl.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS))
+			Host_Error ("CL_ParseServerInfo: Server sent too many sound precaches (max = %d)", (cl.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS);
 		strcpy (sound_precache[numsounds], str);
 		S_TouchSound (str);
 	}
 
+	//johnfitz -- check for excessive sounds
+	if (numsounds >= 256)
+		Con_DWarning ("CL_ParseServerInfo: sounds exceeds standard old limit (%d, normal max = %d)\n", numsounds, 256);
+	//johnfitz
+	
 	// Baker: maps/e1m1.bsp ---> e1m1
 	// We need this early for external vis to know if a model is worldmodel or not
 	COM_StripExtension (COM_SkipPath(model_precache[1]), cl.worldname);
@@ -368,6 +388,39 @@ void CL_ParseServerInfo (void)
 	player_models[3] = (model_t *)Mod_FindName ("models/assassin.mdl");
 	if (portals)
 		player_models[4] = (model_t *)Mod_FindName ("models/succubus.mdl");
+
+	if (cl.protocol == PROTOCOL_UH2_114)
+	{
+		// load model fx from server
+		for (numfx = 1; ; numfx++)
+		{
+			str = MSG_ReadString (net_message);
+			if (!str[0])
+				break;
+			if (numfx == MAX_MODELS)
+			{
+				Con_SafePrintf ("Server sent too many model effects\n");
+				return;
+			}
+			for (j = 2; j < nummodels; j++)
+			{
+				if (!strcmp(cl.model_precache[j]->name, str))
+				{
+					// just parsing ...
+					MSG_ReadShort (net_message);
+					MSG_ReadFloat (net_message);
+					MSG_ReadFloat (net_message);
+					MSG_ReadFloat (net_message);
+					MSG_ReadFloat (net_message);
+				}
+			}
+		}
+
+		if (precache.value)
+		{
+			total_loading_size = nummodels + numsounds + numfx;
+		}
+	}
 
 	for (i=1 ; i<numsounds ; i++)
 	{
@@ -444,6 +497,7 @@ void CL_ParseUpdate (int bits)
 		num = MSG_ReadShort (net_message);
 	else
 		num = MSG_ReadByte (net_message);
+
 	ent = CL_EntityNum (num);
 
 	ent->baseline.flags |= BE_ON;
@@ -517,8 +571,9 @@ void CL_ParseUpdate (int bits)
 	if (bits & U_MODEL)
 	{
 		modnum = MSG_ReadShort (net_message);
-		if (modnum >= MAX_MODELS)
-			Host_Error ("CL_ParseModel: bad modnum");
+		
+		if (modnum < 0 || modnum >= MAX_MODELS)
+			Host_Error ("CL_ParseUpdate: invalid model (%d, max = %d)", modnum, MAX_MODELS);
 	}
 	else
 		modnum = ref_ent->modelindex;
@@ -766,9 +821,12 @@ CL_ParseClientdata
 Server information pertaining to this client only
 ==================
 */
-void CL_ParseClientdata (int bits)
+void CL_ParseClientdata (void)
 {
 	int		i, j;
+	int		bits;
+
+	bits = (unsigned short)MSG_ReadShort (net_message); // read bits here isntead of in CL_ParseServerMessage()
 
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar (net_message);
@@ -1125,6 +1183,24 @@ void CL_ParseRainEffect(void)
 	R_RainEffect(org,e_size,x_dir,y_dir,color,count);
 }
 
+/*
+===================
+Svc_Name
+===================
+*/
+static char *Svc_Name (int cmd)
+{
+	if (cmd == -1)
+		return "none";
+
+	cmd &= 255;
+
+	if (cmd & 128)
+		return "fast update";
+
+	return svc_strings[cmd];
+}
+
 #define SHOWNET(x) if(cl_shownet.value==2)Con_Printf ("%3i:%s\n", net_message->readcount - 1, x);
 
 /*
@@ -1134,7 +1210,9 @@ CL_ParseServerMessage
 */
 void CL_ParseServerMessage (void)
 {
-	int			cmd;
+	int		cmd = -1;
+	int		lastpos = 0, lastcmd;
+	char	*str; //johnfitz
 	int			i,j,k;
 	int			EntityCount = 0;
 	int			EntitySize = 0;
@@ -1163,7 +1241,8 @@ void CL_ParseServerMessage (void)
 	else if (cl_shownet.value == 2)
 		Con_Printf ("------------------\n");
 	
-	cl.onground = false;	// unless the server says otherwise	
+//	cl.onground = false;	// unless the server says otherwise
+	
 //
 // parse the message
 //
@@ -1172,7 +1251,15 @@ void CL_ParseServerMessage (void)
 	while (1)
 	{
 		if (net_message->badread)
-			Host_Error ("CL_ParseServerMessage: Bad server message");
+		{
+			char s[512];
+
+			sprintf (s, "CL_ParseServerMessage: insufficient data in service '%s', size %d", Svc_Name(cmd), net_message->readcount - lastpos);
+			Host_Error (s);
+		}
+
+		lastpos = net_message->readcount;
+		lastcmd = cmd;
 
 		cmd = MSG_ReadByte (net_message);
 
@@ -1186,7 +1273,7 @@ void CL_ParseServerMessage (void)
 		}
 
 	// if the high bit of the command byte is set, it is a fast update
-		if (cmd & 128)
+		if (cmd & U_SIGNAL) // was 128, changed for clarity
 		{
 			before = net_message->readcount;
 			SHOWNET("fast update");
@@ -1206,7 +1293,7 @@ void CL_ParseServerMessage (void)
 		switch (cmd)
 		{
 		default:
-			Host_Error ("CL_ParseServerMessage: Illegible server message\n");
+			Host_Error ("CL_ParseServerMessage: Illegible server message (service %d, last service '%s')", cmd, Svc_Name(lastcmd));
 			break;
 			
 		case svc_nop:
@@ -1216,21 +1303,27 @@ void CL_ParseServerMessage (void)
 		case svc_time:
 			cl.mtime[1] = cl.mtime[0];
 			cl.mtime[0] = MSG_ReadFloat (net_message);
+			cl.fixangle = false;
 			break;
 			
 		case svc_clientdata:
-			i = MSG_ReadShort (net_message);
-			CL_ParseClientdata (i);
+			CL_ParseClientdata (); //johnfitz -- removed bits parameter, we will read this inside CL_ParseClientdata()
 			break;
 		
 		case svc_version:
+			// svc_version is never used in the engine. wtf? maybe it's from an older version of stuff?
+			// don't read flags anyway for compatibility as we have no control over what sent the message
 			i = MSG_ReadLong (net_message);
-			if (i != PROTOCOL_RAVEN_111 && 
-				i != PROTOCOL_RAVEN_112 && 
-				i != PROTOCOL_UQE_113)
-				Host_Error ("CL_ParseServerMessage: Server is protocol %i instead of %i or %i-%i", i, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_UQE_113);
+			if (i == PROTOCOL_UQE_113 || i == PROTOCOL_UH2_114)
+				Con_SafePrintf ("using UQE/UH2 demo protocol version %i\n", i);
+			//johnfitz -- support multiple protocols
+			else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
+				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i or %i", i,
+//				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i, %i or %i", i,
+							PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
 			cl.protocol = i;
 			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
+			//johnfitz
 			break;
 			
 		case svc_disconnect:
@@ -1249,9 +1342,17 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_stufftext:
-			cls.stufftext_frame = host_framecount;	// allow full frame update
-								// on stuff messages. Pa3PyX
-			Cbuf_AddText (MSG_ReadString (net_message));
+			// ericw -- hack - only wait for the full frame update if the stufftext
+			// contains "reconnect". some mods, e.g. honey, send stufftext every frame;
+			// if we were to set cls.stufftext_frame every frame, that would break
+			// the playback rate control (causing demos to play back in slow-motion
+			// if the client can't keep up)
+			str = MSG_ReadString (net_message);
+			if (strstr (str, "reconnect") != NULL)
+			{
+				cls.stufftext_frame = host_framecount;	// Pa3PyX: allow full frame update on stuff messages in demo playback.
+			}
+			Cbuf_AddText (str);
 			break;
 			
 		case svc_damage:
@@ -1263,10 +1364,26 @@ void CL_ParseServerMessage (void)
 			vid.recalc_refdef = true;	// leave intermission full screen
 			break;
 			
-		case svc_setangle:
+		case svc_setangle: // JPG - added mviewangles for smooth chasecam, set last_angle_time
 			for (i=0 ; i<3 ; i++)
 				cl.viewangles[i] = MSG_ReadAngle (net_message);
 
+			if (!cls.demoplayback)
+			{
+				VectorCopy (cl.mviewangles[0], cl.mviewangles[1]);
+
+				// JPG - hack with last_angle_time to autodetect continuous svc_setangles (From ProQuake)
+				if (cl.last_angle_time > cl.time - 0.3)
+					cl.last_angle_time = cl.time + 0.3;
+				else if (cl.last_angle_time > cl.time - 0.6)
+					cl.last_angle_time = cl.time;
+				else
+					cl.last_angle_time = cl.time - 0.3;
+
+				for (i=0 ; i<3 ; i++)
+					cl.mviewangles[0][i] = cl.viewangles[i];
+			}
+			cl.fixangle = true;
 			break;
 
 		case svc_setangle_interpolate:
@@ -1310,12 +1427,22 @@ void CL_ParseServerMessage (void)
 			
 		case svc_setview:
 			cl.viewentity = MSG_ReadShort (net_message);
+			if (cl.viewentity >= MAX_EDICTS)
+				Host_Error ("CL_ParseServerMessage: svc_setview %d >= MAX_EDICTS (%d)", cl.viewentity, MAX_EDICTS);
 			break;
 					
 		case svc_lightstyle:
 			i = MSG_ReadByte (net_message);
 			if (i >= MAX_LIGHTSTYLES)
-				Sys_Error ("svc_lightstyle > MAX_LIGHTSTYLES");
+			{
+				if (cl.protocol == PROTOCOL_UH2_114)
+				{
+					MSG_ReadString(net_message);
+					break;
+				}
+				else
+					Host_Error ("CL_ParseServerMessage: svc_lightstyle %d >= MAX_LIGHTSTYLES (%d)", i, MAX_LIGHTSTYLES);
+			}
 			strcpy (cl_lightstyle[i].map,  MSG_ReadString(net_message));
 			cl_lightstyle[i].length = strlen(cl_lightstyle[i].map);
 			break;
@@ -1339,7 +1466,7 @@ void CL_ParseServerMessage (void)
 			channel &= 7;
 			
 			if (ent > MAX_EDICTS)
-				Host_Error ("svc_sound_update_pos: ent = %i", ent);
+				Host_Error ("CL_ParseServerMessage: svc_sound_update_pos ent %i > MAX_EDICTS (%i)", ent, MAX_EDICTS);
 			
 			for (i=0 ; i<3 ; i++)
 				pos[i] = MSG_ReadCoord (net_message);
@@ -1354,10 +1481,10 @@ void CL_ParseServerMessage (void)
 			break;
 		
 		case svc_updatename:
-			Sbar_Changed();
+			Sbar_Changed ();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatename > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updatename %d >= cl.maxclients (%d)", i, cl.maxclients);
 			strcpy (cl.scores[i].name, MSG_ReadString (net_message));
 			break;
 
@@ -1365,7 +1492,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updateclass > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updateclass %d >= cl.maxclients (%d)", i, cl.maxclients);
 			cl.scores[i].playerclass = (float)MSG_ReadByte(net_message);
 			CL_NewTranslation(i); // update the color
 			break;
@@ -1374,7 +1501,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatefrags > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updatefrags %d >= cl.maxclients (%d)", i, cl.maxclients);
 			cl.scores[i].frags = MSG_ReadShort (net_message);
 			break;			
 
@@ -1386,7 +1513,7 @@ void CL_ParseServerMessage (void)
 			Sbar_Changed();
 			i = MSG_ReadByte (net_message);
 			if (i >= cl.maxclients)
-				Host_Error ("CL_ParseServerMessage: svc_updatecolors > MAX_SCOREBOARD");
+				Host_Error ("CL_ParseServerMessage: svc_updatecolors %d >= cl.maxclients (%d)", i, cl.maxclients);
 			cl.scores[i].colors = MSG_ReadByte (net_message);
 			CL_NewTranslation (i);
 			break;
@@ -1433,7 +1560,7 @@ void CL_ParseServerMessage (void)
 		case svc_signonnum:
 			i = MSG_ReadByte (net_message);
 			if (i <= cls.signon)
-				Host_Error ("Received signon %i when at %i", i, cls.signon);
+				Host_Error ("CL_ParseServerMessage: Received signon %i when at %i", i, cls.signon);
 			cls.signon = i;
 			CL_SignonReply ();
 			break;
@@ -1449,8 +1576,8 @@ void CL_ParseServerMessage (void)
 		case svc_updatestat:
 			i = MSG_ReadByte (net_message);
 			if (i < 0 || i >= MAX_CL_STATS)
-				Sys_Error ("svc_updatestat: %i is invalid", i);
-			cl.stats[i] = MSG_ReadLong (net_message);;
+				Host_Error ("CL_ParseServerMessage: invalid svc_updatestat (%d, max = %d)", i, MAX_CL_STATS);
+			cl.stats[i] = MSG_ReadLong (net_message);
 			break;
 			
 		case svc_spawnstaticsound:
@@ -1774,10 +1901,14 @@ void CL_ParseServerMessage (void)
 				break;
 
 		case svc_mod_name:
+			MSG_ReadString(net_message);
+			Con_DPrintf ("Ignored server msg %d (%s)\n", cmd, svc_strings[cmd]);
+			break;
 		case svc_skybox:
 			R_LoadSkyBox (MSG_ReadString(net_message));
-//			MSG_ReadString(net_message);
-//			Con_DPrintf ("Ignored server msg %d (%s)\n", cmd, svc_strings[cmd]);
+			break;
+		case svc_fog:
+			R_FogParseServerMessage ();
 			break;
 		}
 	}

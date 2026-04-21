@@ -735,7 +735,7 @@ void V_SetPalette (byte *palette)
 {
 	byte *pal, *src;
 	int i;
-	int a = (int)(255 * map_transparentalpha);
+	int a = (int)(255 * map_tablealpha);
 
 	pal = palette;
 	
@@ -779,13 +779,13 @@ void V_SetPalette (byte *palette)
 	
 	// fullbright palette, for holey textures (fence)
 	memcpy (d_8to24table_fullbright_holey, d_8to24table_fullbright, 256*4);
-//	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
-	d_8to24table_fullbright_holey[0] = 0; // Alpha of zero.
+	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
+	d_8to24table_fullbright_holey[0] = 0; // Alpha of zero. (h2 models)
 	
 	// nobright palette, for holey textures (fence)
 	memcpy (d_8to24table_nobright_holey, d_8to24table_nobright, 256*4);
-//	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
-	d_8to24table_nobright_holey[0] = 0; // Alpha of zero.
+	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
+	d_8to24table_nobright_holey[0] = 0; // Alpha of zero. (h2 models)
 	
 	d_8to24table_fullbright_transparent[0] = 0;
 	d_8to24table_nobright_transparent[0] = 0;
@@ -1196,6 +1196,14 @@ void V_CalcRefdef (void)
 		view->origin[2] += 0.25;
 	else if (scr_weaponsize.value == 60) // scr_viewsize
 		view->origin[2] += 0;
+
+	if (ent->lerpflags & LERP_FINISH)
+	{
+		view->lerpflags |= LERP_FINISH;
+		view->lerpfinish = ent->lerpfinish;
+	}
+	else
+		view->lerpflags &= ~LERP_FINISH;
 
 	view->model = cl.model_precache[cl.stats[STAT_WEAPON]];
 	view->frame = cl.stats[STAT_WEAPONFRAME];

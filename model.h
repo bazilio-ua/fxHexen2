@@ -130,14 +130,12 @@ typedef struct texture_s
 
 typedef struct
 {
-	unsigned short	v[2];
-	unsigned int	cachededgeoffset;
+	unsigned int	v[2]; // bsp2 support. was (short)
 } medge_t;
 
 typedef struct
 {
 	float		vecs[2][4];
-	float		mipadjust;
 	texture_t	*texture;
 	int			flags;
 } mtexinfo_t;
@@ -170,8 +168,8 @@ typedef struct msurface_s
 	int			firstedge;	// look up in model->surfedges[], negative numbers
 	int			numedges;	// are backwards edges
 	
-	short		texturemins[2];
-	short		extents[2];
+	int		texturemins[2]; // q1 was (short), h2 bsp2 support
+	int		extents[2]; // q1 was (short), h2 bsp2 support
 
 	int			light_s, light_t;	// gl lightmap coordinates
 
@@ -204,8 +202,8 @@ typedef struct mnode_s
 	mplane_t	*plane;
 	struct mnode_s	*children[2];	
 
-	unsigned short		firstsurface;
-	unsigned short		numsurfaces;
+	unsigned int		firstsurface; // bsp2 support. was (short)
+	unsigned int		numsurfaces; // bsp2 support. was (short)
 } mnode_t;
 
 
@@ -245,7 +243,6 @@ typedef struct
 	int			lastclipnode;
 	vec3_t		clip_mins;
 	vec3_t		clip_maxs;
-	int			available;
 } hull_t;
 
 
@@ -278,8 +275,7 @@ SPRITE MODELS
 // FIXME: shorten these?
 typedef struct mspriteframe_s
 {
-	short	width;
-	short	height;
+	int		width, height;		// h2 was short
 	float	up, down, left, right;
 	float	smax, tmax; // image might be padded
 	struct	gltexture_s	*gltexture;
@@ -287,7 +283,7 @@ typedef struct mspriteframe_s
 
 typedef struct
 {
-	short			numframes;
+	int			numframes;		// h2 was short
 	float			*intervals;
 	mspriteframe_t	*frames[1];
 } mspritegroup_t;
@@ -300,10 +296,10 @@ typedef struct
 
 typedef struct
 {
-	short				type;
-	short				maxwidth;
-	short				maxheight;
-	short				numframes;
+	int				type;		// h2 was short
+	int				maxwidth;	// h2 was short
+	int				maxheight;	// h2 was short
+	int				numframes;	// h2 was short
 	float				beamlength;		// remove?
 	mspriteframedesc_t	frames[1];
 } msprite_t;
@@ -424,6 +420,9 @@ typedef enum {mod_brush, mod_sprite, mod_alias} modtype_t;
 
 #define  EF_MIP_MAP_FAR	  0x1000000	// Set per frame, this model will use the far mip map
 
+//johnfitz -- extra flags for rendering
+#define	MOD_NOLERP		0x2000000		// don't lerp when animating
+//johnfitz
 
 
 typedef struct model_s
@@ -527,3 +526,6 @@ byte	*Mod_LeafPVS (mleaf_t *leaf, model_t *model);
 byte	*Mod_NoVisPVS (model_t *model);
 
 void	Mod_FloodFillSkin (byte *skin, int skinwidth, int skinheight, char *name);
+
+float	Mod_PimpModel (edict_t *ed, float color[3]);
+

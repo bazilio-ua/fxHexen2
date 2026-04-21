@@ -42,7 +42,10 @@ typedef struct edict_s
 	int		leafnums[MAX_ENT_LEAFS]; // ericw -- leafnums array in edict_t needs to be int, not short
 
 	entity_state_t	baseline;
-	
+	qboolean	sendinterval;		// johnfitz -- send time until nextthink to client for better lerp timing
+	float		oldframe;
+	float		oldthinktime;
+
 	float		freetime;			// sv.time when the object was freed
 	float		alloctime;			// sv.time when the object was allocated
 	entvars_t	v;					// C exported fields from progs
@@ -56,15 +59,12 @@ typedef struct edict_s
 
 extern	dprograms_t		*progs;
 extern	dfunction_t		*pr_functions;
-//extern	char			*pr_strings;
-//extern  int         pr_strings_size;
+extern	char			*pr_strings;
+extern  int         pr_strings_size;
 extern	ddef_t			*pr_globaldefs;
 extern	ddef_t			*pr_fielddefs;
 extern	dstatement_t	*pr_statements;
-extern	globalvars_t	*pr_global_struct;
-extern	globalvars_v111_t	*pr_global_struct_v111;
-extern	qboolean		is_progdefs111;	// whether we have a Hexen2-v1.11 globals struct
-#define	PR_GLOBAL_STRUCT(parm)	(is_progdefs111 ? (pr_global_struct_v111->parm) : (pr_global_struct->parm))
+extern	mglobalvars_t	pr_global_struct;
 extern	float			*pr_globals;			// same as pr_global_struct
 
 extern	int				pr_edict_size;	// in bytes
@@ -93,6 +93,8 @@ void ED_ClearEdict (edict_t *e);
 
 char	*ED_NewString (char *string);
 // returns a copy of the string allocated from the server's string heap
+
+char *ED_GetEdictProperty (edict_t *ed, char *prop);
 
 void ED_Print (edict_t *ed);
 void ED_Write (FILE *f, edict_t *ed);

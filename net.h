@@ -85,12 +85,12 @@ struct qsockaddr
 };
 
 #define NET_NAME_ID			"HEXENII"
-#define PROHEXEN_VERSION	5.00 // for network communications (compat. with PQ)
+#define PROQUAKE_VERSION	6.00 // for network communications (compat. with PQ)
 
 #define	NET_NAMELEN			64
 
-#define NET_MAXMESSAGE		16384 // 65536
-#define NET_HEADERSIZE		(2 * sizeof(unsigned int))
+#define NET_MAXMESSAGE		65536 // was 16384
+#define NET_HEADERSIZE		(2 * sizeof(unsigned int)) // 8
 #define NET_DATAGRAMSIZE	(MAX_DATAGRAM + NET_HEADERSIZE)
 
 // NetHeader flags
@@ -181,7 +181,7 @@ struct qsockaddr
 
 // support for mods
 #define MOD_NONE		0x00
-#define MOD_PROHEXEN		0x01
+#define MOD_PROQUAKE		0x01
 
 struct net_landriver_s;
 struct net_driver_s;

@@ -75,8 +75,8 @@ cvar_t	r_speeds = {"r_speeds","0", CVAR_NONE};
 cvar_t	r_fullbright = {"r_fullbright","0", CVAR_NONE};
 cvar_t	r_ambient = { "r_ambient","0", CVAR_NONE};
 cvar_t	r_wateralpha = {"r_wateralpha","1", CVAR_ARCHIVE};
-cvar_t	r_translucentalpha = {"r_translucentalpha","0.6", CVAR_NONE};
-cvar_t	r_transparentalpha = {"r_transparentalpha","0.5", CVAR_NONE};
+cvar_t	r_transalpha = {"r_transalpha","0.6", CVAR_NONE};
+cvar_t	r_tablealpha = {"r_tablealpha","0.5", CVAR_NONE};
 cvar_t	r_spritealpha = {"r_spritealpha","1", CVAR_NONE};
 cvar_t	r_lockalpha = {"r_lockalpha","0", CVAR_ARCHIVE};
 cvar_t	r_lavaalpha = {"r_lavaalpha","1", CVAR_NONE};
@@ -92,6 +92,8 @@ cvar_t	r_lockpvs = {"r_lockpvs","0", CVAR_NONE};
 cvar_t	r_waterwarp = {"r_waterwarp", "1", CVAR_ARCHIVE};
 cvar_t	r_clearcolor = {"r_clearcolor", "2", CVAR_ARCHIVE}; // Closest to the original
 cvar_t	r_flatlightstyles = {"r_flatlightstyles", "0", CVAR_NONE};
+cvar_t	r_lerpmodels = {"r_lerpmodels", "1", CVAR_NONE};
+cvar_t	r_lerpmove = {"r_lerpmove", "1", CVAR_NONE};
 
 cvar_t	gl_finish = {"gl_finish","0", CVAR_NONE};
 cvar_t	gl_clear = {"gl_clear","0", CVAR_NONE};
@@ -729,7 +731,7 @@ void R_DrawAliasModel (entity_t *e)
 	//
 	// set up for alpha blending
 	//
-	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? map_translucentalpha/*0.5f*/ : 1.0f;
+	aliasalpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
 	
 //	aliasalpha = ENTALPHA_DECODE(e->alpha);
 //	aliasalpha = 0.5f; // test
@@ -1669,21 +1671,23 @@ void R_SetupAliasFrame (entity_t *e, aliashdr_t *paliashdr, lerpdata_t *lerpdata
 	}
 
 	// set up values
-	// always lerp
+	if (r_lerpmodels.value && !(e->model->flags & MOD_NOLERP && r_lerpmodels.value != 2))
 	{
 		if (e->lerpflags & LERP_FINISH && numposes == 1)
 			lerpdata->blend = CLAMP (0.f, (float)(cl.time - e->lerpstart) / (e->lerpfinish - e->lerpstart), 1.f);
 		else
 			lerpdata->blend = CLAMP (0.f, (float)(cl.time - e->lerpstart) / e->lerptime, 1.f);
+		if (lerpdata->blend == 1.0f)
+			e->previouspose = e->currentpose;
 		lerpdata->pose1 = e->previouspose;
 		lerpdata->pose2 = e->currentpose;
 	}
-	// don't lerp
-/*	{
+	else // don't lerp
+	{
 		lerpdata->blend = 1;
 		lerpdata->pose1 = posenum;
 		lerpdata->pose2 = posenum;
-	}	*/
+	}
 }
 
 /*
@@ -1717,11 +1721,11 @@ void R_SetupEntityTransform (entity_t *e, lerpdata_t *lerpdata)
 		VectorCopy (e->angles,  e->currentangles);
 	}
 
-	// set up values
 	if (stupidquakebugfix && e == &cl.viewent)
 		e->angles[0] = -e->angles[0]; // stupid quake bug
 
-	if (e != &cl.viewent && e->lerpflags & LERP_MOVESTEP)
+	// set up values
+	if (r_lerpmove.value && e != &cl.viewent && e->lerpflags & LERP_MOVESTEP)
 	{
 		if (e->lerpflags & LERP_FINISH)
 			blend = CLAMP (0.f, (float)(cl.time - e->movelerpstart) / (e->lerpfinish - e->movelerpstart), 1.f);

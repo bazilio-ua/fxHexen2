@@ -28,11 +28,188 @@ int         pr_strings_size;
 ddef_t			*pr_fielddefs;
 ddef_t			*pr_globaldefs;
 dstatement_t	*pr_statements;
-globalvars_t	*pr_global_struct;
-globalvars_v111_t	*pr_global_struct_v111;
-qboolean	is_progdefs111;	// whether we have a Hexen2-v1.11 globals struct
+mglobalvars_t	pr_global_struct;
 float			*pr_globals;			// same as pr_global_struct
 int				pr_edict_size;	// in bytes
+
+typedef struct
+{
+	etype_t		type;
+	int		offset;
+	void	*field;
+} mdef_t;
+
+#define OFS_V103(m)	(int)((size_t)(&((globalvars_v103_t *)0)->m))/4
+#define OFS_V111(m)	(int)((size_t)(&((globalvars_v111_t *)0)->m))/4
+#define OFS_V112(m)	(int)((size_t)(&((globalvars_v112_t *)0)->m))/4
+
+mdef_t globalvars_v103[] = {
+	{ev_entity,	OFS_V103(self),			&pr_global_struct.self},
+	{ev_entity,	OFS_V103(other),		&pr_global_struct.other},
+	{ev_entity,	OFS_V103(world),		&pr_global_struct.world},
+	{ev_float,	OFS_V103(time),			&pr_global_struct.time},
+	{ev_float,	OFS_V103(frametime),		&pr_global_struct.frametime},
+	{ev_float,	OFS_V103(force_retouch),	&pr_global_struct.force_retouch},
+	{ev_string,	OFS_V103(mapname),		&pr_global_struct.mapname},
+	{ev_string,	OFS_V103(startspot),		&pr_global_struct.startspot},
+	{ev_float,	OFS_V103(deathmatch),		&pr_global_struct.deathmatch},
+	{ev_float,	OFS_V103(coop),			&pr_global_struct.coop},
+	{ev_float,	OFS_V103(teamplay),		&pr_global_struct.teamplay},
+	{ev_float,	OFS_V103(serverflags),		&pr_global_struct.serverflags},
+	{ev_float,	OFS_V103(total_secrets),	&pr_global_struct.total_secrets},
+	{ev_float,	OFS_V103(total_monsters),	&pr_global_struct.total_monsters},
+	{ev_float,	OFS_V103(found_secrets),	&pr_global_struct.found_secrets},
+	{ev_float,	OFS_V103(killed_monsters),	&pr_global_struct.killed_monsters},
+	{ev_float,	OFS_V103(chunk_cnt),		&pr_global_struct.chunk_cnt},
+	{ev_float,	OFS_V103(done_precache),	&pr_global_struct.done_precache},
+	{ev_float,	OFS_V103(parm1),		&pr_global_struct.parm},
+	{ev_vector,	OFS_V103(v_forward),		&pr_global_struct.v_forward},
+	{ev_vector,	OFS_V103(v_up),			&pr_global_struct.v_up},
+	{ev_vector,	OFS_V103(v_right),		&pr_global_struct.v_right},
+	{ev_float,	OFS_V103(trace_allsolid),	&pr_global_struct.trace_allsolid},
+	{ev_float,	OFS_V103(trace_startsolid),	&pr_global_struct.trace_startsolid},
+	{ev_float,	OFS_V103(trace_fraction),	&pr_global_struct.trace_fraction},
+	{ev_vector,	OFS_V103(trace_endpos),		&pr_global_struct.trace_endpos},
+	{ev_vector,	OFS_V103(trace_plane_normal),	&pr_global_struct.trace_plane_normal},
+	{ev_float,	OFS_V103(trace_plane_dist),	&pr_global_struct.trace_plane_dist},
+	{ev_entity,	OFS_V103(trace_ent),		&pr_global_struct.trace_ent},
+	{ev_float,	OFS_V103(trace_inopen),		&pr_global_struct.trace_inopen},
+	{ev_float,	OFS_V103(trace_inwater),	&pr_global_struct.trace_inwater},
+	{ev_entity,	OFS_V103(msg_entity),		&pr_global_struct.msg_entity},
+	{ev_float,	OFS_V103(cycle_wrapped),	&pr_global_struct.cycle_wrapped},
+	{ev_float,	OFS_V103(crouch_cnt),		&pr_global_struct.crouch_cnt},
+	{ev_float,	OFS_V103(modelindex_assassin),	&pr_global_struct.modelindex_assassin},
+	{ev_float,	OFS_V103(modelindex_crusader),	&pr_global_struct.modelindex_crusader},
+	{ev_float,	OFS_V103(modelindex_paladin),	&pr_global_struct.modelindex_paladin},
+	{ev_float,	OFS_V103(modelindex_necromancer),&pr_global_struct.modelindex_necromancer},
+	{ev_float,	OFS_V103(modelindex_sheep),	&pr_global_struct.modelindex_sheep},
+	{ev_float,	OFS_V103(num_players),		&pr_global_struct.num_players},
+	{ev_float,	OFS_V103(exp_mult),		&pr_global_struct.exp_mult},
+
+	{ev_function,	OFS_V103(main),			&pr_global_struct.main},
+	{ev_function,	OFS_V103(StartFrame),		&pr_global_struct.StartFrame},
+	{ev_function,	OFS_V103(PlayerPreThink),	&pr_global_struct.PlayerPreThink},
+	{ev_function,	OFS_V103(PlayerPostThink),	&pr_global_struct.PlayerPostThink},
+	{ev_function,	OFS_V103(ClientKill),		&pr_global_struct.ClientKill},
+	{ev_function,	OFS_V103(ClientConnect),	&pr_global_struct.ClientConnect},
+	{ev_function,	OFS_V103(PutClientInServer),	&pr_global_struct.PutClientInServer},
+	{ev_function,	OFS_V103(ClientReEnter),	&pr_global_struct.ClientReEnter},
+	{ev_function,	OFS_V103(ClientDisconnect),	&pr_global_struct.ClientDisconnect},
+	{ev_function,	OFS_V103(ClassChangeWeapon),	&pr_global_struct.ClassChangeWeapon},
+	{ev_void,	0,				NULL }
+};
+
+mdef_t globalvars_v111[] = {
+	{ev_entity,	OFS_V111(self),			&pr_global_struct.self},
+	{ev_entity,	OFS_V111(other),		&pr_global_struct.other},
+	{ev_entity,	OFS_V111(world),		&pr_global_struct.world},
+	{ev_float,	OFS_V111(time),			&pr_global_struct.time},
+	{ev_float,	OFS_V111(frametime),		&pr_global_struct.frametime},
+	{ev_float,	OFS_V111(force_retouch),	&pr_global_struct.force_retouch},
+	{ev_string,	OFS_V111(mapname),		&pr_global_struct.mapname},
+	{ev_string,	OFS_V111(startspot),		&pr_global_struct.startspot},
+	{ev_float,	OFS_V111(deathmatch),		&pr_global_struct.deathmatch},
+	{ev_float,	OFS_V111(randomclass),		&pr_global_struct.randomclass},
+	{ev_float,	OFS_V111(coop),			&pr_global_struct.coop},
+	{ev_float,	OFS_V111(teamplay),		&pr_global_struct.teamplay},
+	{ev_float,	OFS_V111(serverflags),		&pr_global_struct.serverflags},
+	{ev_float,	OFS_V111(total_secrets),	&pr_global_struct.total_secrets},
+	{ev_float,	OFS_V111(total_monsters),	&pr_global_struct.total_monsters},
+	{ev_float,	OFS_V111(found_secrets),	&pr_global_struct.found_secrets},
+	{ev_float,	OFS_V111(killed_monsters),	&pr_global_struct.killed_monsters},
+	{ev_float,	OFS_V111(chunk_cnt),		&pr_global_struct.chunk_cnt},
+	{ev_float,	OFS_V111(done_precache),	&pr_global_struct.done_precache},
+	{ev_float,	OFS_V111(parm1),		&pr_global_struct.parm},
+	{ev_vector,	OFS_V111(v_forward),		&pr_global_struct.v_forward},
+	{ev_vector,	OFS_V111(v_up),			&pr_global_struct.v_up},
+	{ev_vector,	OFS_V111(v_right),		&pr_global_struct.v_right},
+	{ev_float,	OFS_V111(trace_allsolid),	&pr_global_struct.trace_allsolid},
+	{ev_float,	OFS_V111(trace_startsolid),	&pr_global_struct.trace_startsolid},
+	{ev_float,	OFS_V111(trace_fraction),	&pr_global_struct.trace_fraction},
+	{ev_vector,	OFS_V111(trace_endpos),		&pr_global_struct.trace_endpos},
+	{ev_vector,	OFS_V111(trace_plane_normal),	&pr_global_struct.trace_plane_normal},
+	{ev_float,	OFS_V111(trace_plane_dist),	&pr_global_struct.trace_plane_dist},
+	{ev_entity,	OFS_V111(trace_ent),		&pr_global_struct.trace_ent},
+	{ev_float,	OFS_V111(trace_inopen),		&pr_global_struct.trace_inopen},
+	{ev_float,	OFS_V111(trace_inwater),	&pr_global_struct.trace_inwater},
+	{ev_entity,	OFS_V111(msg_entity),		&pr_global_struct.msg_entity},
+	{ev_float,	OFS_V111(cycle_wrapped),	&pr_global_struct.cycle_wrapped},
+	{ev_float,	OFS_V111(crouch_cnt),		&pr_global_struct.crouch_cnt},
+	{ev_float,	OFS_V111(modelindex_assassin),	&pr_global_struct.modelindex_assassin},
+	{ev_float,	OFS_V111(modelindex_crusader),	&pr_global_struct.modelindex_crusader},
+	{ev_float,	OFS_V111(modelindex_paladin),	&pr_global_struct.modelindex_paladin},
+	{ev_float,	OFS_V111(modelindex_necromancer),&pr_global_struct.modelindex_necromancer},
+	{ev_float,	OFS_V111(modelindex_sheep),	&pr_global_struct.modelindex_sheep},
+	{ev_float,	OFS_V111(num_players),		&pr_global_struct.num_players},
+	{ev_float,	OFS_V111(exp_mult),		&pr_global_struct.exp_mult},
+
+	{ev_function,	OFS_V111(main),			&pr_global_struct.main},
+	{ev_function,	OFS_V111(StartFrame),		&pr_global_struct.StartFrame},
+	{ev_function,	OFS_V111(PlayerPreThink),	&pr_global_struct.PlayerPreThink},
+	{ev_function,	OFS_V111(PlayerPostThink),	&pr_global_struct.PlayerPostThink},
+	{ev_function,	OFS_V111(ClientKill),		&pr_global_struct.ClientKill},
+	{ev_function,	OFS_V111(ClientConnect),	&pr_global_struct.ClientConnect},
+	{ev_function,	OFS_V111(PutClientInServer),	&pr_global_struct.PutClientInServer},
+	{ev_function,	OFS_V111(ClientReEnter),	&pr_global_struct.ClientReEnter},
+	{ev_function,	OFS_V111(ClientDisconnect),	&pr_global_struct.ClientDisconnect},
+	{ev_function,	OFS_V111(ClassChangeWeapon),	&pr_global_struct.ClassChangeWeapon},
+	{ev_void,	0,				NULL }
+};
+
+mdef_t globalvars_v112[] = {
+	{ev_entity,	OFS_V112(self),			&pr_global_struct.self},
+	{ev_entity,	OFS_V112(other),		&pr_global_struct.other},
+	{ev_entity,	OFS_V112(world),		&pr_global_struct.world},
+	{ev_float,	OFS_V112(time),			&pr_global_struct.time},
+	{ev_float,	OFS_V112(frametime),		&pr_global_struct.frametime},
+	{ev_float,	OFS_V112(force_retouch),	&pr_global_struct.force_retouch},
+	{ev_string,	OFS_V112(mapname),		&pr_global_struct.mapname},
+	{ev_string,	OFS_V112(startspot),		&pr_global_struct.startspot},
+	{ev_float,	OFS_V112(deathmatch),		&pr_global_struct.deathmatch},
+	{ev_float,	OFS_V112(randomclass),		&pr_global_struct.randomclass},
+	{ev_float,	OFS_V112(coop),			&pr_global_struct.coop},
+	{ev_float,	OFS_V112(teamplay),		&pr_global_struct.teamplay},
+	{ev_float,	OFS_V112(cl_playerclass),	&pr_global_struct.cl_playerclass},
+	{ev_float,	OFS_V112(serverflags),		&pr_global_struct.serverflags},
+	{ev_float,	OFS_V112(total_secrets),	&pr_global_struct.total_secrets},
+	{ev_float,	OFS_V112(total_monsters),	&pr_global_struct.total_monsters},
+	{ev_float,	OFS_V112(found_secrets),	&pr_global_struct.found_secrets},
+	{ev_float,	OFS_V112(killed_monsters),	&pr_global_struct.killed_monsters},
+	{ev_float,	OFS_V112(chunk_cnt),		&pr_global_struct.chunk_cnt},
+	{ev_float,	OFS_V112(done_precache),	&pr_global_struct.done_precache},
+	{ev_float,	OFS_V112(parm1),		&pr_global_struct.parm},
+	{ev_vector,	OFS_V112(v_forward),		&pr_global_struct.v_forward},
+	{ev_vector,	OFS_V112(v_up),			&pr_global_struct.v_up},
+	{ev_vector,	OFS_V112(v_right),		&pr_global_struct.v_right},
+	{ev_float,	OFS_V112(trace_allsolid),	&pr_global_struct.trace_allsolid},
+	{ev_float,	OFS_V112(trace_startsolid),	&pr_global_struct.trace_startsolid},
+	{ev_float,	OFS_V112(trace_fraction),	&pr_global_struct.trace_fraction},
+	{ev_vector,	OFS_V112(trace_endpos),		&pr_global_struct.trace_endpos},
+	{ev_vector,	OFS_V112(trace_plane_normal),	&pr_global_struct.trace_plane_normal},
+	{ev_float,	OFS_V112(trace_plane_dist),	&pr_global_struct.trace_plane_dist},
+	{ev_entity,	OFS_V112(trace_ent),		&pr_global_struct.trace_ent},
+	{ev_float,	OFS_V112(trace_inopen),		&pr_global_struct.trace_inopen},
+	{ev_float,	OFS_V112(trace_inwater),	&pr_global_struct.trace_inwater},
+	{ev_entity,	OFS_V112(msg_entity),		&pr_global_struct.msg_entity},
+	{ev_float,	OFS_V112(cycle_wrapped),	&pr_global_struct.cycle_wrapped},
+	{ev_float,	OFS_V112(crouch_cnt),		&pr_global_struct.crouch_cnt},
+	{ev_float,	OFS_V112(modelindex_sheep),	&pr_global_struct.modelindex_sheep},
+	{ev_float,	OFS_V112(num_players),		&pr_global_struct.num_players},
+	{ev_float,	OFS_V112(exp_mult),		&pr_global_struct.exp_mult},
+
+	{ev_function,	OFS_V112(main),			&pr_global_struct.main},
+	{ev_function,	OFS_V112(StartFrame),		&pr_global_struct.StartFrame},
+	{ev_function,	OFS_V112(PlayerPreThink),	&pr_global_struct.PlayerPreThink},
+	{ev_function,	OFS_V112(PlayerPostThink),	&pr_global_struct.PlayerPostThink},
+	{ev_function,	OFS_V112(ClientKill),		&pr_global_struct.ClientKill},
+	{ev_function,	OFS_V112(ClientConnect),	&pr_global_struct.ClientConnect},
+	{ev_function,	OFS_V112(PutClientInServer),	&pr_global_struct.PutClientInServer},
+	{ev_function,	OFS_V112(ClientReEnter),	&pr_global_struct.ClientReEnter},
+	{ev_function,	OFS_V112(ClientDisconnect),	&pr_global_struct.ClientDisconnect},
+	{ev_function,	OFS_V112(ClassChangeWeapon),	&pr_global_struct.ClassChangeWeapon},
+	{ev_void,	0,				NULL }
+};
+
 
 // For international stuff
 int             *pr_string_index = NULL;
@@ -126,7 +303,7 @@ edict_t *ED_Alloc (void)
 	if (i == MAX_EDICTS)
 	{
 		SV_Edicts("edicts.txt");
-		Sys_Error ("ED_Alloc: no free edicts");
+		Host_Error ("ED_Alloc: no free edicts");
 	}
 		
 	sv.num_edicts++;
@@ -511,6 +688,43 @@ char *PR_GlobalStringNoContents (int ofs)
 	return line;
 }
 
+/*
+=============
+ED_GetEdictProperty
+
+Get the value of an edict property by name
+=============
+*/
+char *ED_GetEdictProperty (edict_t *ed, char *prop)
+{
+	static char	ret[1];
+	ddef_t	*d;
+	int		*v;
+	int		i;
+	char	*name;
+
+	ret[0] = '\0';
+
+	if (ed->free)
+		return ret;
+
+	for (i=1 ; i<progs->numfielddefs ; i++)
+	{
+		d = &pr_fielddefs[i];
+		name = PR_GetString(d->s_name);
+
+		if (!strncasecmp(name, prop, strlen(prop)))
+		{
+			v = (int *)((char *)&ed->v + d->ofs*4);
+			return PR_ValueString(d->type, (eval_t *)v);
+		}
+		else
+			continue;
+	}
+
+	return ret;
+}
+
 
 /*
 =============
@@ -760,17 +974,17 @@ void ED_ParseGlobals (char *data)
 		if (com_token[0] == '}')
 			break;
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
 		strcpy (keyname, com_token);
 
 	// parse value	
 		data = COM_Parse (data);
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
 		if (com_token[0] == '}')
-			Sys_Error ("ED_ParseEntity: closing brace without data");
+			Host_Error ("ED_ParseEntity: closing brace without data");
 
 		key = ED_FindGlobal (keyname);
 		if (!key)
@@ -923,7 +1137,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (com_token[0] == '}')
 			break;
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 		
 // anglehack is to allow QuakeEd to write single scalar angles
 // and allow them to be turned into vectors. (FIXME...)
@@ -952,10 +1166,10 @@ if (!strcmp(com_token, "light"))
 	// parse value	
 		data = COM_Parse (data);
 		if (!data)
-			Sys_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEntity: EOF without closing brace");
 
 		if (com_token[0] == '}')
-			Sys_Error ("ED_ParseEntity: closing brace without data");
+			Host_Error ("ED_ParseEntity: closing brace without data");
 
 		init = true;	
 
@@ -1026,10 +1240,7 @@ void ED_LoadFromFile (char *data)
 	int		start_amount = current_loading_size;
 	char		*orig = data;
 
-	if (is_progdefs111)
-		pr_global_struct_v111->time = sv.time;
-	else
-		pr_global_struct->time = sv.time;
+	*pr_global_struct.time = sv.time;
 
 // parse ents
 	while (1)
@@ -1164,14 +1375,36 @@ void ED_LoadFromFile (char *data)
 			continue;
 		}
 
-		if (is_progdefs111)
-			pr_global_struct_v111->self = EDICT_TO_PROG(ent);
-		else
-			pr_global_struct->self = EDICT_TO_PROG(ent);
+		*pr_global_struct.self = EDICT_TO_PROG(ent);
 		PR_ExecuteProgram (func - pr_functions);
 	}	
 
 	Con_DPrintf ("%i entities inhibited\n", inhibit);
+}
+
+
+/*
+===============
+PR_SetAddress
+===============
+*/
+void PR_SetAddress (mdef_t *def, void *address)
+{
+	switch (def->type) {
+		case ev_void:
+			break;
+		case ev_float:
+		case ev_vector:
+			*(float **)def->field = (float *) address;
+			break;
+		case ev_string:
+		case ev_entity:
+		case ev_field:
+		case ev_function:
+		case ev_pointer:
+			*(int **)def->field = (int *) address;
+			break;
+	}
 }
 
 
@@ -1185,12 +1418,12 @@ void PR_LoadProgs (void)
 	int		i, j, k;
 	FILE	*f;
 	char	mapname[MAX_QPATH], progname[MAX_OSPATH], finalprogname[MAX_OSPATH];
+	char	*version;
+	mdef_t	*def;
 
 // flush the non-C variable lookup cache
 	for (i=0 ; i<GEFV_CACHESIZE ; i++)
 		gefvCache[i].field[0] = 0;
-
-	CRC_Init (&pr_crc);
 
 	strcpy(finalprogname, "progs.dat");
 
@@ -1260,20 +1493,18 @@ void PR_LoadProgs (void)
 
 	progs = (dprograms_t *)COM_LoadHunkFile (finalprogname, NULL);
 	if (!progs)
-		Sys_Error ("PR_LoadProgs: couldn't load %s",finalprogname);
+		Host_Error ("PR_LoadProgs: couldn't load %s",finalprogname);
 	Con_DPrintf ("Programs occupy %iK.\n", com_filesize/1024);
 
-	for (i=0 ; i<com_filesize ; i++)
-		CRC_ProcessByte (&pr_crc, ((byte *)progs)[i]);
+// add prog crc to the serverinfo
+	pr_crc = CRC_Block ((byte *)progs, com_filesize);
 
 // byte swap the header
 	for (i=0 ; i<sizeof(*progs)/4 ; i++)
 		((int *)progs)[i] = LittleLong ( ((int *)progs)[i] );
 
 	if (progs->version != PROG_VERSION)
-		Sys_Error ("%s is of unsupported version (%d, should be %d)", finalprogname, progs->version, PROG_VERSION);
-	if (progs->crc != PROGS_V111_CRC && progs->crc != PROGS_V112_CRC)
-		Sys_Error ("Unexpected crc ( %d ) for %s", progs->crc, finalprogname);
+		Host_Error ("%s is of unsupported version (%d, should be %d)", finalprogname, progs->version, PROG_VERSION);
 
 	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
 	pr_strings = (char *)progs + progs->ofs_strings;
@@ -1286,24 +1517,32 @@ void PR_LoadProgs (void)
 	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
 	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
 
-	Con_Printf ("Loaded %s, v%d, %d crc, %s structures\n",
-			finalprogname, progs->version, progs->crc,
-			(progs->crc == PROGS_V111_CRC) ? "H2/v1.11" : "H2MP/v1.12");
+	switch (progs->crc)
+	{
+	case PROGS_V103_CRC:
+		def = globalvars_v103;
+		version = "H2/v1.03";
+		break;
+	case PROGS_V111_CRC:
+		def = globalvars_v111;
+		version = "H2/v1.11";
+		break;
+	case PROGS_V112_CRC:
+		def = globalvars_v112;
+		version = "H2MP/v1.12";
+		break;
+	default:
+		Host_Error ("Unexpected CRC ( %d ) for %s", progs->crc, finalprogname);
+		return; // silence compiler
+	}
 
-	if (progs->crc == PROGS_V111_CRC)
-	{
-		is_progdefs111 = true;
-		pr_global_struct_v111 = (globalvars_v111_t *)((byte *)progs + progs->ofs_globals);
-		pr_globals = (float *)pr_global_struct_v111;
-		pr_global_struct = NULL;
-	}
-	else
-	{
-		is_progdefs111 = false;
-		pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
-		pr_globals = (float *)pr_global_struct;
-		pr_global_struct_v111 = NULL;
-	}
+	Con_Printf ("Loaded %s, %d CRC, %s\n",
+				finalprogname, progs->crc, version);
+
+	memset (&pr_global_struct, 0, sizeof(pr_global_struct));
+	pr_globals = (float *)((byte *)progs + progs->ofs_globals);
+	for (; def->field; def++)
+		PR_SetAddress (def, &G_FLOAT(def->offset));
 
 	// byte swap the lumps
 	for (i=0 ; i<progs->numstatements ; i++)
@@ -1335,7 +1574,7 @@ void PR_LoadProgs (void)
 	{
 		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
 		if (pr_fielddefs[i].type & DEF_SAVEGLOBAL)
-			Sys_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+			Host_Error ("PR_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
 		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
 	}
@@ -1352,7 +1591,7 @@ void PR_LoadProgs (void)
 
 	// set the cl_playerclass value after pr_global_struct has been created
 	if (progs->crc == PROGS_V112_CRC)
-		pr_global_struct->cl_playerclass = cl_playerclass.value;
+		*pr_global_struct.cl_playerclass = cl_playerclass.value;
 }
 
 
@@ -1363,7 +1602,7 @@ void PR_LoadInfoStrings(void)
 
 	pr_global_info_strings = (char *)COM_LoadHunkFile ("infolist.txt", NULL);
 	if (!pr_global_info_strings)
-		Sys_Error ("PR_LoadInfoStrings: couldn't load infolist.txt");
+		Host_Error ("PR_LoadInfoStrings: couldn't load infolist.txt");
 
 	NewLineChar = -1;
 
@@ -1382,7 +1621,7 @@ void PR_LoadInfoStrings(void)
 
 	if (!count)
 	{
-		Sys_Error ("PR_LoadInfoStrings: no string lines found");
+		Host_Error ("PR_LoadInfoStrings: no string lines found");
 	}
 
 	pr_info_string_index = (int *)Hunk_AllocName ((count+1)*4, "info_string_index");
@@ -1414,7 +1653,7 @@ void PR_LoadStrings(void)
 
 	pr_global_strings = (char *)COM_LoadHunkFile ("strings.txt", NULL);
 	if (!pr_global_strings)
-		Sys_Error ("PR_LoadStrings: couldn't load strings.txt");
+		Host_Error ("PR_LoadStrings: couldn't load strings.txt");
 
 	NewLineChar = -1;
 
@@ -1433,7 +1672,7 @@ void PR_LoadStrings(void)
 
 	if (!count)
 	{
-		Sys_Error ("PR_LoadStrings: no string lines found");
+		Host_Error ("PR_LoadStrings: no string lines found");
 	}
 
 	pr_string_index = (int *)Hunk_AllocName ((count+1)*4, "string_index");
@@ -1489,7 +1728,7 @@ void PR_Init (void)
 edict_t *EDICT_NUM(int n)
 {
 	if (n < 0 || n >= sv.max_edicts)
-		Sys_Error ("EDICT_NUM: bad number %i", n);
+		Host_Error ("EDICT_NUM: bad number %i", n);
 	return (edict_t *)((byte *)sv.edicts+ (n)*pr_edict_size);
 }
 

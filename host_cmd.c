@@ -392,7 +392,7 @@ void Host_God_f (void)
 		return;
 	}
 
-	if (PR_GLOBAL_STRUCT(deathmatch) || PR_GLOBAL_STRUCT(coop))
+	if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
 		return;
 
 	sv_player->v.flags = (int)sv_player->v.flags ^ FL_GODMODE;
@@ -410,7 +410,7 @@ void Host_Notarget_f (void)
 		return;
 	}
 
-	if (PR_GLOBAL_STRUCT(deathmatch) || PR_GLOBAL_STRUCT(coop))
+	if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
 		return;
 
 	sv_player->v.flags = (int)sv_player->v.flags ^ FL_NOTARGET;
@@ -435,7 +435,7 @@ void Host_Noclip_f (void)
 		return;
 	}
 
-	if (PR_GLOBAL_STRUCT(deathmatch) || PR_GLOBAL_STRUCT(coop))
+	if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
 		return;
 
 	if (sv_player->v.movetype != MOVETYPE_NOCLIP)
@@ -1025,7 +1025,7 @@ retry:
 
 	// this may be redundant with the setting in PR_LoadProgs, but not sure so its here too
 	if (progs->crc == PROGS_V112_CRC)
-		pr_global_struct->cl_playerclass = ent->v.playerclass;
+		*pr_global_struct.cl_playerclass = ent->v.playerclass;
 
 	svs.clients->playerclass = ent->v.playerclass;
 
@@ -1175,28 +1175,17 @@ void RestoreClients(void)
 			ent->v.netname = PR_SetString(host_client->name);
 			ent->v.playerclass = host_client->playerclass;
 
-			if (is_progdefs111)
-			{
 			// copy spawn parms out of the client_t
-				for (j = 0; j < NUM_SPAWN_PARMS; j++)
-					(&pr_global_struct_v111->parm1)[j] = host_client->spawn_parms[j];
+
+			for (j=0 ; j< NUM_SPAWN_PARMS ; j++)
+				pr_global_struct.parm[j] = host_client->spawn_parms[j];
+
 			// call the spawn function
-				pr_global_struct_v111->time = sv.time;
-				pr_global_struct_v111->self = EDICT_TO_PROG(ent);
-				G_FLOAT(OFS_PARM0) = time_diff;
-				PR_ExecuteProgram (pr_global_struct_v111->ClientReEnter);
-			}
-			else
-			{
-			// copy spawn parms out of the client_t
-				for (j=0 ; j< NUM_SPAWN_PARMS ; j++)
-					(&pr_global_struct->parm1)[j] = host_client->spawn_parms[j];
-			// call the spawn function
-				pr_global_struct->time = sv.time;
-				pr_global_struct->self = EDICT_TO_PROG(ent);
-				G_FLOAT(OFS_PARM0) = time_diff;
-				PR_ExecuteProgram (pr_global_struct->ClientReEnter);	
-			}
+
+			*pr_global_struct.time = sv.time;
+			*pr_global_struct.self = EDICT_TO_PROG(ent);
+			G_FLOAT(OFS_PARM0) = time_diff;
+			PR_ExecuteProgram (*pr_global_struct.ClientReEnter);
 		}
 	}
 
@@ -1310,10 +1299,7 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		{
 			ED_ParseGlobals (start);
 			// Need to restore this
-			if (is_progdefs111)
-				pr_global_struct_v111->startspot = PR_SetString(sv.startspot);
-			else
-				pr_global_struct->startspot = PR_SetString(sv.startspot);
+			*pr_global_struct.startspot = PR_SetString(sv.startspot);
 		}
 		else
 		{
@@ -1350,10 +1336,7 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 		sv.time = time;
 		sv.paused = true;
 
-		if (is_progdefs111)
-			pr_global_struct_v111->serverflags = svs.serverflags;
-		else
-			pr_global_struct->serverflags = svs.serverflags;
+		*pr_global_struct.serverflags = svs.serverflags;
 
 		RestoreClients();
 	}
@@ -1365,11 +1348,8 @@ int LoadGamestate(char *level, char *startspot, int ClientsMode)
 	{
 		sv.time = time;
 
-		if (is_progdefs111)
-			pr_global_struct_v111->serverflags = svs.serverflags;
-		else
-			pr_global_struct->serverflags = svs.serverflags;
-		
+		*pr_global_struct.serverflags = svs.serverflags;
+
 		RestoreClients();
 	}
 
@@ -1523,8 +1503,8 @@ void Host_Class_f (void)
 
 		// when classes changes after map load, update cl_playerclass, cl_playerclass should 
 		// probably only be used in worldspawn, though
-		if (pr_global_struct && (progs->crc == PROGS_V112_CRC))
-			pr_global_struct->cl_playerclass = newClass;
+		if (sv.active && (progs->crc == PROGS_V112_CRC))
+			*pr_global_struct.cl_playerclass = newClass;
 
 		if (cls.state == ca_connected)
 			Cmd_ForwardToServer ();
@@ -1543,16 +1523,8 @@ void Host_Class_f (void)
 	host_client->edict->v.playerclass = newClass;
 	
 	// Change the weapon model used
-	if (is_progdefs111)
-	{
-		pr_global_struct_v111->self = EDICT_TO_PROG(host_client->edict);
-		PR_ExecuteProgram (pr_global_struct_v111->ClassChangeWeapon);
-	}
-	else
-	{
-		pr_global_struct->self = EDICT_TO_PROG(host_client->edict);
-		PR_ExecuteProgram (pr_global_struct->ClassChangeWeapon);
-	}
+	*pr_global_struct.self = EDICT_TO_PROG(host_client->edict);
+	PR_ExecuteProgram (*pr_global_struct.ClassChangeWeapon);
 
 // send notification to all clients
 	
@@ -1767,18 +1739,9 @@ void Host_Kill_f (void)
 		return;
 	}
 	
-	if (is_progdefs111)
-	{
-		pr_global_struct_v111->time = sv.time;
-		pr_global_struct_v111->self = EDICT_TO_PROG(sv_player);
-		PR_ExecuteProgram (pr_global_struct_v111->ClientKill);
-	}
-	else
-	{
-		pr_global_struct->time = sv.time;
-		pr_global_struct->self = EDICT_TO_PROG(sv_player);
-		PR_ExecuteProgram (pr_global_struct->ClientKill);
-	}
+	*pr_global_struct.time = sv.time;
+	*pr_global_struct.self = EDICT_TO_PROG(sv_player);
+	PR_ExecuteProgram (*pr_global_struct.ClientKill);
 }
 
 
@@ -1893,31 +1856,21 @@ void Host_Spawn_f (void)
 			ent->v.netname = PR_SetString(host_client->name);
 			ent->v.playerclass = host_client->playerclass;
 
-			if (is_progdefs111)
-			{
 			// copy spawn parms out of the client_t
-				for (i = 0; i < NUM_SPAWN_PARMS; i++)
-					(&pr_global_struct_v111->parm1)[i] = host_client->spawn_parms[i];
+
+			for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
+				pr_global_struct.parm[i] = host_client->spawn_parms[i];
+
 			// call the spawn function
-				pr_global_struct_v111->time = sv.time;
-				pr_global_struct_v111->self = EDICT_TO_PROG(sv_player);
-				PR_ExecuteProgram (pr_global_struct_v111->ClientConnect);
-			}
-			else
-			{
-			// copy spawn parms out of the client_t
-				for (i=0 ; i< NUM_SPAWN_PARMS ; i++)
-					(&pr_global_struct->parm1)[i] = host_client->spawn_parms[i];
-			// call the spawn function
-				pr_global_struct->time = sv.time;
-				pr_global_struct->self = EDICT_TO_PROG(sv_player);
-				PR_ExecuteProgram (pr_global_struct->ClientConnect);
-			}
+
+			*pr_global_struct.time = sv.time;
+			*pr_global_struct.self = EDICT_TO_PROG(sv_player);
+			PR_ExecuteProgram (*pr_global_struct.ClientConnect);
 
 			if ((Sys_DoubleTime() - host_client->netconnection->connecttime) <= sv.time)
 				Sys_Printf ("Client %s connected\n", host_client->name);
 
-			PR_ExecuteProgram (PR_GLOBAL_STRUCT(PutClientInServer));	
+			PR_ExecuteProgram (*pr_global_struct.PutClientInServer);
 		}
 	}
 
@@ -1958,19 +1911,19 @@ void Host_Spawn_f (void)
 //
 	MSG_WriteByte (&host_client->message, svc_updatestat);
 	MSG_WriteByte (&host_client->message, STAT_TOTALSECRETS);
-	MSG_WriteLong (&host_client->message, PR_GLOBAL_STRUCT(total_secrets));
+	MSG_WriteLong (&host_client->message, *pr_global_struct.total_secrets);
 
 	MSG_WriteByte (&host_client->message, svc_updatestat);
 	MSG_WriteByte (&host_client->message, STAT_TOTALMONSTERS);
-	MSG_WriteLong (&host_client->message, PR_GLOBAL_STRUCT(total_monsters));
+	MSG_WriteLong (&host_client->message, *pr_global_struct.total_monsters);
 
 	MSG_WriteByte (&host_client->message, svc_updatestat);
 	MSG_WriteByte (&host_client->message, STAT_SECRETS);
-	MSG_WriteLong (&host_client->message, PR_GLOBAL_STRUCT(found_secrets));
+	MSG_WriteLong (&host_client->message, *pr_global_struct.found_secrets);
 
 	MSG_WriteByte (&host_client->message, svc_updatestat);
 	MSG_WriteByte (&host_client->message, STAT_MONSTERS);
-	MSG_WriteLong (&host_client->message, PR_GLOBAL_STRUCT(killed_monsters));
+	MSG_WriteLong (&host_client->message, *pr_global_struct.killed_monsters);
 
 
 	SV_UpdateEffects(&host_client->message);
@@ -2118,10 +2071,7 @@ void Host_Create_f(void)
 	ent->v.absmax[1] += 16;
 	ent->v.absmax[2] += 16;
 
-	if (is_progdefs111)
-		pr_global_struct_v111->self = EDICT_TO_PROG(ent);
-	else
-		pr_global_struct->self = EDICT_TO_PROG(ent);
+	*pr_global_struct.self = EDICT_TO_PROG(ent);
 	ignore_precache = true;
 	PR_ExecuteProgram (func - pr_functions);
 	ignore_precache = false;
@@ -2169,7 +2119,7 @@ void Host_Kick_f (void)
 			return;
 		}
 	}
-	else if (PR_GLOBAL_STRUCT(deathmatch) || PR_GLOBAL_STRUCT(coop))
+	else if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
 		return;
 
 	save = host_client;
@@ -2260,7 +2210,7 @@ void Host_Give_f (void)
 		return;
 	}
 
-	if (PR_GLOBAL_STRUCT(deathmatch) || PR_GLOBAL_STRUCT(coop))
+	if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
 		return;
 
 	t = Cmd_Argv(1);

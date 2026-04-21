@@ -162,7 +162,6 @@ void SV_SendEffect(sizebuf_t *sb, int index)
 			break;
 
 		default:
-//			Sys_Error ("SV_SendEffect: bad type");
 			PR_RunError ("SV_SendEffect: bad type");
 			break;
 	}
@@ -388,7 +387,6 @@ void SV_SendEffect(sizebuf_t *sb, int index)
 				break;
 
 			default:
-	//			Sys_Error ("SV_SendEffect: bad type");
 				PR_RunError ("SV_SendEffect: bad type");
 				break;
 		}
@@ -421,10 +419,10 @@ void SV_ParseEffect(sizebuf_t *sb)
 			(sv.Effects[index].expire_time && sv.Effects[index].expire_time <= sv.time))
 			break;
 	}
-		
+
 	if (index >= MAX_EFFECTS)
 	{
-		PR_RunError ("MAX_EFFECTS reached");
+		PR_RunError ("SV_ParseEffect: MAX_EFFECTS reached");
 		return;
 	}
 
@@ -587,7 +585,6 @@ void SV_ParseEffect(sizebuf_t *sb)
 		break;
 
 	default:
-//		Sys_Error ("SV_ParseEffect: bad type");
 		PR_RunError ("SV_SendEffect: bad type");
 	}
 

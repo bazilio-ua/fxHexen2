@@ -20,8 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // net_wins.c
 
 #include "quakedef.h"
-#include "net_wins.h"
 #include "winquake.h"
+#include "net_wins.h"
 
 // socket for fielding new connections
 static sys_socket_t net_acceptsocket = INVALID_SOCKET;
@@ -107,7 +107,7 @@ sys_socket_t WINS_Init (void)
 	err = gethostname(buff, MAXHOSTNAMELEN);
 	if (err) 
 	{
-		Con_Printf("WINS_Init: WARNING: gethostname failed.\n");
+		Con_Warning("WINS_Init: gethostname failed.\n");
 	}
 	else
 	{
@@ -119,7 +119,7 @@ sys_socket_t WINS_Init (void)
 		WSAUnhookBlockingHook();
 		if (!local) 
 		{
-			Con_Printf("WINS_Init: WARNING: gethostbyname timed out.\n");
+			Con_Warning("WINS_Init: gethostbyname timed out.\n");
 		}
 		else if (local->h_addrtype != AF_INET)
 		{
@@ -136,26 +136,26 @@ sys_socket_t WINS_Init (void)
 	if (i && i < com_argc - 1) 
 	{
 		bindAddr.s_addr = inet_addr(com_argv[i + 1]);
-		if (bindAddr.s_addr == INADDR_NONE)
+		if (bindAddr.s_addr == htonl(INADDR_NONE))
 			Sys_Error("WINS_Init: %s is not a valid IP address", com_argv[i + 1]);
 		Con_Printf("Binding to IP Interface Address of %s\n", com_argv[i + 1]);
 	} 
 	else 
 	{
-		bindAddr.s_addr = INADDR_NONE;
+		bindAddr.s_addr = htonl(INADDR_NONE);
 	}
 
 	i = COM_CheckParm("-localip");
 	if (i && i < com_argc - 1) 
 	{
 		localAddr.s_addr = inet_addr(com_argv[i + 1]);
-		if (localAddr.s_addr == INADDR_NONE)
+		if (localAddr.s_addr == htonl(INADDR_NONE))
 			Sys_Error("WINS_Init: %s is not a valid IP address", com_argv[i + 1]);
 		Con_Printf("Advertising %s as the local IP in response packets\n", com_argv[i + 1]);
 	} 
 	else 
 	{
-		localAddr.s_addr = INADDR_NONE;
+		localAddr.s_addr = htonl(INADDR_NONE);
 	}
 
 	net_controlsocket = WINS_OpenSocket(0);
@@ -168,7 +168,7 @@ sys_socket_t WINS_Init (void)
 	}
 
 	broadcastaddr.sin_family = AF_INET;
-	broadcastaddr.sin_addr.s_addr = INADDR_BROADCAST;
+	broadcastaddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
 	broadcastaddr.sin_port = htons((unsigned short)net_hostport);
 
 	WINS_GetSocketAddr(net_controlsocket, &addr);
@@ -203,7 +203,7 @@ void WINS_Listen (qboolean state)
 		if (net_acceptsocket != INVALID_SOCKET)
 			return;
 		if ((net_acceptsocket = WINS_OpenSocket (net_hostport)) == INVALID_SOCKET)
-			Sys_Error ("WINS_Listen: Unable to open accept socket\n");
+			Sys_Error ("WINS_Listen: Unable to open accept socket");
 		return;
 	}
 
@@ -223,17 +223,17 @@ sys_socket_t WINS_OpenSocket (int port)
 	struct sockaddr_in address;
 	u_long _true = 1;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
+	if ((newsocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
 		return INVALID_SOCKET;
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == SOCKET_ERROR)
+	if (ioctlsocket(newsocket, FIONBIO, &_true) == SOCKET_ERROR)
 		goto ErrorReturn;
 
 	address.sin_family = AF_INET;
-	if (bindAddr.s_addr != INADDR_NONE)
+	if (bindAddr.s_addr != htonl(INADDR_NONE))
 		address.sin_addr.s_addr = bindAddr.s_addr;
 	else
-		address.sin_addr.s_addr = INADDR_ANY;
+		address.sin_addr.s_addr = htonl(INADDR_ANY);
 	address.sin_port = htons((unsigned short)port);
 
 	if (bind(newsocket, (struct sockaddr *)&address, sizeof(address)) == -1)
@@ -253,12 +253,12 @@ ErrorReturn:
 
 //=============================================================================
 
-int WINS_CloseSocket (sys_socket_t socket)
+int WINS_CloseSocket (sys_socket_t net_socket)
 {
-	if (socket == net_broadcastsocket)
+	if (net_socket == net_broadcastsocket)
 		net_broadcastsocket = 0;
 
-	return closesocket (socket);
+	return closesocket(net_socket);
 }
 
 
@@ -319,12 +319,6 @@ static int PartialIPAddress (char *in, struct qsockaddr *hostaddr)
 	
 	return 0;
 }
-//=============================================================================
-
-int WINS_Connect (sys_socket_t socket, struct qsockaddr *addr)
-{
-	return 0;
-}
 
 //=============================================================================
 
@@ -346,49 +340,50 @@ sys_socket_t WINS_CheckNewConnections (void)
 
 //=============================================================================
 
-int WINS_Read (sys_socket_t socket, byte *buf, int len, struct qsockaddr *addr)
+int WINS_Read (sys_socket_t net_socket, byte *buf, int len, struct qsockaddr *addr)
 {
 	socklen_t addrlen = sizeof (struct qsockaddr);
 	int ret;
 	int err;
 
-	ret = recvfrom(socket, (char *)buf, len, 0, (struct sockaddr *)addr, &addrlen);
+	ret = recvfrom(net_socket, (char *)buf, len, 0, (struct sockaddr *)addr, &addrlen);
 	if (ret == SOCKET_ERROR)
 	{
 		err = WSAGetLastError();
 		if (err == WSAEWOULDBLOCK || err == WSAECONNREFUSED)
 			return 0;
 	}
+
 	return ret;
 }
 
 //=============================================================================
 
-int WINS_MakeSocketBroadcastCapable (sys_socket_t socket)
+int WINS_MakeSocketBroadcastCapable (sys_socket_t net_socket)
 {
 	int	i = 1;
 
 	// make this socket broadcast capable
-	if (setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) == SOCKET_ERROR)
+	if (setsockopt(net_socket, SOL_SOCKET, SO_BROADCAST, (char *)&i, sizeof(i)) == SOCKET_ERROR)
 		return -1;
 
-	net_broadcastsocket = socket;
+	net_broadcastsocket = net_socket;
 
 	return 0;
 }
 
 //=============================================================================
 
-int WINS_Broadcast (sys_socket_t socket, byte *buf, int len)
+int WINS_Broadcast (sys_socket_t net_socket, byte *buf, int len)
 {
 	int ret;
 
-	if (socket != net_broadcastsocket)
+	if (net_socket != net_broadcastsocket)
 	{
 		if (net_broadcastsocket != 0)
-			Sys_Error("WINS_Broadcast: Attempted to use multiple broadcasts sockets\n");
+			Sys_Error("WINS_Broadcast: Attempted to use multiple broadcasts sockets");
 
-		ret = WINS_MakeSocketBroadcastCapable(socket);
+		ret = WINS_MakeSocketBroadcastCapable(net_socket);
 		if (ret == -1)
 		{
 			Con_Printf("Unable to make socket broadcast capable\n");
@@ -396,16 +391,16 @@ int WINS_Broadcast (sys_socket_t socket, byte *buf, int len)
 		}
 	}
 
-	return WINS_Write (socket, buf, len, (struct qsockaddr *)&broadcastaddr);
+	return WINS_Write (net_socket, buf, len, (struct qsockaddr *)&broadcastaddr);
 }
 
 //=============================================================================
 
-int WINS_Write (sys_socket_t socket, byte *buf, int len, struct qsockaddr *addr)
+int WINS_Write (sys_socket_t net_socket, byte *buf, int len, struct qsockaddr *addr)
 {
 	int ret;
 
-	ret = sendto(socket, (const char *)buf, len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
+	ret = sendto(net_socket, (char *)buf, len, 0, (struct sockaddr *)addr, sizeof(struct qsockaddr));
 	if (ret == SOCKET_ERROR)
 		if (WSAGetLastError() == WSAEWOULDBLOCK)
 			return 0;
@@ -422,6 +417,7 @@ char *WINS_AddrToString (struct qsockaddr *addr)
 
 	haddr = ntohl(((struct sockaddr_in *)addr)->sin_addr.s_addr);
 	sprintf(buffer, "%d.%d.%d.%d:%d", (haddr >> 24) & 0xff, (haddr >> 16) & 0xff, (haddr >> 8) & 0xff, haddr & 0xff, ntohs(((struct sockaddr_in *)addr)->sin_port));
+
 	return buffer;
 }
 
@@ -438,19 +434,20 @@ int WINS_StringToAddr (char *string, struct qsockaddr *addr)
 	addr->qsa_family = AF_INET;
 	((struct sockaddr_in *)addr)->sin_addr.s_addr = htonl(ipaddr);
 	((struct sockaddr_in *)addr)->sin_port = htons((unsigned short)hp);
+
 	return 0;
 }
 
 //=============================================================================
 
-int WINS_GetSocketAddr (sys_socket_t socket, struct qsockaddr *addr)
+int WINS_GetSocketAddr (sys_socket_t net_socket, struct qsockaddr *addr)
 {
 	struct sockaddr_in *address = (struct sockaddr_in *)addr;
 	socklen_t addrlen = sizeof(struct qsockaddr);
 	struct in_addr a;
 
 	memset(addr, 0, sizeof(struct qsockaddr));
-	getsockname(socket, (struct sockaddr *)addr, &addrlen);
+	getsockname(net_socket, (struct sockaddr *)addr, &addrlen);
 
 /*
 	The returned IP is embedded in our response to a broadcast request for
@@ -458,7 +455,7 @@ int WINS_GetSocketAddr (sys_socket_t socket, struct qsockaddr *addr)
 	specific IP for various reasons, so allow the "default" address
 	returned by the OS to be overridden.
 */
-	if (localAddr.s_addr != INADDR_NONE)
+	if (localAddr.s_addr != htonl(INADDR_NONE))
 		address->sin_addr.s_addr = localAddr.s_addr;
 	else 
 	{
@@ -475,8 +472,18 @@ int WINS_GetSocketAddr (sys_socket_t socket, struct qsockaddr *addr)
 int WINS_GetNameFromAddr (struct qsockaddr *addr, char *name)
 {
 /*	ProQuake connect speedup fix (verified for w95 -> XP) */
+/*	// pq comment out this block
+	struct hostent *hostentry;
 
+	hostentry = gethostbyaddr((char *)&((struct sockaddr_in *)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
+	if (hostentry)
+	{
+		strncpy(name, (char *)hostentry->h_name, NET_NAMELEN - 1);
+		return 0;
+	}
+*/
 	strcpy(name, WINS_AddrToString(addr));
+
 	return 0;
 }
 
@@ -489,7 +496,7 @@ int WINS_GetAddrFromName(char *name, struct qsockaddr *addr)
 	if (name[0] >= '0' && name[0] <= '9')
 		return PartialIPAddress (name, addr);
 	
-	hostentry = gethostbyname (name);
+	hostentry = gethostbyname(name);
 	if (!hostentry)
 		return -1;
 
@@ -527,7 +534,13 @@ int WINS_GetSocketPort (struct qsockaddr *addr)
 int WINS_SetSocketPort (struct qsockaddr *addr, int port)
 {
 	((struct sockaddr_in *)addr)->sin_port = htons((unsigned short)port);
+
 	return 0;
 }
 
 //=============================================================================
+
+int WINS_GetDefaultMTU (void)
+{
+    return (sv.protocol == PROTOCOL_NETQUAKE) ? DATAGRAM_MTU_NQ : DATAGRAM_MTU;
+}

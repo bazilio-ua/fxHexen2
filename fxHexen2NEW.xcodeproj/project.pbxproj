@@ -77,7 +77,7 @@
 		42B718761EA2C19600BD51E1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 428D9ED31DFF275C000ACF30 /* IOKit.framework */; };
 		42B718771EA2C19900BD51E1 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 428D9EDA1DFF2782000ACF30 /* OpenGL.framework */; };
 		42B718781EA2C19D00BD51E1 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 428D9ED81DFF2778000ACF30 /* CoreAudio.framework */; };
-		42B9764B2EA6802E00DD201F /* quake.icns in Resources */ = {isa = PBXBuildFile; fileRef = 4273FB421DFF2F2B005DC9A7 /* quake.icns */; };
+		42B9764B2EA6802E00DD201F /* hexen2.icns in Resources */ = {isa = PBXBuildFile; fileRef = 4273FB421DFF2F2B005DC9A7 /* hexen2.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -178,7 +178,7 @@
 		4273FB0A1DFF2EDA005DC9A7 /* world.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = world.h; sourceTree = SOURCE_ROOT; };
 		4273FB0B1DFF2EDA005DC9A7 /* zone.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zone.c; sourceTree = SOURCE_ROOT; };
 		4273FB0C1DFF2EDA005DC9A7 /* zone.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zone.h; sourceTree = SOURCE_ROOT; };
-		4273FB421DFF2F2B005DC9A7 /* quake.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = quake.icns; sourceTree = SOURCE_ROOT; };
+		4273FB421DFF2F2B005DC9A7 /* hexen2.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = hexen2.icns; sourceTree = SOURCE_ROOT; };
 		427630261E7E714600F71B32 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		428D9ED31DFF275C000ACF30 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		428D9ED51DFF2769000ACF30 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
@@ -387,7 +387,7 @@
 				42A7FC5B1EA2B730002A1C29 /* Info.plist */,
 				42A7FC5F1EA2B730002A1C29 /* Prefix.pch */,
 				42A7FC5E1EA2B730002A1C29 /* fxHexen2.xib */,
-				4273FB421DFF2F2B005DC9A7 /* quake.icns */,
+				4273FB421DFF2F2B005DC9A7 /* hexen2.icns */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -446,7 +446,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				42B7186D1EA2C13200BD51E1 /* fxHexen2.xib in Resources */,
-				42B9764B2EA6802E00DD201F /* quake.icns in Resources */,
+				42B9764B2EA6802E00DD201F /* hexen2.icns in Resources */,
 				42B718721EA2C15900BD51E1 /* Credits.rtf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

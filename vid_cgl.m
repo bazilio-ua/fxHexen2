@@ -617,7 +617,7 @@ void VID_DescribeModes_f (void)
 }
 
 
-static int vmodecompare(const void *inmode1, const void *inmode2)
+int vmodecompare(const void *inmode1, const void *inmode2)
 {
 	// sort lowest res to highest
 	const vmode_t *mode1 = (vmode_t *)inmode1;
@@ -931,36 +931,37 @@ void VID_Shutdown (void)
 {
 	CGError err;
 	
-    if (display) {
-        
-        if (glcontext) {
-            [NSOpenGLContext clearCurrentContext];
-            
-            [glcontext clearDrawable];
-            
-            [glcontext release];
-            glcontext = nil;
-        }
-        
-        if (window) {
-            [window release];
-            window = nil;
-        }
-        
-        if (screen) {
-            [screen release];
-            screen = nil;
-        }
-        
-        // Switch back to the original screen resolution
-        if (vid.fullscreen) {
-            if (desktopMode) {
+	if (display) {
+		
+		if (glcontext) {
+			[NSOpenGLContext clearCurrentContext];
+			
+			[glcontext clearDrawable];
+			
+			[glcontext release];
+			glcontext = nil;
+		}
+		
+		if (window) {
+			[window setLevel:NSNormalWindowLevel];
+			[window release];
+			window = nil;
+		}
+		
+		if (screen) {
+			[screen release];
+			screen = nil;
+		}
+		
+		// Switch back to the original screen resolution
+		if (vid.fullscreen) {
+			if (desktopMode) {
 				err = CGDisplaySetDisplayMode(display, desktopMode, NULL); // Restoring desktop mode
 				if (err != kCGErrorSuccess)
 					Con_Printf("Unable to restore display mode\n");
-            }
-        }
-        
+			}
+		}
+		
 		// Release the main display
 		if (vid.fullscreen) {
 			if (CGDisplayIsMain(display)) {
@@ -972,14 +973,20 @@ void VID_Shutdown (void)
 				Con_Printf("Unable to release display\n");
 		}
 		
-		if (desktopMode)
+		if (desktopMode) {
 			CGDisplayModeRelease (desktopMode);
+			desktopMode = NULL;
+		}
 		
-		if (displayModes)
+		if (displayModes) {
 			CFRelease (displayModes);
-    }
-    
-    vid.fullscreen = false;
+			displayModes = NULL;
+		}
+		
+		display = 0;
+	}
+	
+	vid.fullscreen = false;
 }
 
 //==========================================================================

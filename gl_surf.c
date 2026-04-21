@@ -79,7 +79,7 @@ qboolean R_SetAlphaSurface(msurface_t *s, float alpha, qboolean force)
     if (force || alpha < 1.0) {
         // do nothing
     } else if (s->flags & SURF_TRANSLUCENT) {
-        alpha = map_translucentalpha/*0.5f*/;
+        alpha = map_transalpha/*0.5f*/;
 	} else if (s->flags & SURF_TRANS33) {
 		alpha = 0.33f;
 	} else if (s->flags & SURF_TRANS66) {
@@ -350,9 +350,19 @@ void R_AddDynamicLights (msurface_t *surf)
 				// lit support via lordhavoc
 				{
 					brightness = rad - dist;
-					bl[0] += (int) (brightness * r);
-					bl[1] += (int) (brightness * g);
-					bl[2] += (int) (brightness * b);
+					if (cl_dlights[lnum].dark)
+					{
+						// clamp to 0
+						bl[0] -= (int) (((brightness * r) < bl[0]) ? (brightness * r) : bl[0]);
+						bl[1] -= (int) (((brightness * g) < bl[1]) ? (brightness * g) : bl[1]);
+						bl[2] -= (int) (((brightness * b) < bl[2]) ? (brightness * b) : bl[2]);
+					}
+					else
+					{
+						bl[0] += (int) (brightness * r);
+						bl[1] += (int) (brightness * g);
+						bl[2] += (int) (brightness * b);
+					}
 				}
 				bl += 3;
 			}
@@ -393,7 +403,7 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 // clear to no light
 		memset (&blocklights[0], 0, size * 3 * sizeof (unsigned int)); // lit support via lordhavoc
 
-		// clear to ambient
+// clear to ambient
 		bl = blocklights;
 		ambient_light = (unsigned int)(max(0, r_ambient.value)) << 8;
 		for (i = 0; i < size; i++)
@@ -404,28 +414,28 @@ void R_BuildLightMap (msurface_t *surf, byte *dest, int stride)
 		}
 		
 // add all the lightmaps
-	if (lightmap)
-		for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
-		{
-			scale = d_lightstyle[surf->styles[maps]];
-			surf->cached_light[maps] = scale;	// 8.8 fraction
+		if (lightmap)
+			for (maps = 0 ; maps < MAXLIGHTMAPS && surf->styles[maps] != 255 ; maps++)
+			{
+				scale = d_lightstyle[surf->styles[maps]];
+				surf->cached_light[maps] = scale;	// 8.8 fraction
 				// lit support via lordhavoc
 				bl = blocklights;
-			for (i=0 ; i<size ; i++)
+				for (i=0 ; i<size ; i++)
 				{
 					*bl++ += *lightmap++ * scale;
 					*bl++ += *lightmap++ * scale;
 					*bl++ += *lightmap++ * scale;
 				}
-		}
+			}
 
 // add all the dynamic lights
-	if (surf->dlightframe == r_framecount)
-		R_AddDynamicLights (surf);
+		if (surf->dlightframe == r_framecount)
+			R_AddDynamicLights (surf);
 	}
 	else
 	{
-		// set to full bright if no light data
+// set to full bright if no light data
 		memset (&blocklights[0], 255, size * 3 * sizeof (unsigned int)); // lit support via lordhavoc
 	}
 
@@ -916,7 +926,7 @@ void R_DrawBrushModel (entity_t *e)
 
 	clmodel = e->model;
 
-	alpha = (e->drawflags & DRF_TRANSLUCENT) ? map_translucentalpha/*0.5f*/ : 1.0f;
+	alpha = (e->drawflags & DRF_TRANSLUCENT) ? map_transalpha/*0.5f*/ : 1.0f;
 //	alpha = ENTALPHA_DECODE(e->alpha);
 	forcealpha = !!(e->drawflags & DRF_TRANSLUCENT);
 //	forcealpha = (e->alpha != ENTALPHA_DEFAULT);

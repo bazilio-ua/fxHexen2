@@ -1,16 +1,31 @@
-// sv_user.c -- server code for moving users
-
 /*
- * $Header: /H2 Mission Pack/SV_USER.C 6     3/13/98 1:51p Mgummelt $
- */
+Copyright (C) 1996-1997 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+// sv_user.c -- server code for moving users
 
 #include "quakedef.h"
 
 edict_t	*sv_player = NULL;
 
-extern	cvar_t	sv_friction;
+//extern	cvar_t	sv_friction;
 cvar_t	sv_edgefriction = {"edgefriction", "2", CVAR_NONE};
-extern	cvar_t	sv_stopspeed;
+//extern	cvar_t	sv_stopspeed;
 
 static	vec3_t		forward, right, up;
 
@@ -148,7 +163,7 @@ void SV_UserFriction (void)
 // feel slightly more slippery.
 
 #if USE_AOT_FRICTION
-	if (progs->crc == PROGS_V111_CRC)
+	if (progs->crc != PROGS_V112_CRC)
 		friction = 6;
 	else
 	{
@@ -158,7 +173,7 @@ void SV_UserFriction (void)
 			friction = sv_friction.value*sv_player->v.friction;
 	}
 #else	// not using AoT friction
-	if (progs->crc == PROGS_V111_CRC)
+	if (progs->crc != PROGS_V112_CRC)
 		sv_player->v.friction = 1.0f;
 
 	if (trace.fraction == 1.0)
@@ -314,6 +329,7 @@ void SV_FlightMove (void)
 	for (i=0 ; i<3 ; i++)
 		velocity[i] += accelspeed * wishvel[i];
 }
+
 /*
 ===================
 SV_WaterMove
@@ -346,7 +362,7 @@ void SV_WaterMove (void)
 		wishspeed = sv_maxspeed.value;
 	}
 
-	if (sv_player->v.playerclass==CLASS_DEMON)   // Paladin Special Ability #1 - unrestricted movement in water
+	if (sv_player->v.playerclass==CLASS_DEMON)   // Demoness restricted movement in water
 		wishspeed *= 0.5;
 	else if (sv_player->v.playerclass!=CLASS_PALADIN)   // Paladin Special Ability #1 - unrestricted movement in water
 		wishspeed *= 0.7;
@@ -545,8 +561,16 @@ void SV_ReadClientMove (usercmd_t *move)
 	host_client->num_pings++;
 
 // read current angles	
-	for (i=0 ; i<3 ; i++)
-		angle[i] = MSG_ReadAngle (net_message);
+	if ((host_client->netconnection->mod == MOD_PROQUAKE) && (sv.protocol <= PROTOCOL_RAVEN_112)) // precise aim for ProQuake
+	{
+		for (i=0 ; i<3 ; i++)
+			angle[i] = MSG_ReadPreciseAngle (net_message);
+	}
+	else
+	{
+		for (i=0 ; i<3 ; i++)
+			angle[i] = MSG_ReadAngle (net_message);
+	}
 
 	VectorCopy (angle, host_client->edict->v.v_angle);
 		
@@ -623,7 +647,7 @@ nextmsg:
 				return false;
 							
 			case clc_nop:
-//				Sys_Printf ("clc_nop\n");
+//				Sys_Printf ("SV_ReadClientMessage: clc_nop\n");
 				break;
 				
 			case clc_stringcmd:	
@@ -737,61 +761,3 @@ void SV_RunClients (void)
 	}
 }
 
-/*
- * $Log: /H2 Mission Pack/SV_USER.C $
- * 
- * 6     3/13/98 1:51p Mgummelt
- * Fixed friction_change entity to work,  made checkbottom use the hull
- * mins/maxs for it's checks, not the bounding box's.
- * 
- * 5     3/13/98 12:02p Jmonroe
- * more fixes for hullforent
- * 
- * 4     2/09/98 11:43a Jmonroe
- * 
- * 3     2/02/98 10:28a Mgummelt
- * 
- * 21    8/26/97 11:41a Rlove
- * 
- * 20    8/26/97 11:38a Rlove
- * 
- * 19    8/26/97 10:29a Rjohnson
- * Made flags2 be set when a player crouches
- * 
- * 18    8/26/97 8:17a Rjohnson
- * Just a few changes
- * 
- * 17    8/04/97 2:22p Rjohnson
- * Included light level for the player
- * 
- * 16    7/24/97 5:21p Rlove
- * 
- * 15    7/09/97 6:08a Rlove
- * 
- * 14    7/08/97 9:12a Rlove
- * 
- * 13    6/05/97 4:42p Rlove
- * Flight mode is network friendly now.
- * 
- * 12    5/31/97 10:01a Rlove
- * Had to up sv_maxspeed so haste would work
- * 
- * 11    4/04/97 3:07p Rjohnson
- * Networking updates and corrections
- * 
- * 10    3/31/97 7:24p Rjohnson
- * Added a playerclass field and made sure the server/clients handle it
- * properly
- * 
- * 9     3/15/97 3:08p Rlove
- * Added COMA console command
- * 
- * 8     3/07/97 2:19p Rjohnson
- * Id Updates
- * 
- * 7     3/03/97 5:00p Rjohnson
- * Added spawn flags and code to prevent items flagged from being spawned
- * 
- * 6     2/18/97 4:47p Rjohnson
- * Added headers
- */

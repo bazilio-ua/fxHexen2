@@ -81,7 +81,8 @@ qsocket_t *Loop_Connect (char *host)
 	loop_client->receiveMessageLength = 0;
 	loop_client->sendMessageLength = 0;
 	loop_client->canSend = true;
-	loop_client->mod = MOD_PROHEXEN; // (compat. with PQ)
+	loop_client->mtu = Loop_GetDefaultMTU();
+	loop_client->mod = MOD_PROQUAKE; // (compat. with PQ)
 	loop_client->client_port = 0;
 
 	if (!loop_server)
@@ -96,7 +97,8 @@ qsocket_t *Loop_Connect (char *host)
 	loop_server->receiveMessageLength = 0;
 	loop_server->sendMessageLength = 0;
 	loop_server->canSend = true;
-	loop_server->mod = MOD_PROHEXEN; // (compat. with PQ)
+	loop_server->mtu = Loop_GetDefaultMTU();
+	loop_server->mod = MOD_PROQUAKE; // (compat. with PQ)
 	loop_server->client_port = 0;
 
 	loop_client->driverdata = (void *)loop_server;
@@ -145,7 +147,7 @@ int Loop_GetMessage (qsocket_t *sock)
 	length = IntAlign(length + 4);
 	sock->receiveMessageLength -= length;
 
-// FIXME: was memcpy
+	// using memcpy within the same buffer is not safe, replaced by memmove
 	if (sock->receiveMessageLength)
 		memmove(sock->receiveMessage, &sock->receiveMessage[length], sock->receiveMessageLength);
 
@@ -167,7 +169,7 @@ int Loop_SendMessage (qsocket_t *sock, sizebuf_t *data)
 	bufferLength = &((qsocket_t *)sock->driverdata)->receiveMessageLength;
 
 	if ((*bufferLength + data->cursize + 4) > NET_MAXMESSAGE)
-		Sys_Error("Loop_SendMessage: overflow\n");
+		Sys_Error("Loop_SendMessage: overflow");
 
 	buffer = ((qsocket_t *)sock->driverdata)->receiveMessage + *bufferLength;
 
@@ -247,4 +249,10 @@ void Loop_Close (qsocket_t *sock)
 		loop_client = NULL;
 	else
 		loop_server = NULL;
+}
+
+int Loop_GetDefaultMTU (void)
+{
+	// The loop driver can send the maximum message size in one packet
+	return MAX_MSGLEN;
 }

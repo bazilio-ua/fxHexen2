@@ -42,7 +42,7 @@ static int	mod_novis_capacity;
 static byte	*mod_decompressed;
 static int	mod_decompressed_capacity;
 
-#define	MAX_MOD_KNOWN	2048 // was 1500
+#define	MAX_MOD_KNOWN	4096 // was 1500
 model_t	mod_known[MAX_MOD_KNOWN];
 int		mod_numknown;
 
@@ -571,7 +571,8 @@ void Mod_LoadTextures (lump_t *l)
 				mark = Hunk_LowMark ();
 				
 				if (tx->name[0] == '{') // holey texture (fence)
-					extraflags |= TEXPREF_ALPHA;
+//					extraflags |= TEXPREF_ALPHA;
+					extraflags |= TEXPREF_HOLEY;
 
 				offset = (uintptr_t)(mt+1) - (uintptr_t)mod_base;
 				if (Mod_HasFullbrights ((byte *)(tx+1), tx->width*tx->height))
@@ -1105,7 +1106,6 @@ void Mod_LoadTexinfo (lump_t *l)
 	texinfo_t *in;
 	mtexinfo_t *out;
 	int 	i, j, count, miptex;
-	float	len1, len2;
 
 	in = (void *)(mod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1125,17 +1125,6 @@ void Mod_LoadTexinfo (lump_t *l)
 			out->vecs[0][j] = LittleFloat (in->vecs[0][j]);
 			out->vecs[1][j] = LittleFloat (in->vecs[1][j]);
 		}
-		len1 = VectorLength (out->vecs[0]);
-		len2 = VectorLength (out->vecs[1]);
-		len1 = (len1 + len2)/2;
-		if (len1 < 0.32)
-			out->mipadjust = 4;
-		else if (len1 < 0.49)
-			out->mipadjust = 3;
-		else if (len1 < 0.99)
-			out->mipadjust = 2;
-		else
-			out->mipadjust = 1;
 
 		miptex = LittleLong (in->miptex);
 		out->flags = LittleLong (in->flags);
@@ -1956,10 +1945,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 //	hull->firstclipnode = 0;
 //	hull->lastclipnode = count-1;
 //	hull->planes = loadmodel->planes;
-//
 //	VectorSet (hull->clip_mins, -16, -16, -24);
 //	VectorSet (hull->clip_maxs,  16,  16,  32);
-//	hull->available = true;
 //
 //	// Monster hull
 //	hull = &loadmodel->hulls[2];
@@ -1967,10 +1954,8 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 //	hull->firstclipnode = 0;
 //	hull->lastclipnode = count-1;
 //	hull->planes = loadmodel->planes;
-//
 //	VectorSet (hull->clip_mins, -32, -32, -24);
 //	VectorSet (hull->clip_maxs,  32,  32,  64);
-//	hull->available = true;
 	
 	
 //player
@@ -1985,7 +1970,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 16;
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 32;
-	hull->available = true;
 	
 //scorpion	
 	hull = &loadmodel->hulls[2];
@@ -1999,7 +1983,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 24;
 	hull->clip_maxs[1] = 24;
 	hull->clip_maxs[2] = 20;
-	hull->available = true;
 	
 //crouch
 	hull = &loadmodel->hulls[3];
@@ -2013,7 +1996,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 16;
 	hull->clip_maxs[1] = 16;
 	hull->clip_maxs[2] = 16;
-	hull->available = true;
 	
 //hydra -changing in MP to '-8 -8 -8', '8 8 8' for pentacles (was: '-40 -40 -42', '40 40 42')
 	hull = &loadmodel->hulls[4];
@@ -2027,7 +2009,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 8;
 	hull->clip_maxs[1] = 8;
 	hull->clip_maxs[2] = 8;
-	hull->available = true;
 	
 //golem - maybe change to '-28 -28 -40', '28 28 40' for Yakman
 	hull = &loadmodel->hulls[5];
@@ -2048,7 +2029,6 @@ void Mod_MakeHulls (mclipnode_t *out, int count)
 	hull->clip_maxs[0] = 48;
 	hull->clip_maxs[1] = 48;
 	hull->clip_maxs[2] = 50;
-	hull->available = true;
 	
 }
 
@@ -2493,7 +2473,7 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-byte		player_texels[MAX_PLAYER_CLASS][620*245];
+//byte		player_texels[MAX_PLAYER_CLASS][620*245];
 
 /*
 =================
@@ -2681,9 +2661,12 @@ Mod_LoadAllSkins
 */
 void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 {
-	int		i, size;
+	int		i, j, k, size;
 	char	skinname[64];
 	byte	*texels;
+	daliasskingroup_t		*pinskingroup;
+	int		groupskins;
+	daliasskininterval_t	*pinskinintervals;
 	uintptr_t				offset; //johnfitz
 	unsigned int			texflags = TEXPREF_PAD;
 
@@ -2704,51 +2687,99 @@ void *Mod_LoadAllSkins (int numskins, daliasskintype_t *pskintype)
 
 	for (i=0 ; i<numskins ; i++)
 	{
-		// save 8 bit texels for the player model to remap
-/*		if (!strcmp(loadmodel->name, "models/paladin.mdl") ||
-			!strcmp(loadmodel->name, "models/crusader.mdl") ||
-			!strcmp(loadmodel->name, "models/necro.mdl") ||
-			!strcmp(loadmodel->name, "models/assassin.mdl") ||
-			!strcmp(loadmodel->name, "models/succubus.mdl"))
-*/		{
-			texels = Hunk_AllocName(size, loadname);
-			pheader->texels[i] = texels - (byte *)pheader;
-			memcpy (texels, (byte *)(pskintype + 1), size);
-		}
-
-		offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
-		if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
+		if (pskintype->type == ALIAS_SKIN_SINGLE) 
 		{
-			if (texflags & TEXPREF_SPECIAL_TRANS) goto special;
-			
-			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
-			pheader->base[i][0] =
-			pheader->base[i][1] =
-			pheader->base[i][2] =
-			pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_NOBRIGHT);
+			// save 8 bit texels for the player model to remap
+/*			if (!strcmp(loadmodel->name, "models/paladin.mdl") ||
+				!strcmp(loadmodel->name, "models/crusader.mdl") ||
+				!strcmp(loadmodel->name, "models/necro.mdl") ||
+				!strcmp(loadmodel->name, "models/assassin.mdl") ||
+				!strcmp(loadmodel->name, "models/succubus.mdl"))
+*/			{
+				texels = Hunk_AllocName(size, loadname);
+				pheader->texels[i] = texels - (byte *)pheader;
+				memcpy (texels, (byte *)(pskintype + 1), size);
+			}
 
-			sprintf (skinname, "%s:frame%i_glow", loadmodel->name, i);
-			pheader->glow[i][0] =
-			pheader->glow[i][1] =
-			pheader->glow[i][2] =
-			pheader->glow[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_FULLBRIGHT);
-		}
-		else
-		{
+			offset = (uintptr_t)(pskintype + 1) - (uintptr_t)mod_base;
+			if (Mod_HasFullbrights ((byte *)(pskintype + 1), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
+			{
+				if (texflags & TEXPREF_SPECIAL_TRANS) goto special;
+				
+				sprintf (skinname, "%s:frame%i", loadmodel->name, i);
+				pheader->base[i][0] =
+				pheader->base[i][1] =
+				pheader->base[i][2] =
+				pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_NOBRIGHT);
+
+				sprintf (skinname, "%s:frame%i_glow", loadmodel->name, i);
+				pheader->glow[i][0] =
+				pheader->glow[i][1] =
+				pheader->glow[i][2] =
+				pheader->glow[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags | TEXPREF_FULLBRIGHT);
+			}
+			else
+			{
 special:
-			sprintf (skinname, "%s:frame%i", loadmodel->name, i);
-			pheader->base[i][0] =
-			pheader->base[i][1] =
-			pheader->base[i][2] =
-			pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags);
-			
-			pheader->glow[i][0] =
-			pheader->glow[i][1] =
-			pheader->glow[i][2] =
-			pheader->glow[i][3] = NULL;
-		}
+				sprintf (skinname, "%s:frame%i", loadmodel->name, i);
+				pheader->base[i][0] =
+				pheader->base[i][1] =
+				pheader->base[i][2] =
+				pheader->base[i][3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype + 1), loadmodel->name, offset, texflags);
+				
+				pheader->glow[i][0] =
+				pheader->glow[i][1] =
+				pheader->glow[i][2] =
+				pheader->glow[i][3] = NULL;
+			}
 
-		pskintype = (daliasskintype_t *)((byte *)(pskintype + 1) + size);
+			pskintype = (daliasskintype_t *)((byte *)(pskintype + 1) + size);
+		}
+		else 
+		{
+			// animating skin group.  yuck.
+			pskintype++;
+			pinskingroup = (daliasskingroup_t *)pskintype;
+			groupskins = LittleLong (pinskingroup->numskins);
+			pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
+
+			pskintype = (void *)(pinskinintervals + groupskins);
+
+			for (j=0 ; j<groupskins ; j++)
+			{
+				if (j == 0) 
+				{
+					texels = Hunk_AllocName(size, loadname);
+					pheader->texels[i] = texels - (byte *)pheader;
+					memcpy (texels, (byte *)(pskintype), size);
+				}
+
+				offset = (uintptr_t)(pskintype) - (uintptr_t)mod_base; //johnfitz
+				if (Mod_HasFullbrights ((byte *)(pskintype), size) || texflags & (TEXPREF_HOLEY|TEXPREF_TRANSPARENT))
+				{
+					if (texflags & TEXPREF_SPECIAL_TRANS) goto special2;
+
+					sprintf (skinname, "%s:frame%i_%i", loadmodel->name, i,j);
+					pheader->base[i][j&3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype), loadmodel->name, offset, texflags | TEXPREF_NOBRIGHT);
+
+					sprintf (skinname, "%s:frame%i_%i_glow", loadmodel->name, i,j);
+					pheader->glow[i][j&3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype), loadmodel->name, offset, texflags | TEXPREF_FULLBRIGHT);
+				}
+				else
+				{
+special2:
+					sprintf (skinname, "%s:frame%i_%i", loadmodel->name, i,j);
+					pheader->base[i][j&3] = TexMgr_LoadTexture (loadmodel, skinname, pheader->skinwidth, pheader->skinheight, SRC_INDEXED, (byte *)(pskintype), loadmodel->name, offset, texflags);
+
+					pheader->glow[i][j&3] = NULL;
+				}
+
+				pskintype = (daliasskintype_t *)((byte *)(pskintype) + size);
+			}
+			k = j;
+			for (/* */; j < 4; j++)
+				pheader->base[i][j&3] = pheader->base[i][j - k]; 
+		}
 	}
 
 	return (void *)pskintype;
@@ -2824,6 +2855,63 @@ void Mod_SetExtraFlags (model_t *mod)
 	// and visa verse for standard hexen2. So we set it both
 	if (mod->flags & EF_MAGICMISSILE)
 		mod->flags |= (EF_HOLEY|EF_FACE_VIEW);
+	
+	// 'ros' has bad design, this should be a sprite rather than a model
+	// bloodfx.mdl doesn't have transparent background
+	// and strangely looking without being properly loaded as holey texture
+	if (!strcmp (mod->name, "models/smoke3.mdl") ||
+		!strcmp (mod->name, "models/bloodfx.mdl"))
+	{
+		mod->flags |= EF_HOLEY;
+		mod->flags |= MOD_NOLERP;
+	}
+	
+	// more 'ros' junk
+	if (!strcmp (mod->name, "models/waterfallt.mdl") ||
+		!strcmp (mod->name, "models/waterfallh.mdl") ||
+		!strcmp (mod->name, "models/waterfallb.mdl") ||
+		!strcmp (mod->name, "models/waterfallb_90.mdl") ||
+		!strcmp (mod->name, "models/waterfall.mdl") ||
+		!strcmp (mod->name, "models/waterfall_90.mdl"))
+	{
+		mod->flags |= MOD_NOLERP;
+	}
+	
+	// This should include all torches in data1, portals, which look bad when lerped, and the 'ros' flames, which also look bad lerped.
+	if (!strcmp (mod->name, "models/flame.mdl") || // data1
+		!strcmp (mod->name, "models/cflmtrch.mdl") ||
+		!strcmp (mod->name, "models/mflmtrch.mdl") ||
+		!strcmp (mod->name, "models/eflmtrch.mdl") ||
+		!strcmp (mod->name, "models/rflmtrch.mdl") ||
+		!strcmp (mod->name, "models/candle.mdl") || // portals
+		!strcmp (mod->name, "models/lantern.mdl") ||
+		!strcmp (mod->name, "models/newfire.mdl") ||
+		!strcmp (mod->name, "models/flame1.mdl") || // ros
+		!strcmp (mod->name, "models/flame2.mdl") ||
+		!strcmp (mod->name, "models/flame3.mdl") ||
+		!strcmp (mod->name, "models/flame4.mdl") ||
+		!strcmp (mod->name, "models/flame5.mdl") ||
+		!strcmp (mod->name, "models/flame6.mdl") ||
+		!strcmp (mod->name, "models/flame7.mdl") ||
+		!strcmp (mod->name, "models/flame7_red.mdl") ||
+		!strcmp (mod->name, "models/flame7_violet.mdl") ||
+		!strcmp (mod->name, "models/flame8.mdl") ||
+		!strcmp (mod->name, "models/flame9.mdl") ||
+		!strcmp (mod->name, "models/flame9_2.mdl") ||
+		!strcmp (mod->name, "models/flame10.mdl") ||
+		!strcmp (mod->name, "models/flame11.mdl") ||
+		!strcmp (mod->name, "models/flame12.mdl") ||
+		!strcmp (mod->name, "models/flame12_violet.mdl") ||
+		!strcmp (mod->name, "models/flame12a.mdl") ||
+		!strcmp (mod->name, "models/flame13.mdl") ||
+		!strcmp (mod->name, "models/candle.mdl") ||
+		!strcmp (mod->name, "models/candle1.mdl") ||
+		!strcmp (mod->name, "models/candle1X.mdl") ||
+		!strcmp (mod->name, "models/candle2.mdl") ||
+		!strcmp (mod->name, "models/cndl.mdl"))
+	{
+		mod->flags |= MOD_NOLERP; // nolerp flag
+	}
 }
 
 /*
@@ -3379,6 +3467,53 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 		}
 	}
 
+}
+
+//=============================================================================
+
+/*
+================
+Mod_PimpModel
+
+returns 1 if everything is ok, 0 otherwise (notably if it comes too early and the precaches are not done)
+================
+*/
+float Mod_PimpModel (edict_t *ed, float color[3])
+{
+	// Get handle on target model
+	int i = atoi(ED_GetEdictProperty(ed, "model"));
+	model_t *mod = cl.model_precache[i];
+
+	if (mod == NULL)
+		return 0;
+
+	// Replace the original mdl flags by those of the entity
+	mod->flags = atoi(ED_GetEdictProperty(ed, "flags"));
+
+	// 'ros' junk
+	if (!strcmp (mod->name, "models/waterfallt.mdl") ||
+		!strcmp (mod->name, "models/waterfallh.mdl") ||
+		!strcmp (mod->name, "models/waterfallb.mdl") ||
+		!strcmp (mod->name, "models/waterfallb_90.mdl") ||
+		!strcmp (mod->name, "models/waterfall.mdl") ||
+		!strcmp (mod->name, "models/waterfall_90.mdl"))
+	{
+		mod->flags |= MOD_NOLERP;
+	}
+
+	// Retrieve the spawnflags
+	int spawnflags = atoi(ED_GetEdictProperty(ed, "spawnflags"));
+
+	// spin and float spawnflags  we treat as rotate
+	if (spawnflags & (1|2))
+		mod->flags |= EF_ROTATE;
+	else
+		mod->flags &= ~(EF_ROTATE);
+
+	// alpha
+	float alpha = atof(ED_GetEdictProperty(ed, "abslight"));
+
+	return 1;
 }
 
 //=============================================================================

@@ -19,14 +19,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // protocol.h -- communications protocols
 
-#define	PROTOCOL_RAVEN_107		15	/* cd version, aka 1.03 (not supported) */
-#define	PROTOCOL_RAVEN_109		17	/* official 1.09 update (not supported) */
+// PROTOCOL_RAVEN
+#define	PROTOCOL_RAVEN_107		15	// cd version, aka 1.03 (not supported)
+#define	PROTOCOL_RAVEN_109		17	// official 1.09 update (not supported)
 #define	PROTOCOL_RAVEN_111		18	// official 1.11 update, without mission pack
-#define	PROTOCOL_RAVEN_112		19	// official 1.12, with mission pack
-#define	PROTOCOL_UQE_113		20	// Korax UQE patch 1.13
+#define	PROTOCOL_RAVEN_112		19	// official 1.12, with mission pack (Standard Hexen II protocol)
 
-// the default protocol
-#define	PROTOCOL_VERSION		(PROTOCOL_RAVEN_112) // Standard Hexen II protocol
+// these protocols are read-only on the client and exist for the sole purpose of playing demos
+#define	PROTOCOL_UQE_113		20	// Korax UQE patch 1.13
+#define	PROTOCOL_UH2_114		21	// Shanjaq uHexen 1.14 update
 
 // if the high bit of the servercmd is set, the low bits are fast update flags:
 #define	U_MOREBITS	(1<<0)
@@ -45,7 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	U_CLEAR_ENT		(1<<11)
 #define U_ENT_OFF       (1<<13)
 #define	U_LONGENTITY	(1<<14)
-#define U_MOREBITS2     (1<<15)
+#define U_MOREBITS2     (1<<15)	// U_EXTEND1
 
 #define	U_SKIN			(1<<16)
 #define	U_EFFECTS		(1<<17)
@@ -248,8 +249,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svc_update_kingofhill		51
 #define svc_toggle_statbar			52
 #define svc_sound_update_pos		53	//[short] ent+channel [coord3] pos
-#define	svc_mod_name		54	// [string] name (UQE v1.13 by Korax, music file name)
-#define	svc_skybox		55	// [string] name (UQE v1.13 by Korax, skybox name)
+
+#define	svc_mod_name				54	// [string] name (UQE v1.13 by Korax, music file name)
+#define	svc_skybox					55	// [string] name (UQE v1.13 by Korax, skybox name)
+#define	svc_fog						56	// [byte] density [byte] red [byte] green [byte] blue [float] time
 
 
 //
@@ -323,7 +326,7 @@ typedef struct
 	byte	abslight;
 } entity_state3_t;
 
-#define MAX_CLIENT_STATES 150
+#define MAX_CLIENT_STATES 512 // was 150
 #define MAX_FRAMES 5
 #define MAX_CLIENTS 8
 #define CLEAR_LIMIT 2
