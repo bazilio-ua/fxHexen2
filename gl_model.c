@@ -2903,7 +2903,12 @@ void Mod_SetExtraFlags (model_t *mod)
 		!strcmp (mod->name, "models/flame12.mdl") ||
 		!strcmp (mod->name, "models/flame12_violet.mdl") ||
 		!strcmp (mod->name, "models/flame12a.mdl") ||
-		!strcmp (mod->name, "models/flame13.mdl"))
+		!strcmp (mod->name, "models/flame13.mdl") ||
+		!strcmp (mod->name, "models/candle.mdl") ||
+		!strcmp (mod->name, "models/candle1.mdl") ||
+		!strcmp (mod->name, "models/candle1X.mdl") ||
+		!strcmp (mod->name, "models/candle2.mdl") ||
+		!strcmp (mod->name, "models/cndl.mdl"))
 	{
 		mod->flags |= MOD_NOLERP; // nolerp flag
 	}
