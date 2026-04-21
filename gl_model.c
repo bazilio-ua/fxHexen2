@@ -2856,6 +2856,27 @@ void Mod_SetExtraFlags (model_t *mod)
 	if (mod->flags & EF_MAGICMISSILE)
 		mod->flags |= (EF_HOLEY|EF_FACE_VIEW);
 	
+	// 'ros' has bad design, this should be a sprite rather than a model
+	// bloodfx.mdl doesn't have transparent background
+	// and strangely looking without being properly loaded as holey texture
+	if (!strcmp (mod->name, "models/smoke3.mdl") ||
+		!strcmp (mod->name, "models/bloodfx.mdl"))
+	{
+		mod->flags |= EF_HOLEY;
+		mod->flags |= MOD_NOLERP;
+	}
+	
+	// more 'ros' junk
+	if (!strcmp (mod->name, "models/waterfallt.mdl") ||
+		!strcmp (mod->name, "models/waterfallh.mdl") ||
+		!strcmp (mod->name, "models/waterfallb.mdl") ||
+		!strcmp (mod->name, "models/waterfallb_90.mdl") ||
+		!strcmp (mod->name, "models/waterfall.mdl") ||
+		!strcmp (mod->name, "models/waterfall_90.mdl"))
+	{
+		mod->flags |= MOD_NOLERP;
+	}
+	
 	// This should include all torches in data1, portals, which look bad when lerped, and the 'ros' flames, which also look bad lerped.
 	if (!strcmp (mod->name, "models/flame.mdl") || // data1
 		!strcmp (mod->name, "models/cflmtrch.mdl") ||
@@ -3464,26 +3485,28 @@ float Mod_PimpModel (edict_t *ed, float color[3])
 	// Replace the original mdl flags by those of the entity
 	mod->flags = atoi(ED_GetEdictProperty(ed, "flags"));
 
-//	// Retrieve the spawnflags
-//	int spawnflags = atoi(ED_GetEdictProperty(ed, "spawnflags"));
-//
-//	//Alpha
-//	float alpha = atof(ED_GetEdictProperty(ed, "abslight"));
-//
-//	// Orb offset
-//	vec3_t view_ofs;
-//	view_ofs[0] = atof(ED_GetEdictProperty(ed, "view_ofs_x"));
-//	view_ofs[1] = atof(ED_GetEdictProperty(ed, "view_ofs_y"));
-//	view_ofs[2] = atof(ED_GetEdictProperty(ed, "view_ofs_z"));
-//
-//	// Orb radius
-//	float radius = atof(ED_GetEdictProperty(ed, "health"));
-//
-//	// Light style
-//	int lightstyle = atoi(ED_GetEdictProperty(ed, "style"));
-//
-//	// Light radius
-//	int lightradius = atoi(ED_GetEdictProperty(ed, "max_health"));
+	// 'ros' junk
+	if (!strcmp (mod->name, "models/waterfallt.mdl") ||
+		!strcmp (mod->name, "models/waterfallh.mdl") ||
+		!strcmp (mod->name, "models/waterfallb.mdl") ||
+		!strcmp (mod->name, "models/waterfallb_90.mdl") ||
+		!strcmp (mod->name, "models/waterfall.mdl") ||
+		!strcmp (mod->name, "models/waterfall_90.mdl"))
+	{
+		mod->flags |= MOD_NOLERP;
+	}
+
+	// Retrieve the spawnflags
+	int spawnflags = atoi(ED_GetEdictProperty(ed, "spawnflags"));
+
+	// spin and float spawnflags  we treat as rotate
+	if (spawnflags & (1|2))
+		mod->flags |= EF_ROTATE;
+	else
+		mod->flags &= ~(EF_ROTATE);
+
+	// alpha
+	float alpha = atof(ED_GetEdictProperty(ed, "abslight"));
 
 	return 1;
 }
