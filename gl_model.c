@@ -2866,6 +2866,12 @@ void Mod_SetExtraFlags (model_t *mod)
 		mod->flags |= MOD_NOLERP;
 	}
 	
+	// 'ros' junk
+	if (!strcmp (mod->name, "models/portal.mdl"))
+	{
+		mod->flags |= MOD_NOLERP;
+	}
+	
 	// more 'ros' junk
 	if (!strcmp (mod->name, "models/waterfallt.mdl") ||
 		!strcmp (mod->name, "models/waterfallh.mdl") ||
