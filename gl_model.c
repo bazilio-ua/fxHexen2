@@ -575,7 +575,7 @@ void Mod_LoadTextures (lump_t *l)
 					extraflags |= TEXPREF_HOLEY;
 
 				offset = (uintptr_t)(mt+1) - (uintptr_t)mod_base;
-				if (Mod_HasFullbrights ((byte *)(tx+1), tx->width*tx->height))
+				if (Mod_HasFullbrights ((byte *)(tx+1), tx->width*tx->height) || extraflags & TEXPREF_HOLEY)
 				{
 					sprintf (texturename, "%s:%s", loadmodel->name, tx->name);
 					tx->base = TexMgr_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP | TEXPREF_NOBRIGHT | extraflags);
