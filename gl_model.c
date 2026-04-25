@@ -575,7 +575,7 @@ void Mod_LoadTextures (lump_t *l)
 					extraflags |= TEXPREF_HOLEY;
 
 				offset = (uintptr_t)(mt+1) - (uintptr_t)mod_base;
-				if (Mod_HasFullbrights ((byte *)(tx+1), tx->width*tx->height))
+				if (Mod_HasFullbrights ((byte *)(tx+1), tx->width*tx->height) || extraflags & TEXPREF_HOLEY)
 				{
 					sprintf (texturename, "%s:%s", loadmodel->name, tx->name);
 					tx->base = TexMgr_LoadTexture (loadmodel, texturename, tx->width, tx->height, SRC_INDEXED, (byte *)(tx+1), loadmodel->name, offset, TEXPREF_MIPMAP | TEXPREF_NOBRIGHT | extraflags);
@@ -2856,6 +2856,21 @@ void Mod_SetExtraFlags (model_t *mod)
 	if (mod->flags & EF_MAGICMISSILE)
 		mod->flags |= (EF_HOLEY|EF_FACE_VIEW);
 	
+	// This should include all torches in data1, portals, which look bad when lerped
+	if (!strcmp (mod->name, "models/flame.mdl") || // data1
+		!strcmp (mod->name, "models/flame1.mdl") ||
+		!strcmp (mod->name, "models/flame2.mdl") ||
+		!strcmp (mod->name, "models/cflmtrch.mdl") ||
+		!strcmp (mod->name, "models/mflmtrch.mdl") ||
+		!strcmp (mod->name, "models/eflmtrch.mdl") ||
+		!strcmp (mod->name, "models/rflmtrch.mdl") ||
+		!strcmp (mod->name, "models/candle.mdl") || // portals
+		!strcmp (mod->name, "models/lantern.mdl") ||
+		!strcmp (mod->name, "models/newfire.mdl"))
+	{
+		mod->flags |= MOD_NOLERP; // nolerp flag
+	}
+	
 	// 'ros' has bad design, this should be a sprite rather than a model
 	// bloodfx.mdl doesn't have transparent background
 	// and strangely looking without being properly loaded as holey texture
@@ -2863,6 +2878,18 @@ void Mod_SetExtraFlags (model_t *mod)
 		!strcmp (mod->name, "models/bloodfx.mdl"))
 	{
 		mod->flags |= EF_HOLEY;
+		mod->flags |= MOD_NOLERP;
+	}
+	
+	// 'ros' junk
+	if (!strcmp (mod->name, "models/portal.mdl"))
+	{
+		mod->flags |= MOD_NOLERP;
+	}
+	
+	// 'ros' junk
+	if (!strcmp (mod->name, "models/waterpool.mdl"))
+	{
 		mod->flags |= MOD_NOLERP;
 	}
 	
@@ -2877,18 +2904,8 @@ void Mod_SetExtraFlags (model_t *mod)
 		mod->flags |= MOD_NOLERP;
 	}
 	
-	// This should include all torches in data1, portals, which look bad when lerped, and the 'ros' flames, which also look bad lerped.
-	if (!strcmp (mod->name, "models/flame.mdl") || // data1
-		!strcmp (mod->name, "models/cflmtrch.mdl") ||
-		!strcmp (mod->name, "models/mflmtrch.mdl") ||
-		!strcmp (mod->name, "models/eflmtrch.mdl") ||
-		!strcmp (mod->name, "models/rflmtrch.mdl") ||
-		!strcmp (mod->name, "models/candle.mdl") || // portals
-		!strcmp (mod->name, "models/lantern.mdl") ||
-		!strcmp (mod->name, "models/newfire.mdl") ||
-		!strcmp (mod->name, "models/flame1.mdl") || // ros
-		!strcmp (mod->name, "models/flame2.mdl") ||
-		!strcmp (mod->name, "models/flame3.mdl") ||
+	// and the 'ros' flames, which also look bad lerped.
+	if (!strcmp (mod->name, "models/flame3.mdl") || // ros
 		!strcmp (mod->name, "models/flame4.mdl") ||
 		!strcmp (mod->name, "models/flame5.mdl") ||
 		!strcmp (mod->name, "models/flame6.mdl") ||
@@ -2904,7 +2921,6 @@ void Mod_SetExtraFlags (model_t *mod)
 		!strcmp (mod->name, "models/flame12_violet.mdl") ||
 		!strcmp (mod->name, "models/flame12a.mdl") ||
 		!strcmp (mod->name, "models/flame13.mdl") ||
-		!strcmp (mod->name, "models/candle.mdl") ||
 		!strcmp (mod->name, "models/candle1.mdl") ||
 		!strcmp (mod->name, "models/candle1X.mdl") ||
 		!strcmp (mod->name, "models/candle2.mdl") ||

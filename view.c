@@ -781,12 +781,17 @@ void V_SetPalette (byte *palette)
 	memcpy (d_8to24table_fullbright_holey, d_8to24table_fullbright, 256*4);
 	d_8to24table_fullbright_holey[255] = 0; // Alpha of zero.
 	d_8to24table_fullbright_holey[0] = 0; // Alpha of zero. (h2 models)
-	
+	d_8to24table_fullbright_holey[1] = 0; // 'ros' has bad design, some holey/fence texture have transparent background at index 1 nor 0 or 255 as expected
+										  // FIXME: temporary
+										  // h2 palette at indices 0 and 1 have identical black value, so this should no harm,
+										  // but this should be fixed in the mod/map and not in the engine
+
 	// nobright palette, for holey textures (fence)
 	memcpy (d_8to24table_nobright_holey, d_8to24table_nobright, 256*4);
 	d_8to24table_nobright_holey[255] = 0; // Alpha of zero.
 	d_8to24table_nobright_holey[0] = 0; // Alpha of zero. (h2 models)
-	
+	d_8to24table_nobright_holey[1] = 0; // 'ros' has bad design, some holey/fence texture have transparent background at index 1 nor 0 or 255 as expected
+
 	d_8to24table_fullbright_transparent[0] = 0;
 	d_8to24table_nobright_transparent[0] = 0;
 	
