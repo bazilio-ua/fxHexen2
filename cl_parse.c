@@ -263,6 +263,8 @@ void CL_ParseServerInfo (void)
 	i = MSG_ReadLong (net_message);
 	if (i == PROTOCOL_UQE_113 || i == PROTOCOL_UH2_114)
 		Con_SafePrintf ("\nusing UQE/UH2 demo protocol %i\n", i);
+	else if (i == PROTOCOL_RAVEN_107 || i == PROTOCOL_RAVEN_109)
+		Con_SafePrintf ("\nusing Raven demo protocol %i\n", i);
 	//johnfitz -- support multiple protocols
 	else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
 	{
@@ -333,8 +335,8 @@ void CL_ParseServerInfo (void)
 		str = MSG_ReadString (net_message);
 		if (!str[0])
 			break;
-		if (numsounds == ((cl.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS))
-			Host_Error ("CL_ParseServerInfo: Server sent too many sound precaches (max = %d)", (cl.protocol == PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS);
+		if (numsounds == ((cl.protocol <= PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS))
+			Host_Error ("CL_ParseServerInfo: Server sent too many sound precaches (max = %d)", (cl.protocol <= PROTOCOL_RAVEN_111) ? 256 : MAX_SOUNDS);
 		strcpy (sound_precache[numsounds], str);
 		S_TouchSound (str);
 	}
@@ -1122,7 +1124,7 @@ void CL_ParseStaticSound (void)
 	for (i=0 ; i<3 ; i++)
 		org[i] = MSG_ReadCoord (net_message);
 
-	if (cl.protocol == PROTOCOL_RAVEN_111)
+	if (cl.protocol <= PROTOCOL_RAVEN_111)
 		sound_num = MSG_ReadByte (net_message);
 	else 
 		sound_num = MSG_ReadShort (net_message);
@@ -1316,6 +1318,8 @@ void CL_ParseServerMessage (void)
 			i = MSG_ReadLong (net_message);
 			if (i == PROTOCOL_UQE_113 || i == PROTOCOL_UH2_114)
 				Con_SafePrintf ("using UQE/UH2 demo protocol version %i\n", i);
+			else if (i == PROTOCOL_RAVEN_107 || i == PROTOCOL_RAVEN_109)
+				Con_SafePrintf ("using Raven demo protocol %i\n", i);
 			//johnfitz -- support multiple protocols
 			else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
 				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i or %i", i,
