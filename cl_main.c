@@ -264,7 +264,7 @@ void CL_EstablishConnection (char *host)
 
 	// JPG - ProQuake dprint
 	if (cls.netcon->mod == MOD_PROQUAKE && cl.protocol <= PROTOCOL_RAVEN_112)
-		Con_DPrintf ("Connected to ProQ/ProHexen server %s\n", host);
+		Con_DPrintf ("Connected to ProQ/ProH2 server %s\n", host);
 	else
 		Con_DPrintf ("Connected to server %s\n", host);
 	
