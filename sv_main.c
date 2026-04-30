@@ -258,9 +258,9 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
 		return;
 
 	MSG_WriteByte (&sv.datagram, svc_particle);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	for (i=0 ; i<3 ; i++)
 	{
 		v = dir[i]*16;
@@ -287,9 +287,9 @@ void SV_StartParticle2 (vec3_t org, vec3_t dmin, vec3_t dmax, int color, int eff
 	if (sv.datagram.cursize > ((sv.protocol <= PROTOCOL_RAVEN_112) ? 1024 : MAX_DATAGRAM) - 36)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle2);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteFloat (&sv.datagram, dmin[0]);
 	MSG_WriteFloat (&sv.datagram, dmin[1]);
 	MSG_WriteFloat (&sv.datagram, dmin[2]);
@@ -315,9 +315,9 @@ void SV_StartParticle3 (vec3_t org, vec3_t box, int color, int effect, int count
 	if (sv.datagram.cursize > ((sv.protocol <= PROTOCOL_RAVEN_112) ? 1024 : MAX_DATAGRAM) - 15)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle3);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteByte (&sv.datagram, box[0]);
 	MSG_WriteByte (&sv.datagram, box[1]);
 	MSG_WriteByte (&sv.datagram, box[2]);
@@ -340,9 +340,9 @@ void SV_StartParticle4 (vec3_t org, float radius, int color, int effect, int cou
 	if (sv.datagram.cursize > ((sv.protocol <= PROTOCOL_RAVEN_112) ? 1024 : MAX_DATAGRAM) - 13)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle4);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteByte (&sv.datagram, radius);
 
 	MSG_WriteShort (&sv.datagram, color);
@@ -402,7 +402,7 @@ void SV_UpdateSoundPos (edict_t *entity, int channel)
 	MSG_WriteByte (&sv.datagram, svc_sound_update_pos);
 	MSG_WriteShort (&sv.datagram, channel);
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]), sv.protocolflags);
 }
 
 /*
@@ -502,7 +502,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	MSG_WriteByte (&sv.datagram, sound_num);
 
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]), sv.protocolflags);
 }
 
 /*
@@ -1182,17 +1182,17 @@ skipA:
 		if (bits & U_EFFECTS)
 			MSG_WriteByte (msg, ent->v.effects);
 		if (bits & U_ORIGIN1)
-			MSG_WriteCoord (msg, ent->v.origin[0]);		
+			MSG_WriteCoord (msg, ent->v.origin[0], sv.protocolflags);
 		if (bits & U_ANGLE1)
-			MSG_WriteAngle(msg, ent->v.angles[0]);
+			MSG_WriteAngle(msg, ent->v.angles[0], sv.protocolflags);
 		if (bits & U_ORIGIN2)
-			MSG_WriteCoord (msg, ent->v.origin[1]);
+			MSG_WriteCoord (msg, ent->v.origin[1], sv.protocolflags);
 		if (bits & U_ANGLE2)
-			MSG_WriteAngle(msg, ent->v.angles[1]);
+			MSG_WriteAngle(msg, ent->v.angles[1], sv.protocolflags);
 		if (bits & U_ORIGIN3)
-			MSG_WriteCoord (msg, ent->v.origin[2]);
+			MSG_WriteCoord (msg, ent->v.origin[2], sv.protocolflags);
 		if (bits & U_ANGLE3)
-			MSG_WriteAngle(msg, ent->v.angles[2]);
+			MSG_WriteAngle(msg, ent->v.angles[2], sv.protocolflags);
 		if (bits & U_SCALE)
 		{ // Used for scale and abslight
 			MSG_WriteByte(msg, (int)(ent->v.scale*100.0)&255);
@@ -1253,7 +1253,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		MSG_WriteByte (msg, ent->v.dmg_save);
 		MSG_WriteByte (msg, ent->v.dmg_take);
 		for (i=0 ; i<3 ; i++)
-			MSG_WriteCoord (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]));
+			MSG_WriteCoord (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]), sv.protocolflags);
 	
 		ent->v.dmg_take = 0;
 		ent->v.dmg_save = 0;
@@ -1269,7 +1269,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	{
 		MSG_WriteByte (msg, svc_setangle);
 		for (i=0 ; i < 3 ; i++)
-			MSG_WriteAngle (msg, ent->v.angles[i] );
+			MSG_WriteAngle (msg, ent->v.angles[i], sv.protocolflags);
 		ent->v.fixangle = 0;
 	}
 
@@ -1978,8 +1978,8 @@ void SV_CreateBaseline (void)
 		MSG_WriteByte (&sv.signon, svent->baseline.abslight);
 		for (i = 0; i < 3; i++)
 		{
-			MSG_WriteCoord (&sv.signon, svent->baseline.origin[i]);
-			MSG_WriteAngle (&sv.signon, svent->baseline.angles[i]);
+			MSG_WriteCoord (&sv.signon, svent->baseline.origin[i], sv.protocolflags);
+			MSG_WriteAngle (&sv.signon, svent->baseline.angles[i], sv.protocolflags);
 		}
 	}
 }

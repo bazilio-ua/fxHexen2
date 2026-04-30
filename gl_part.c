@@ -334,7 +334,7 @@ void R_ParseParticleEffect (void)
 	int			i, count, msgcount, color;
 	
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord (net_message);
+		org[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 	for (i=0 ; i<3 ; i++)
 		dir[i] = MSG_ReadChar (net_message) * (1.0/16);
 	msgcount = MSG_ReadByte (net_message);
@@ -361,7 +361,7 @@ void R_ParseParticleEffect2 (void)
 	int			i, msgcount, color, effect;
 	
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord (net_message);
+		org[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 	for (i=0 ; i<3 ; i++)
 		dmin[i] = MSG_ReadFloat (net_message);
 	for (i=0 ; i<3 ; i++)
@@ -386,7 +386,7 @@ void R_ParseParticleEffect3 (void)
 	int			i, msgcount, color, effect;
 	
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord (net_message);
+		org[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 	for (i=0 ; i<3 ; i++)
 		box[i] = MSG_ReadByte (net_message);
 	color = MSG_ReadShort (net_message);
@@ -410,7 +410,7 @@ void R_ParseParticleEffect4 (void)
 	float		radius;
 	
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord (net_message);
+		org[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 	radius = MSG_ReadByte (net_message);
 	color = MSG_ReadShort (net_message);
 	msgcount = MSG_ReadByte (net_message);

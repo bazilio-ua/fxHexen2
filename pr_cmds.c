@@ -691,7 +691,7 @@ void PF_ambientsound (void)
 	MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
 
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord(&sv.signon, pos[i]);
+		MSG_WriteCoord(&sv.signon, pos[i], sv.protocolflags);
 
 	if (sv.protocol == PROTOCOL_RAVEN_111)
 		MSG_WriteByte (&sv.signon, soundnum);
@@ -1962,12 +1962,12 @@ void PF_WriteLong (void)
 
 void PF_WriteAngle (void)
 {
-	MSG_WriteAngle (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteAngle (WriteDest(), G_FLOAT(OFS_PARM1), sv.protocolflags);
 }
 
 void PF_WriteCoord (void)
 {
-	MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1));
+	MSG_WriteCoord (WriteDest(), G_FLOAT(OFS_PARM1), sv.protocolflags);
 }
 
 void PF_WriteString (void)
@@ -2003,8 +2003,8 @@ void PF_makestatic (void)
 
 	for (i=0 ; i<3 ; i++)
 	{
-		MSG_WriteCoord(&sv.signon, ent->v.origin[i]);
-		MSG_WriteAngle(&sv.signon, ent->v.angles[i]);
+		MSG_WriteCoord(&sv.signon, ent->v.origin[i], sv.protocolflags);
+		MSG_WriteAngle(&sv.signon, ent->v.angles[i], sv.protocolflags);
 	}
 
 // throw the entity away now
@@ -2142,14 +2142,14 @@ void PF_rain_go (void)
 //void SV_StartRainEffect (vec3_t org, vec3_t e_size, int x_dir, int y_dir, int color, int count)
 {
 	MSG_WriteByte (&sv.datagram, svc_raineffect);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
-	MSG_WriteCoord (&sv.datagram, e_size[0]);
-	MSG_WriteCoord (&sv.datagram, e_size[1]);
-	MSG_WriteCoord (&sv.datagram, e_size[2]);
-	MSG_WriteAngle (&sv.datagram, x_dir);	
-	MSG_WriteAngle (&sv.datagram, y_dir);	
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, e_size[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, e_size[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, e_size[2], sv.protocolflags);
+	MSG_WriteAngle (&sv.datagram, x_dir, sv.protocolflags);
+	MSG_WriteAngle (&sv.datagram, y_dir, sv.protocolflags);
 	MSG_WriteShort (&sv.datagram, color);
 	MSG_WriteShort (&sv.datagram, count);
 
@@ -2169,9 +2169,9 @@ void PF_particleexplosion (void)
 	counter = G_FLOAT(OFS_PARM3);
 
 	MSG_WriteByte(&sv.datagram, svc_particle_explosion);
-	MSG_WriteCoord(&sv.datagram, org[0]);
-	MSG_WriteCoord(&sv.datagram, org[1]);
-	MSG_WriteCoord(&sv.datagram, org[2]);
+	MSG_WriteCoord(&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord(&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord(&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteShort(&sv.datagram, color);
 	MSG_WriteShort(&sv.datagram, radius);
 	MSG_WriteShort(&sv.datagram, counter);

@@ -170,7 +170,7 @@ void CL_ParseStartSoundPacket(void)
 		Host_Error ("CL_ParseStartSoundPacket: invalid edict (%d, max = %d)", ent, MAX_EDICTS);
 	
 	for (i=0 ; i<3 ; i++)
-		pos[i] = MSG_ReadCoord (net_message);
+		pos[i] = MSG_ReadCoord (net_message, cl.protocolflags);
  
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }       
@@ -641,7 +641,7 @@ void CL_ParseUpdate (int bits)
 
 	if (bits & U_ORIGIN1)
 	{
-		set_ent->origin[0] = ent->msg_origins[0][0] = MSG_ReadCoord (net_message);
+		set_ent->origin[0] = ent->msg_origins[0][0] = MSG_ReadCoord (net_message, cl.protocolflags);
 		//if (num == 2) fprintf(FH,"Read origin[0] %f\n",set_ent->angles[0]);
 	}
 	else
@@ -650,25 +650,25 @@ void CL_ParseUpdate (int bits)
 		//if (num == 2) fprintf(FH,"Restored origin[0] %f\n",ref_ent->angles[0]);
 	}
 	if (bits & U_ANGLE1)
-		set_ent->angles[0] = ent->msg_angles[0][0] = MSG_ReadAngle(net_message);
+		set_ent->angles[0] = ent->msg_angles[0][0] = MSG_ReadAngle(net_message, cl.protocolflags);
 	else
 		ent->msg_angles[0][0] = ref_ent->angles[0];
 
 	if (bits & U_ORIGIN2)
-		set_ent->origin[1] = ent->msg_origins[0][1] = MSG_ReadCoord (net_message);
+		set_ent->origin[1] = ent->msg_origins[0][1] = MSG_ReadCoord (net_message, cl.protocolflags);
 	else
 		ent->msg_origins[0][1] = ref_ent->origin[1];
 	if (bits & U_ANGLE2)
-		set_ent->angles[1] = ent->msg_angles[0][1] = MSG_ReadAngle(net_message);
+		set_ent->angles[1] = ent->msg_angles[0][1] = MSG_ReadAngle(net_message, cl.protocolflags);
 	else
 		ent->msg_angles[0][1] = ref_ent->angles[1];
 
 	if (bits & U_ORIGIN3)
-		set_ent->origin[2] = ent->msg_origins[0][2] = MSG_ReadCoord (net_message);
+		set_ent->origin[2] = ent->msg_origins[0][2] = MSG_ReadCoord (net_message, cl.protocolflags);
 	else
 		ent->msg_origins[0][2] = ref_ent->origin[2];
 	if (bits & U_ANGLE3)
-		set_ent->angles[2] = ent->msg_angles[0][2] = MSG_ReadAngle(net_message);
+		set_ent->angles[2] = ent->msg_angles[0][2] = MSG_ReadAngle(net_message, cl.protocolflags);
 	else
 		ent->msg_angles[0][2] = ref_ent->angles[2];
 
@@ -776,19 +776,19 @@ void CL_ParseUpdate2 (int bits)
 		MSG_ReadByte (net_message);
 
 	if (bits & U_ORIGIN1)
-		MSG_ReadCoord (net_message);
+		MSG_ReadCoord (net_message, cl.protocolflags);
 	if (bits & U_ANGLE1)
-		MSG_ReadAngle (net_message);
+		MSG_ReadAngle (net_message, cl.protocolflags);
 
 	if (bits & U_ORIGIN2)
-		MSG_ReadCoord (net_message);
+		MSG_ReadCoord (net_message, cl.protocolflags);
 	if (bits & U_ANGLE2)
-		MSG_ReadAngle (net_message);
+		MSG_ReadAngle (net_message, cl.protocolflags);
 
 	if (bits & U_ORIGIN3)
-		MSG_ReadCoord (net_message);
+		MSG_ReadCoord (net_message, cl.protocolflags);
 	if (bits & U_ANGLE3)
-		MSG_ReadAngle (net_message);
+		MSG_ReadAngle (net_message, cl.protocolflags);
 
 	if (bits & U_SCALE)
 	{
@@ -815,8 +815,8 @@ void CL_ParseBaseline (entity_t *ent)
 	ent->baseline.abslight = MSG_ReadByte (net_message);
 	for (i=0 ; i<3 ; i++)
 	{
-		ent->baseline.origin[i] = MSG_ReadCoord (net_message);
-		ent->baseline.angles[i] = MSG_ReadAngle (net_message);
+		ent->baseline.origin[i] = MSG_ReadCoord (net_message, cl.protocolflags);
+		ent->baseline.angles[i] = MSG_ReadAngle (net_message, cl.protocolflags);
 	}
 }
 
@@ -1127,7 +1127,7 @@ void CL_ParseStaticSound (void)
 	int			i;
 	
 	for (i=0 ; i<3 ; i++)
-		org[i] = MSG_ReadCoord (net_message);
+		org[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 	if (cl.protocol <= PROTOCOL_RAVEN_111)
 		sound_num = MSG_ReadByte (net_message);
@@ -1160,9 +1160,9 @@ void CL_ParticleExplosion(void)
 	vec3_t org;
 	short color, radius, counter;
 
-	org[0] = MSG_ReadCoord(net_message);
-	org[1] = MSG_ReadCoord(net_message);
-	org[2] = MSG_ReadCoord(net_message);
+	org[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+	org[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+	org[2] = MSG_ReadCoord(net_message, cl.protocolflags);
 	color = MSG_ReadShort(net_message);
 	radius = MSG_ReadShort(net_message);
 	counter = MSG_ReadShort(net_message);
@@ -1176,14 +1176,14 @@ void CL_ParseRainEffect(void)
 	short		color,count;
 	int			x_dir, y_dir;
 
-	org[0] = MSG_ReadCoord(net_message);
-	org[1] = MSG_ReadCoord(net_message);
-	org[2] = MSG_ReadCoord(net_message);
-	e_size[0] = MSG_ReadCoord(net_message);
-	e_size[1] = MSG_ReadCoord(net_message);
-	e_size[2] = MSG_ReadCoord(net_message);
-	x_dir = MSG_ReadAngle(net_message);
-	y_dir = MSG_ReadAngle(net_message);
+	org[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+	org[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+	org[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+	e_size[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+	e_size[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+	e_size[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+	x_dir = MSG_ReadAngle(net_message, cl.protocolflags);
+	y_dir = MSG_ReadAngle(net_message, cl.protocolflags);
 	color = MSG_ReadShort(net_message);
 	count = MSG_ReadShort(net_message);
 
@@ -1374,7 +1374,7 @@ void CL_ParseServerMessage (void)
 			
 		case svc_setangle: // JPG - added mviewangles for smooth chasecam, set last_angle_time
 			for (i=0 ; i<3 ; i++)
-				cl.viewangles[i] = MSG_ReadAngle (net_message);
+				cl.viewangles[i] = MSG_ReadAngle (net_message, cl.protocolflags);
 
 			if (!cls.demoplayback)
 			{
@@ -1395,9 +1395,9 @@ void CL_ParseServerMessage (void)
 			break;
 
 		case svc_setangle_interpolate:
-			compangles[0][0] = MSG_ReadAngle(net_message);
-			compangles[0][1] = MSG_ReadAngle(net_message);
-			compangles[0][2] = MSG_ReadAngle(net_message);
+			compangles[0][0] = MSG_ReadAngle(net_message, cl.protocolflags);
+			compangles[0][1] = MSG_ReadAngle(net_message, cl.protocolflags);
+			compangles[0][2] = MSG_ReadAngle(net_message, cl.protocolflags);
 			for (i=0 ; i<3 ; i++)
 			{
 				compangles[1][i] = cl.viewangles[i];
@@ -1477,7 +1477,7 @@ void CL_ParseServerMessage (void)
 				Host_Error ("CL_ParseServerMessage: svc_sound_update_pos ent %i > MAX_EDICTS (%i)", ent, MAX_EDICTS);
 			
 			for (i=0 ; i<3 ; i++)
-				pos[i] = MSG_ReadCoord (net_message);
+				pos[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 			
 			S_UpdateSoundPos (ent, channel, pos);
 		}

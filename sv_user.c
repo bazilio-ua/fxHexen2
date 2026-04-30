@@ -569,7 +569,7 @@ void SV_ReadClientMove (usercmd_t *move)
 	else
 	{
 		for (i=0 ; i<3 ; i++)
-			angle[i] = MSG_ReadAngle (net_message);
+			angle[i] = MSG_ReadAngle (net_message, sv.protocolflags);
 	}
 
 	VectorCopy (angle, host_client->edict->v.v_angle);

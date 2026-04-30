@@ -401,7 +401,7 @@ void CL_SendMove (usercmd_t *cmd)
 		else
 		{
 			for (i=0 ; i<3 ; i++)
-				MSG_WriteAngle (&buf, cl.viewangles[i]);
+				MSG_WriteAngle (&buf, cl.viewangles[i], cl.protocolflags);
 		}
 		
 		MSG_WriteShort (&buf, cmd->forwardmove);
