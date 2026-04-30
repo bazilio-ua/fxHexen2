@@ -1300,8 +1300,6 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 			bits |= SU_WEAPON;
 	}
 
-// send the data
-
 	//fjm: this wasn't in here b4, and the centerview command requires it.
 	if ( (int)ent->v.flags & FL_ONGROUND) 
 		bits |= SU_ONGROUND;
@@ -1354,6 +1352,8 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 			break;
 		}
 	}
+
+// send the data
 
 	MSG_WriteByte (msg, svc_clientdata);
 	MSG_WriteShort (msg, bits);
