@@ -86,7 +86,13 @@ char *svc_strings[] =
 	"svc_sound_update_pos",
 	"svc_mod_name",		// UQE v1.13 by Korax, music file name
 	"svc_skybox",		// UQE v1.13 by Korax, skybox name
-	"svc_fog"				// [byte] density [byte] red [byte] green [byte] blue [float] time
+	"svc_fog",				// [byte] density [byte] red [byte] green [byte] blue [float] time
+	"svc_bf",				// no data
+	"svc_df",				// no data
+	"svc_wf",				// no data
+	"svc_spawnbaseline2",	// support for large modelindex, large framenum, alpha, using flags
+	"svc_spawnstatic2",		// support for large modelindex, large framenum, alpha, using flags
+	"svc_spawnstaticsound2"	// [coord3] [short] samp [byte] vol [byte] aten
 };
 
 char *puzzle_strings;
@@ -1914,6 +1920,32 @@ void CL_ParseServerMessage (void)
 		case svc_fog:
 			R_FogParseServerMessage ();
 			break;
+
+		case svc_bf:
+			Cmd_ExecuteString ("bf", src_command);
+			break;
+		case svc_df:
+			Cmd_ExecuteString ("df", src_command);
+			break;
+		case svc_wf:
+			Cmd_ExecuteString ("wf", src_command);
+			break;
+
+		//johnfitz
+		case svc_spawnbaseline2: //PROTOCOL_FITZQUAKE
+			i = MSG_ReadShort (net_message);
+			// must use CL_EntityNum() to force cl.num_entities up
+//			CL_ParseBaseline (CL_EntityNum(i), 2);
+			break;
+			
+		case svc_spawnstatic2: //PROTOCOL_FITZQUAKE
+//			CL_ParseStatic (2);
+			break;
+			
+		case svc_spawnstaticsound2: //PROTOCOL_FITZQUAKE
+//			CL_ParseStaticSound (2);
+			break;
+		//johnfitz
 		}
 	}
 }

@@ -1514,6 +1514,8 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	if (!sc1 && !sc2)
 		goto end;
 
+	//-->here
+	
 	MSG_WriteByte (&host_client->message, svc_update_inv);
 	test = 0;
 	if (sc1 & 0x000000ff)

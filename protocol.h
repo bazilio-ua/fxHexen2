@@ -24,6 +24,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	PROTOCOL_RAVEN_109		17	// official 1.09 update (not supported)
 #define	PROTOCOL_RAVEN_111		18	// official 1.11 update, without mission pack
 #define	PROTOCOL_RAVEN_112		19	// official 1.12, with mission pack (Standard Hexen II protocol)
+// PROTOCOL_FITZQUAKE
+#define PROTOCOL_FITZQ		667		// johnfitz -- added new protocol for fitzquake 0.85 (adapted for Hexen II)
+#define PROTOCOL_MARKV		669		// Baker: fitz+ for smooth angles for rotating entities
+#define PROTOCOL_RMQ		1000		// mh: RMQ
+
+// PROTOCOL_RMQ protocol flags
+#define PRFL_SHORTANGLE		(1 << 1)
+#define PRFL_FLOATANGLE		(1 << 2)
+#define PRFL_24BITCOORD		(1 << 3)
+#define PRFL_FLOATCOORD		(1 << 4)
+#define PRFL_EDICTSCALE		(1 << 5)
+#define PRFL_ALPHASANITY	(1 << 6)	// cleanup insanity with alpha
+#define PRFL_INT32COORD		(1 << 7)
+#define PRFL_MOREFLAGS		(1 << 31)	// not supported
 
 // these protocols are read-only on the client and exist for the sole purpose of playing demos
 #define	PROTOCOL_UQE_113		20	// Korax UQE patch 1.13
@@ -53,6 +67,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define U_SCALE			(1<<18)
 #define	U_COLORMAP		(1<<19)
 
+// johnfitz -- PROTOCOL_FITZQUAKE -- new bits
+#define U_FRAME2		(1<<20) // 1 byte, this is .frame & 0xFF00 (second byte)
+#define U_LERPFINISH	(1<<21) // 1 byte, 0.0-1.0 maps to 0-255, not sent if exactly 0.1, this is ent->v.nextthink - sv.time, used for lerping
+#define U_UNUSED22		(1<<22)
+#define U_EXTEND2		(1<<23) // another byte to follow, future expansion
+// johnfitz
+
 #define BE_ON			(1<<0)
 
 #define	SU_VIEWHEIGHT	(1<<0)
@@ -63,22 +84,44 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	SU_VELOCITY1	(1<<5)
 #define	SU_VELOCITY2	(1<<6)
 #define	SU_VELOCITY3	(1<<7)
-//define	SU_AIMENT		(1<<8)  AVAILABLE BIT
+//define	SU_UNUSED8		(1<<8)  AVAILABLE BIT
 #define	SU_IDEALROLL	(1<<8)  // I'll take that available bit
-#define	SU_SC1			(1<<9)
+#define	SU_SC1			(1<<9)		// unused?
 #define	SU_ONGROUND		(1<<10)		// no data follows, the bit is it
 #define	SU_INWATER		(1<<11)		// no data follows, the bit is it
 #define	SU_WEAPONFRAME	(1<<12)
 #define	SU_ARMOR		(1<<13)
 #define	SU_WEAPON		(1<<14)
-#define	SU_SC2			(1<<15)
+#define	SU_SC2			(1<<15)		// unused? (SU_EXTEND1)
+
+// johnfitz -- PROTOCOL_FITZQUAKE -- new bits
+#define SU_EXTEND1		(1<<15) // another byte to follow
+#define SU_ARMOR2		(1<<16) // 1 byte, this is .armorvalue & 0xFF00 (second byte)
+#define SU_BLUEMANA2	(1<<17) // 1 byte, this is .bluemana & 0xFF00 (second byte)
+#define SU_GREENMANA2	(1<<18) // 1 byte, this is .greenmana & 0xFF00 (second byte)
+#define SU_MAXMANA2		(1<<19) // 1 byte, this is .max_mana & 0xFF00 (second byte)
+#define SU_WEAPONFRAME2	(1<<20) // 1 byte, this is .weaponframe & 0xFF00 (second byte)
+#define SU_UNUSED21		(1<<21)
+#define SU_UNUSED22		(1<<22)
+#define SU_EXTEND2		(1<<23) // another byte to follow
+// johnfitz
 
 // a sound with no channel is a local only sound
 #define	SND_VOLUME		(1<<0)		// a byte
 #define	SND_ATTENUATION	(1<<1)		// a byte
 #define	SND_OVERFLOW	(1<<2)		// add 255 to snd num
 //gonna use the rest of the bits to pack the ent+channel
+// johnfitz -- PROTOCOL_FITZQUAKE -- new bits
+#define	SND_LARGEENTITY	(1<<3)	// a short + byte (instead of just a short)
+#define	SND_LARGESOUND	(1<<4)	// a short soundindex (instead of a byte)
+// johnfitz
 
+// johnfitz -- PROTOCOL_FITZQUAKE -- flags for entity baseline messages
+#define B_LARGEMODEL	(1<<0)	// modelindex is short instead of byte
+#define B_LARGEFRAME	(1<<1)	// frame is short instead of byte
+#define B_ALPHA			(1<<2)	// 1 byte, uses ENTALPHA_ENCODE, not sent if ENTALPHA_DEFAULT
+#define B_SCALE			(1<<3)	// PROTOCOL_RMQ scale
+// johnfitz
 
 // johnfitz -- PROTOCOL_FITZQUAKE -- alpha encoding
 #define ENTALPHA_DEFAULT	0	//entity's alpha is "default" (i.e. water obeys r_wateralpha) -- must be zero so zeroed out memory works
@@ -254,6 +297,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	svc_skybox					55	// [string] name (UQE v1.13 by Korax, skybox name)
 #define	svc_fog						56	// [byte] density [byte] red [byte] green [byte] blue [float] time
 
+// johnfitz -- PROTOCOL_FITZQUAKE -- new server messages
+#define svc_bf					57
+#define svc_df					58
+#define svc_wf					59
+#define svc_spawnbaseline2		60  // support for large modelindex, large framenum, alpha, using flags
+#define svc_spawnstatic2		61	// support for large modelindex, large framenum, alpha, using flags
+#define svc_spawnstaticsound2	62	// [coord3] [short] samp [byte] vol [byte] aten
+// johnfitz
 
 //
 // client to server
