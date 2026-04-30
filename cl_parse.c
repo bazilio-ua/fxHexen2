@@ -272,12 +272,11 @@ void CL_ParseServerInfo (void)
 	else if (i == PROTOCOL_RAVEN_107 || i == PROTOCOL_RAVEN_109)
 		Con_SafePrintf ("\nusing Raven demo protocol %i\n", i);
 	//johnfitz -- support multiple protocols
-	else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
+	else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_FITZQ && i != PROTOCOL_MARKV && i != PROTOCOL_RMQ)
 	{
 		Con_SafePrintf ("\n"); // because there's no newline after serverinfo print
-		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i or %i", i,
-//		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i, %i or %i", i,
-					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+		Host_Error ("CL_ParseServerInfo: Server returned unknown protocol version %i, not %i, %i, %i, %i or %i", i,
+			PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_FITZQ, PROTOCOL_MARKV, PROTOCOL_RMQ);
 	}
 
 	cl.protocol = i;
@@ -1327,10 +1326,9 @@ void CL_ParseServerMessage (void)
 			else if (i == PROTOCOL_RAVEN_107 || i == PROTOCOL_RAVEN_109)
 				Con_SafePrintf ("using Raven demo protocol %i\n", i);
 			//johnfitz -- support multiple protocols
-			else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
-				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i or %i", i,
-//				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i, %i or %i", i,
-							PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+			else if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_FITZQ && i != PROTOCOL_MARKV && i != PROTOCOL_RMQ)
+				Host_Error ("CL_ParseServerMessage: Server protocol is %i instead of %i, %i, %i, %i or %i", i,
+					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_FITZQ, PROTOCOL_MARKV, PROTOCOL_RMQ);
 			cl.protocol = i;
 			Con_DPrintf ("Using protocol version %i\n", cl.protocol);
 			//johnfitz

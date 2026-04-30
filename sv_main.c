@@ -48,6 +48,7 @@ void Sv_Edicts_f(void);
 SV_Protocol_f
 ===============
 */
+//int sv_protocol = PROTOCOL_FITZQ; //johnfitz
 int sv_protocol = PROTOCOL_RAVEN_112;
 void SV_Protocol_f (void)
 {
@@ -65,9 +66,15 @@ void SV_Protocol_f (void)
 		case PROTOCOL_RAVEN_112:
 			p = "Raven/MP/1.12";
 			break;
-//		case PROTOCOL_UQE_113:
-//			p = "UQE/1.13";
-//			break;
+		case PROTOCOL_FITZQ:
+			p = "FitzQ/H2";
+			break;
+		case PROTOCOL_MARKV:
+			p = "MarkV/H2";
+			break;
+		case PROTOCOL_RMQ:
+			p = "RMQ/H2";
+			break;
 		default:
 			return;
 		}
@@ -75,10 +82,9 @@ void SV_Protocol_f (void)
 		break;
 	case 2:
 		i = atoi(Cmd_Argv(1));
-		if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
-			Con_Printf ("sv_protocol must be %i or %i\n",
-//			Con_Printf ("sv_protocol must be %i, %i or %i\n",
-						PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+		if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_FITZQ && i != PROTOCOL_MARKV && i != PROTOCOL_RMQ)
+			Con_Printf ("sv_protocol must be %i, %i, %i, %i or %i\n",
+					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_FITZQ, PROTOCOL_MARKV, PROTOCOL_RMQ);
 		else
 		{
 			sv_protocol = i;
@@ -146,13 +152,18 @@ void SV_Init (void)
 	case PROTOCOL_RAVEN_112:
 		p = "Raven/MP/1.12";
 		break;
-//	case PROTOCOL_UQE_113:
-//		p = "UQE/1.13";
-//		break;
+	case PROTOCOL_FITZQ:
+		p = "FitzQ/H2";
+		break;
+	case PROTOCOL_MARKV:
+		p = "MarkV/H2";
+		break;
+	case PROTOCOL_RMQ:
+		p = "RMQ/H2";
+		break;
 	default:
-		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i",
-//		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i, %i",
-				   sv_protocol, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i, %i, %i or %i",
+				   sv_protocol, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_FITZQ, PROTOCOL_MARKV, PROTOCOL_RMQ);
 		return; /* silence compiler */
 	}
 	Sys_Printf ("Server using protocol %i (%s)\n", sv_protocol, p);
