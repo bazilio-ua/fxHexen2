@@ -970,7 +970,6 @@ skipA:
 			}
 		}
 
-		bits = 0;
 
 		while (position < reference->count && 
 			   e > reference->states[position].index)
@@ -1030,6 +1029,8 @@ skipA:
 			continue;
 
 // send an update
+		bits = 0;
+
 		for (i=0 ; i<3 ; i++)
 		{
 			miss = ent->v.origin[i] - ref_ent->origin[i];
