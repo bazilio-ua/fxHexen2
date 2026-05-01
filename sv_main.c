@@ -1921,7 +1921,6 @@ int SV_ModelIndex (char *name)
 		if (IsTimeout (&lastmsg, 2))
 			Con_Printf ("SV_ModelIndex: model %s not precached\n", name);
 		return 0;
-//		Host_Error ("SV_ModelIndex: model %s not precached", name);
 	}
 
 	return i;
