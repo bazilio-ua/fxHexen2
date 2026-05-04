@@ -697,7 +697,7 @@ static void DrawLowerBar(void)
 
 static int CalcAC(void)
 {
-	int a;
+/*	int a;
 	int playerClass;
 
 	//playerClass = cl.v.playerclass;
@@ -727,7 +727,9 @@ static int CalcAC(void)
 		a += HelmetAC[playerClass];
 		a += cl.v.armor_helmet/5;
 	}
-	return a;
+	return a;	*/
+	
+	return cl.v.armor_amulet + cl.v.armor_bracer + cl.v.armor_helmet + cl.v.armor_breastplate;
 }
 
 //==========================================================================
