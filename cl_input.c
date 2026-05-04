@@ -398,6 +398,11 @@ void CL_SendMove (usercmd_t *cmd)
 			for (i=0 ; i<3 ; i++)
 				MSG_WritePreciseAngle (&buf, cl.viewangles[i]);
 		}
+		else if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ) //johnfitz -- 16-bit angles for PROTOCOL_FITZQUAKE
+		{
+			for (i=0 ; i<3 ; i++)
+				MSG_WriteAngle16 (&buf, cl.viewangles[i], cl.protocolflags);
+		}
 		else
 		{
 			for (i=0 ; i<3 ; i++)

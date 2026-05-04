@@ -663,6 +663,7 @@ void PF_ambientsound (void)
 	float		*pos;
 	float 		vol, attenuation;
 	int			i, soundnum;
+	qboolean large=false; //johnfitz -- PROTOCOL_FITZQUAKE
 
 	pos = G_VECTOR(OFS_PARM0);
 	samp = G_STRING(OFS_PARM1);
@@ -679,24 +680,42 @@ void PF_ambientsound (void)
 		Con_SafePrintf ("PF_ambientsound: no precache: %s\n", samp);
 		return;
 	}
-
+	//johnfitz -- PROTOCOL_FITZQUAKE
 	if (soundnum > 255)
 	{
-		if (sv.protocol == PROTOCOL_RAVEN_111)
-			return; // don't send any info protocol can't support
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+			large = true;
+		else
+		{
+			if (sv.protocol == PROTOCOL_RAVEN_111)
+				return; // don't send any info protocol can't support
+		}
 	}
+	//johnfitz
 
 // add an svc_spawnambient command to the level signon packet
 
-	MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (large)
+		MSG_WriteByte (&sv.signon,svc_spawnstaticsound2);
+	else
+		MSG_WriteByte (&sv.signon,svc_spawnstaticsound);
+	//johnfitz
 
 	for (i=0 ; i<3 ; i++)
 		MSG_WriteCoord(&sv.signon, pos[i], sv.protocolflags);
 
-	if (sv.protocol == PROTOCOL_RAVEN_111)
-		MSG_WriteByte (&sv.signon, soundnum);
-	else
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (large)
 		MSG_WriteShort (&sv.signon, soundnum);
+	else
+	{
+		if (sv.protocol == PROTOCOL_RAVEN_111)
+			MSG_WriteByte (&sv.signon, soundnum);
+		else
+			MSG_WriteShort (&sv.signon, soundnum);
+	}
+	//johnfitz
 
 	MSG_WriteByte (&sv.signon, vol*255);
 	MSG_WriteByte (&sv.signon, attenuation*64);
@@ -1987,14 +2006,41 @@ void PF_makestatic (void)
 {
 	edict_t	*ent;
 	int		i;
-	
+	int bits=0; //johnfitz -- PROTOCOL_FITZQUAKE
+
 	ent = G_EDICT(OFS_PARM0);
 
-	MSG_WriteByte (&sv.signon,svc_spawnstatic);
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		if ((int)(ent->v.frame) & 0xFF00)
+			bits |= B_LARGEFRAME;
+	}
+	else // PROTOCOL_RAVEN
+	{
+		if ((int)(ent->v.frame) & 0xFF00)
+		{
+			ED_Free (ent);
+			return; // can't display the correct model & frame, so don't show it at all
+		}
+	}
+
+	if (bits)
+	{
+		MSG_WriteByte (&sv.signon, svc_spawnstatic2);
+		MSG_WriteByte (&sv.signon, bits);
+	}
+	else
+		MSG_WriteByte (&sv.signon, svc_spawnstatic);
 
 	MSG_WriteShort (&sv.signon, SV_ModelIndex(PR_GetString(ent->v.model)));
 
-	MSG_WriteByte (&sv.signon, ent->v.frame);
+	if (bits & B_LARGEFRAME)
+		MSG_WriteShort (&sv.signon, ent->v.frame);
+	else
+		MSG_WriteByte (&sv.signon, ent->v.frame);
+	//johnfitz
+
 	MSG_WriteByte (&sv.signon, ent->v.colormap);
 	MSG_WriteByte (&sv.signon, ent->v.skin);
 	MSG_WriteByte (&sv.signon, (int)(ent->v.scale*100.0)&255);

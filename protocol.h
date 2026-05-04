@@ -97,9 +97,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // johnfitz -- PROTOCOL_FITZQUAKE -- new bits
 #define SU_EXTEND1		(1<<15) // another byte to follow
 #define SU_ARMOR2		(1<<16) // 1 byte, this is .armorvalue & 0xFF00 (second byte)
-#define SU_BLUEMANA2	(1<<17) // 1 byte, this is .bluemana & 0xFF00 (second byte)
-#define SU_GREENMANA2	(1<<18) // 1 byte, this is .greenmana & 0xFF00 (second byte)
-#define SU_MAXMANA2		(1<<19) // 1 byte, this is .max_mana & 0xFF00 (second byte)
+//#define SU_BLUEMANA2	(1<<17) // 1 byte, this is .bluemana & 0xFF00 (second byte)
+//#define SU_GREENMANA2	(1<<18) // 1 byte, this is .greenmana & 0xFF00 (second byte)
+//#define SU_MAXMANA2		(1<<19) // 1 byte, this is .max_mana & 0xFF00 (second byte)
 #define SU_WEAPONFRAME2	(1<<20) // 1 byte, this is .weaponframe & 0xFF00 (second byte)
 #define SU_UNUSED21		(1<<21)
 #define SU_UNUSED22		(1<<22)
@@ -117,10 +117,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // johnfitz
 
 // johnfitz -- PROTOCOL_FITZQUAKE -- flags for entity baseline messages
-#define B_LARGEMODEL	(1<<0)	// modelindex is short instead of byte
+//#define B_LARGEMODEL	(1<<0)	// modelindex is short instead of byte
 #define B_LARGEFRAME	(1<<1)	// frame is short instead of byte
-#define B_ALPHA			(1<<2)	// 1 byte, uses ENTALPHA_ENCODE, not sent if ENTALPHA_DEFAULT
-#define B_SCALE			(1<<3)	// PROTOCOL_RMQ scale
+//#define B_ALPHA			(1<<2)	// 1 byte, uses ENTALPHA_ENCODE, not sent if ENTALPHA_DEFAULT
+//#define B_SCALE			(1<<3)	// PROTOCOL_RMQ scale
 // johnfitz
 
 // johnfitz -- PROTOCOL_FITZQUAKE -- alpha encoding
@@ -195,6 +195,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define SC2_OBJ					(1<<22)
 #define SC2_OBJ2				(1<<23)
 
+// johnfitz -- PROTOCOL_FITZQUAKE -- new sc bits
+#define SC1_BLUEMANA2			(1<<24) // 1 byte, this is .bluemana & 0xFF00 (second byte)
+#define SC1_GREENMANA2			(1<<25) // 1 byte, this is .greenmana & 0xFF00 (second byte)
+#define SC2_MAXMANA2			(1<<26) // 1 byte, this is .max_mana & 0xFF00 (second byte)
+// johnfitz
 
 // This is to mask out those items that need to generate a stat bar change
 #define SC1_STAT_BAR   0x01ffffff
@@ -304,6 +309,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svc_spawnbaseline2		60  // support for large modelindex, large framenum, alpha, using flags
 #define svc_spawnstatic2		61	// support for large modelindex, large framenum, alpha, using flags
 #define svc_spawnstaticsound2	62	// [coord3] [short] samp [byte] vol [byte] aten
+#define svc_sound_update_pos2	63
+#define svc_stopsound2			64
 // johnfitz
 
 //
@@ -331,8 +338,8 @@ typedef struct
 {
 	vec3_t	origin;
 	vec3_t	angles;
-	short	modelindex;
-	byte	frame;
+	unsigned short		modelindex;		//johnfitz -- was short (h2)
+	unsigned short		frame;		//johnfitz -- was byte (h2)
 	byte	colormap;
 	byte	skin;
 	byte	effects;
@@ -351,8 +358,8 @@ typedef struct
 
 	vec3_t	origin;
 	vec3_t	angles;
-	short	modelindex;
-	byte	frame;
+	unsigned short		modelindex;		//johnfitz -- was short (h2)
+	unsigned short		frame;		//johnfitz -- was byte (h2)
 	byte	colormap;
 	byte	skin;
 	byte	effects;
@@ -367,8 +374,8 @@ typedef struct
 
 	vec3_t	origin;
 	vec3_t	angles;
-	short	modelindex;
-	byte	frame;
+	unsigned short		modelindex;		//johnfitz -- was short (h2)
+	unsigned short		frame;		//johnfitz -- was byte (h2)
 	byte	colormap;
 	byte	skin;
 	byte	effects;

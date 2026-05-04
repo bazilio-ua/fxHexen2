@@ -92,8 +92,13 @@ char *svc_strings[] =
 	"svc_wf",				// no data
 	"svc_spawnbaseline2",	// support for large modelindex, large framenum, alpha, using flags
 	"svc_spawnstatic2",		// support for large modelindex, large framenum, alpha, using flags
-	"svc_spawnstaticsound2"	// [coord3] [short] samp [byte] vol [byte] aten
+	"svc_spawnstaticsound2",	// [coord3] [short] samp [byte] vol [byte] aten
+	"svc_sound_update_pos2",
+	"svc_stopsound2"
 };
+
+
+extern vec3_t	v_punchangles[2];
 
 char *puzzle_strings;
 int LastServerMessageSize;
@@ -129,6 +134,99 @@ entity_t	*CL_EntityNum (int num)
 
 /*
 ==================
+CL_ParseStopSoundPacket
+==================
+*/
+void CL_ParseStopSoundPacket(int version) //johnfitz -- added a parameter
+{
+	int 	channel, ent;
+	int 	field_mask; //johnfitz
+
+	field_mask = (version == 2) ? MSG_ReadByte (net_message) : 0;
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (field_mask & SND_LARGEENTITY)
+		{
+			ent = (unsigned short) MSG_ReadShort (net_message);
+			channel = MSG_ReadByte (net_message);
+		}
+		else
+		{
+			channel = (unsigned short) MSG_ReadShort (net_message);
+			ent = channel >> 3;
+			channel &= 7;
+		}
+	}
+	else
+	{
+		channel = MSG_ReadShort (net_message);
+		
+		ent = channel >> 3;
+		channel &= 7;
+	}
+	//johnfitz
+
+	if (ent > MAX_EDICTS)
+		Host_Error ("CL_ParseStopSoundPacket: svc_stopsound ent %i > MAX_EDICTS (%i)", ent, MAX_EDICTS);
+
+	S_StopSound(ent, channel);
+}
+
+/*
+==================
+CL_ParseUpdateSoundPosPacket
+==================
+*/
+void CL_ParseUpdateSoundPosPacket(int version) //johnfitz -- added a parameter
+{//FIXME: put a field on the entity that lists the channels
+	//it should update when it moves- if a certain flag
+	//is on the ent, this update_channels field could
+	//be set automatically by each sound and stopSound
+	//called for this ent?
+	vec3_t  pos;
+	int 	channel, ent;
+	int		i;
+	int 	field_mask; //johnfitz
+
+	field_mask = (version == 2) ? MSG_ReadByte (net_message) : 0;
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (field_mask & SND_LARGEENTITY)
+		{
+			ent = (unsigned short) MSG_ReadShort (net_message);
+			channel = MSG_ReadByte (net_message);
+		}
+		else
+		{
+			channel = (unsigned short) MSG_ReadShort (net_message);
+			ent = channel >> 3;
+			channel &= 7;
+		}
+	}
+	else
+	{
+		channel = MSG_ReadShort (net_message);
+		
+		ent = channel >> 3;
+		channel &= 7;
+	}
+	//johnfitz
+
+	if (ent > MAX_EDICTS)
+		Host_Error ("CL_ParseUpdateSoundPosPacket: svc_sound_update_pos ent %i > MAX_EDICTS (%i)", ent, MAX_EDICTS);
+	
+	for (i=0 ; i<3 ; i++)
+		pos[i] = MSG_ReadCoord (net_message, cl.protocolflags);
+	
+	S_UpdateSoundPos (ent, channel, pos);
+}
+
+/*
+==================
 CL_ParseStartSoundPacket
 ==================
 */
@@ -136,7 +234,7 @@ void CL_ParseStartSoundPacket(void)
 {
     vec3_t  pos;
     int 	channel, ent;
-    int 	sound_num;
+    int 	sound_num=0; // keep compiler happy
     int 	volume;
     int 	field_mask;
     float 	attenuation;  
@@ -154,14 +252,38 @@ void CL_ParseStartSoundPacket(void)
 	else
 		attenuation = DEFAULT_SOUND_PACKET_ATTENUATION;
 	
-	channel = MSG_ReadShort (net_message);
-	sound_num = MSG_ReadByte (net_message);
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (field_mask & SND_LARGEENTITY)
+		{
+			ent = (unsigned short) MSG_ReadShort (net_message);
+			channel = MSG_ReadByte (net_message);
+		}
+		else
+		{
+			channel = (unsigned short) MSG_ReadShort (net_message);
+			ent = channel >> 3;
+			channel &= 7;
+		}
 
-	if (field_mask & SND_OVERFLOW)
-		sound_num += 256;
+		if (field_mask & SND_LARGESOUND)
+			sound_num = (unsigned short) MSG_ReadShort (net_message);
+		else
+			sound_num = MSG_ReadByte (net_message);
+	}
+	else
+	{
+		channel = MSG_ReadShort (net_message);
+		sound_num = MSG_ReadByte (net_message);
 
-	ent = channel >> 3;
-	channel &= 7;
+		if (field_mask & SND_OVERFLOW)
+			sound_num += 256;
+
+		ent = channel >> 3;
+		channel &= 7;
+	}
+	//johnfitz
 
 	if (sound_num >= MAX_SOUNDS)
 		Host_Error ("CL_ParseStartSoundPacket: invalid sound_num (%d, max = %d)", sound_num, MAX_SOUNDS);
@@ -491,7 +613,7 @@ void CL_ParseUpdate (int bits)
 {
 	int			i;
 	model_t		*model;
-	int			modnum;
+	int			modnum=0; // keep compiler happy
 	qboolean	forcelink;
 	entity_t	*ent;
 	int			num;
@@ -515,7 +637,15 @@ void CL_ParseUpdate (int bits)
 		bits |= (i<<16);
 	}
 
-	if (bits & U_LONGENTITY)	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & U_EXTEND2)
+			bits |= MSG_ReadByte (net_message) << 24;
+	}
+	//johnfitz
+
+	if (bits & U_LONGENTITY)
 		num = MSG_ReadShort (net_message);
 	else
 		num = MSG_ReadByte (net_message);
@@ -578,6 +708,8 @@ void CL_ParseUpdate (int bits)
 
 	*set_ent = *ref_ent;
 
+	// Exclude the view from this, otherwise screen sometimes jerks badly in some demos
+//	if (ent->msgtime != cl.mtime[1] && (!cls.demoplayback || ent != &cl_entities[cl.viewentity]))
 	if (ent->msgtime != cl.mtime[1])
 		forcelink = true;	// no previous frame to lerp from
 	else
@@ -642,7 +774,7 @@ void CL_ParseUpdate (int bits)
 	if (bits & U_EFFECTS)
 	{
 		set_ent->effects = ent->effects = MSG_ReadByte(net_message);
-//		if (num == 2) fprintf(FH,"Read effects %d\n",set_ent->effects);
+		//if (num == 2) fprintf(FH,"Read effects %d\n",set_ent->effects);
 	}
 	else
 	{
@@ -665,7 +797,10 @@ void CL_ParseUpdate (int bits)
 		//if (num == 2) fprintf(FH,"Restored origin[0] %f\n",ref_ent->angles[0]);
 	}
 	if (bits & U_ANGLE1)
-		set_ent->angles[0] = ent->msg_angles[0][0] = MSG_ReadAngle(net_message, cl.protocolflags);
+		if (cl.protocol == PROTOCOL_MARKV)
+			set_ent->angles[0] = ent->msg_angles[0][0] = MSG_ReadAngle16(net_message, cl.protocolflags); // Baker change
+		else
+			set_ent->angles[0] = ent->msg_angles[0][0] = MSG_ReadAngle(net_message, cl.protocolflags);
 	else
 		ent->msg_angles[0][0] = ref_ent->angles[0];
 
@@ -674,7 +809,10 @@ void CL_ParseUpdate (int bits)
 	else
 		ent->msg_origins[0][1] = ref_ent->origin[1];
 	if (bits & U_ANGLE2)
-		set_ent->angles[1] = ent->msg_angles[0][1] = MSG_ReadAngle(net_message, cl.protocolflags);
+		if (cl.protocol == PROTOCOL_MARKV)
+			set_ent->angles[1] = ent->msg_angles[0][1] = MSG_ReadAngle16(net_message, cl.protocolflags); // Baker change
+		else
+			set_ent->angles[1] = ent->msg_angles[0][1] = MSG_ReadAngle(net_message, cl.protocolflags);
 	else
 		ent->msg_angles[0][1] = ref_ent->angles[1];
 
@@ -683,7 +821,10 @@ void CL_ParseUpdate (int bits)
 	else
 		ent->msg_origins[0][2] = ref_ent->origin[2];
 	if (bits & U_ANGLE3)
-		set_ent->angles[2] = ent->msg_angles[0][2] = MSG_ReadAngle(net_message, cl.protocolflags);
+		if (cl.protocol == PROTOCOL_MARKV)
+			set_ent->angles[2] = ent->msg_angles[0][2] = MSG_ReadAngle16(net_message, cl.protocolflags); // Baker change
+		else
+			set_ent->angles[2] = ent->msg_angles[0][2] = MSG_ReadAngle(net_message, cl.protocolflags);
 	else
 		ent->msg_angles[0][2] = ref_ent->angles[2];
 
@@ -708,6 +849,20 @@ void CL_ParseUpdate (int bits)
 		ent->lerpflags &= ~LERP_MOVESTEP;
 	//johnfitz
 
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & U_FRAME2)
+			set_ent->frame = ent->frame = (ent->frame & 0x00FF) | (MSG_ReadByte (net_message) << 8);
+		if (bits & U_LERPFINISH)
+		{
+			ent->lerpfinish = ent->msgtime + ((float)(MSG_ReadByte (net_message)) / 255);
+			ent->lerpflags |= LERP_FINISH;
+		}
+		else
+			ent->lerpflags &= ~LERP_FINISH;
+	}
+	//johnfitz
 
 	//johnfitz -- moved here from above (because the model num could be changed by extend bits)
 	model = cl.model_precache[modnum];
@@ -765,7 +920,15 @@ void CL_ParseUpdate2 (int bits)
 		bits |= (i<<16);
 	}
 
-	if (bits & U_LONGENTITY)	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & U_EXTEND2)
+			bits |= MSG_ReadByte (net_message) << 24;
+	}
+	//johnfitz
+
+	if (bits & U_LONGENTITY)
 		MSG_ReadShort (net_message);
 	else
 		MSG_ReadByte (net_message);
@@ -793,23 +956,48 @@ void CL_ParseUpdate2 (int bits)
 	if (bits & U_ORIGIN1)
 		MSG_ReadCoord (net_message, cl.protocolflags);
 	if (bits & U_ANGLE1)
-		MSG_ReadAngle (net_message, cl.protocolflags);
+	{
+		if (cl.protocol == PROTOCOL_MARKV)
+			MSG_ReadAngle16(net_message, cl.protocolflags); // Baker change
+		else
+			MSG_ReadAngle (net_message, cl.protocolflags);
+	}
 
 	if (bits & U_ORIGIN2)
 		MSG_ReadCoord (net_message, cl.protocolflags);
 	if (bits & U_ANGLE2)
-		MSG_ReadAngle (net_message, cl.protocolflags);
+	{
+		if (cl.protocol == PROTOCOL_MARKV)
+			MSG_ReadAngle16(net_message, cl.protocolflags); // Baker change
+		else
+			MSG_ReadAngle (net_message, cl.protocolflags);
+	}
 
 	if (bits & U_ORIGIN3)
 		MSG_ReadCoord (net_message, cl.protocolflags);
 	if (bits & U_ANGLE3)
-		MSG_ReadAngle (net_message, cl.protocolflags);
+	{
+		if (cl.protocol == PROTOCOL_MARKV)
+			MSG_ReadAngle16(net_message, cl.protocolflags); // Baker change
+		else
+			MSG_ReadAngle (net_message, cl.protocolflags);
+	}
 
 	if (bits & U_SCALE)
 	{
 		MSG_ReadByte (net_message);
 		MSG_ReadByte (net_message);
 	}
+	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & U_FRAME2)
+			MSG_ReadByte (net_message);
+		if (bits & U_LERPFINISH)
+			MSG_ReadByte (net_message);
+	}
+	//johnfitz
 }
 
 /*
@@ -817,12 +1005,26 @@ void CL_ParseUpdate2 (int bits)
 CL_ParseBaseline
 ==================
 */
-void CL_ParseBaseline (entity_t *ent)
+void CL_ParseBaseline (entity_t *ent, int version) //johnfitz -- added argument
 {
 	int			i;
-	
+	int bits; //johnfitz
+
+	bits = (version == 2) ? MSG_ReadByte (net_message) : 0;
+
 	ent->baseline.modelindex = MSG_ReadShort (net_message);
-	ent->baseline.frame = MSG_ReadByte (net_message);
+	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		ent->baseline.frame = (bits & B_LARGEFRAME) ? MSG_ReadShort (net_message) : MSG_ReadByte (net_message);
+	}
+	else
+	{
+		ent->baseline.frame = MSG_ReadByte (net_message);
+	}
+	//johnfitz
+
 	ent->baseline.colormap = MSG_ReadByte (net_message);
 	ent->baseline.skin = MSG_ReadByte (net_message);
 	ent->baseline.scale = MSG_ReadByte (net_message);
@@ -849,6 +1051,16 @@ void CL_ParseClientdata (void)
 	int		bits;
 
 	bits = (unsigned short)MSG_ReadShort (net_message); // read bits here isntead of in CL_ParseServerMessage()
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & SU_EXTEND1)
+			bits |= (MSG_ReadByte (net_message) << 16);
+		if (bits & SU_EXTEND2)
+			bits |= (MSG_ReadByte (net_message) << 24);
+	}
+	//johnfitz
 
 	if (bits & SU_VIEWHEIGHT)
 		cl.viewheight = MSG_ReadChar (net_message);
@@ -882,6 +1094,13 @@ void CL_ParseClientdata (void)
 			cl.mvelocity[0][i] = MSG_ReadChar(net_message)*16;
 //rjr		else
 //rjr			cl.mvelocity[0][i] = 0;
+	}
+
+	//johnfitz -- update v_punchangles
+	if (v_punchangles[0][0] != cl.punchangle[0] || v_punchangles[0][1] != cl.punchangle[1] || v_punchangles[0][2] != cl.punchangle[2])
+	{
+		VectorCopy (v_punchangles[0], v_punchangles[1]);
+		VectorCopy (cl.punchangle, v_punchangles[0]);
 	}
 
 /*	if (bits & SU_ITEMS)
@@ -922,6 +1141,16 @@ void CL_ParseClientdata (void)
 		//johnfitz
 	}
 
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & SU_ARMOR2)
+			cl.stats[STAT_ARMOR] |= (MSG_ReadByte(net_message) << 8);
+		if (bits & SU_WEAPONFRAME2)
+			cl.stats[STAT_WEAPONFRAME] |= (MSG_ReadByte(net_message) << 8);
+	}
+	//johnfitz
+	
 /*	sc1 = sc2 = 0;
 
 	if (bits & SU_SC1)
@@ -1101,7 +1330,7 @@ void CL_NewTranslation (int slot)
 CL_ParseStatic
 =====================
 */
-void CL_ParseStatic (void)
+void CL_ParseStatic (int version) //johnfitz -- added a parameter
 {
 	entity_t *ent;
 	int		i;
@@ -1111,7 +1340,7 @@ void CL_ParseStatic (void)
 		Host_Error ("CL_ParseStatic: too many (%d) static entities, max = %d", i, MAX_STATIC_ENTITIES);
 	ent = &cl_static_entities[i];
 	cl.num_statics++;
-	CL_ParseBaseline (ent);
+	CL_ParseBaseline (ent, version); //johnfitz -- added second parameter
 
 // copy it to the current state
 	ent->model = cl.model_precache[ent->baseline.modelindex];
@@ -1135,19 +1364,32 @@ void CL_ParseStatic (void)
 CL_ParseStaticSound
 ===================
 */
-void CL_ParseStaticSound (void)
+void CL_ParseStaticSound (int version) //johnfitz -- added argument
 {
 	vec3_t		org;
-	int			sound_num, vol, atten;
+	int			sound_num=0, vol, atten; // keep compiler happy
 	int			i;
 	
 	for (i=0 ; i<3 ; i++)
 		org[i] = MSG_ReadCoord (net_message, cl.protocolflags);
 
-	if (cl.protocol <= PROTOCOL_RAVEN_111)
-		sound_num = MSG_ReadByte (net_message);
-	else 
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+	{
 		sound_num = MSG_ReadShort (net_message);
+	}
+	else
+	{
+		if (cl.protocol <= PROTOCOL_RAVEN_111)
+			sound_num = MSG_ReadByte (net_message);
+		else
+			sound_num = MSG_ReadShort (net_message);
+	}
+	//johnfitz
+
+	if (sound_num >= MAX_SOUNDS)
+		Host_Error ("CL_ParseStaticSound: invalid sound (%d, max = %d)", sound_num, MAX_SOUNDS);
+	
 	vol = MSG_ReadByte (net_message);
 	atten = MSG_ReadByte (net_message);
 	
@@ -1475,32 +1717,11 @@ void CL_ParseServerMessage (void)
 			break;
 		
 		case svc_sound_update_pos:
-		{//FIXME: put a field on the entity that lists the channels
-			//it should update when it moves- if a certain flag
-			//is on the ent, this update_channels field could
-			//be set automatically by each sound and stopSound
-			//called for this ent?
-			vec3_t  pos;
-			int 	channel, ent;
-			
-			channel = MSG_ReadShort (net_message);
-			
-			ent = channel >> 3;
-			channel &= 7;
-			
-			if (ent > MAX_EDICTS)
-				Host_Error ("CL_ParseServerMessage: svc_sound_update_pos ent %i > MAX_EDICTS (%i)", ent, MAX_EDICTS);
-			
-			for (i=0 ; i<3 ; i++)
-				pos[i] = MSG_ReadCoord (net_message, cl.protocolflags);
-			
-			S_UpdateSoundPos (ent, channel, pos);
-		}
+			CL_ParseUpdateSoundPosPacket(1); //johnfitz -- added parameter
 			break;
 
 		case svc_stopsound:
-			i = MSG_ReadShort(net_message);
-			S_StopSound(i>>3, i&7);
+			CL_ParseStopSoundPacket(1); //johnfitz -- added parameter
 			break;
 		
 		case svc_updatename:
@@ -1558,10 +1779,10 @@ void CL_ParseServerMessage (void)
 		case svc_spawnbaseline:
 			i = MSG_ReadShort (net_message);
 			// must use CL_EntityNum() to force cl.num_entities up
-			CL_ParseBaseline (CL_EntityNum(i));
+			CL_ParseBaseline (CL_EntityNum(i), 1); // johnfitz -- added second parameter
 			break;
 		case svc_spawnstatic:
-			CL_ParseStatic ();
+			CL_ParseStatic (1); //johnfitz -- added parameter
 			break;			
 
 		case svc_raineffect:
@@ -1604,7 +1825,7 @@ void CL_ParseServerMessage (void)
 			break;
 			
 		case svc_spawnstaticsound:
-			CL_ParseStaticSound ();
+			CL_ParseStaticSound (1); //johnfitz -- added parameter
 			break;
 
 		case svc_cdtrack:
@@ -1916,6 +2137,18 @@ void CL_ParseServerMessage (void)
 					cl.info_mask2 = MSG_ReadLong(net_message);
 			}
 
+			//johnfitz -- PROTOCOL_FITZQUAKE
+			if (cl.protocol == PROTOCOL_FITZQ || cl.protocol == PROTOCOL_MARKV || cl.protocol == PROTOCOL_RMQ)
+			{
+				if (sc2 & SC1_BLUEMANA2)
+					cl.v.bluemana += (MSG_ReadByte(net_message) << 8);
+				if (sc2 & SC1_GREENMANA2)
+					cl.v.greenmana += (MSG_ReadByte(net_message) << 8);
+				if (sc2 & SC2_MAXMANA2)
+					cl.v.max_mana += (MSG_ReadByte(net_message) << 8);
+			}
+			//johnfitz
+
 			if ((sc1 & SC1_STAT_BAR) || (sc2 & SC2_STAT_BAR))
 				Sbar_Changed();
 
@@ -1948,15 +2181,23 @@ void CL_ParseServerMessage (void)
 		case svc_spawnbaseline2: //PROTOCOL_FITZQUAKE
 			i = MSG_ReadShort (net_message);
 			// must use CL_EntityNum() to force cl.num_entities up
-//			CL_ParseBaseline (CL_EntityNum(i), 2);
+			CL_ParseBaseline (CL_EntityNum(i), 2);
 			break;
 			
 		case svc_spawnstatic2: //PROTOCOL_FITZQUAKE
-//			CL_ParseStatic (2);
+			CL_ParseStatic (2);
 			break;
 			
 		case svc_spawnstaticsound2: //PROTOCOL_FITZQUAKE
-//			CL_ParseStaticSound (2);
+			CL_ParseStaticSound (2);
+			break;
+			
+		case svc_sound_update_pos2:
+			CL_ParseUpdateSoundPosPacket(2); //PROTOCOL_FITZQUAKE
+			break;
+			
+		case svc_stopsound2:
+			CL_ParseStopSoundPacket(2); //PROTOCOL_FITZQUAKE
 			break;
 		//johnfitz
 		}
