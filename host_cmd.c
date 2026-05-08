@@ -452,6 +452,31 @@ void Host_Noclip_f (void)
 	}
 }
 
+/*
+==================
+SV_Freezeall_f
+
+Freezes the world.
+==================
+*/
+void SV_Freezeall_f (void)
+{
+	if (cmd_source == src_command)
+	{
+		Cmd_ForwardToServer ();
+		return;
+	}
+
+	if (*pr_global_struct.deathmatch || *pr_global_struct.coop)
+		return;
+
+	sv.frozen = !sv.frozen;
+
+	if (sv.frozen)
+		SV_ClientPrintf ("freeze mode ON\n");
+	else
+		SV_ClientPrintf ("freeze mode OFF\n");
+}
 
 /*
 ==================

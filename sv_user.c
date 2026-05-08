@@ -662,6 +662,8 @@ nextmsg:
 
 				if (strncasecmp(s, "status", 6) == 0)
 					ret = 1;
+				else if (strncasecmp(s, "freezeall", 9) == 0)
+					ret = 1;
 				else if (strncasecmp(s, "god", 3) == 0)
 					ret = 1;
 				else if (strncasecmp(s, "notarget", 8) == 0)
@@ -715,14 +717,14 @@ nextmsg:
 				SV_ReadClientMove (&host_client->cmd);
 				break;
 
-				case clc_inv_select:
-					host_client->edict->v.inventory = MSG_ReadByte(net_message);
-					break;
+			case clc_inv_select:
+				host_client->edict->v.inventory = MSG_ReadByte(net_message);
+				break;
 
-				case clc_frame:
-					host_client->last_frame = MSG_ReadByte(net_message);
-					host_client->last_sequence = MSG_ReadByte(net_message);
-					break;
+			case clc_frame:
+				host_client->last_frame = MSG_ReadByte(net_message);
+				host_client->last_sequence = MSG_ReadByte(net_message);
+				break;
 			}
 		}
 	} while (ret == 1);

@@ -133,6 +133,8 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_ce_max_size);
 
 	Cmd_AddCommand ("sv_edicts", Sv_Edicts_f);
+	Cmd_AddCommand ("freezeall", &SV_Freezeall_f);
+
 	Cmd_AddCommand ("sv_protocol", &SV_Protocol_f);
 
 	for (i=0 ; i<MAX_MODELS ; i++)

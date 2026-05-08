@@ -1558,6 +1558,7 @@ SV_Physics
 void SV_Physics (void)
 {
 	int		i,c,originMoved;
+	int		entity_cap; // For sv.frozen (sv_freezenonclients)
 	edict_t	*ent, *ent2;
 	vec3_t oldOrigin,oldAngle;
 
@@ -1574,8 +1575,15 @@ void SV_Physics (void)
 //
 	ent = sv.edicts;
 	VectorClear(oldOrigin);	// avoid compiler warning
-	VectorClear(oldAngle);	// avoid compiler warning	
-	for (i=0 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	VectorClear(oldAngle);	// avoid compiler warning
+	
+	if (sv.frozen)
+		entity_cap = svs.maxclients + 1; // Only run physics on clients and the world
+	else
+		entity_cap = sv.num_edicts;
+
+//	for (i=0 ; i<sv.num_edicts ; i++, ent = NEXT_EDICT(ent))
+	for (i=0 ; i<entity_cap ; i++, ent = NEXT_EDICT(ent))
 	{
 		if (ent->free)
 			continue;
@@ -1662,6 +1670,7 @@ void SV_Physics (void)
 	if (*pr_global_struct.force_retouch)
 		(*pr_global_struct.force_retouch)--;
 
-	sv.time += host_frametime;
+	if (!sv.frozen)
+		sv.time += host_frametime;
 }
 

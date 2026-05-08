@@ -756,8 +756,11 @@ void _Host_Frame (double time)
 	}
 
 // run particle logic seperated from rendering
-	R_UpdateParticles ();
-	CL_UpdateEffects ();
+	if (!sv.frozen)
+	{
+		R_UpdateParticles ();
+		CL_UpdateEffects ();
+	}
 
 // update video
 	if (host_speeds.value)
@@ -772,7 +775,8 @@ void _Host_Frame (double time)
 	if (cls.signon == SIGNONS)
 	{
 		S_Update (r_origin, vpn, vright, vup);
-		CL_DecayLights ();
+		if (!sv.frozen)
+			CL_DecayLights ();
 	}
 	else
 		S_Update (vec3_origin, vec3_origin, vec3_origin, vec3_origin);
