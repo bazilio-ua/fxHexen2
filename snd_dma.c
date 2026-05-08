@@ -28,6 +28,8 @@ void S_PaintAndSubmit(void);
 void S_StopAllSounds(qboolean clear);
 void S_StopAllSoundsC(void);
 
+void S_SetUnderwaterIntensity (float intensity);
+
 // =======================================================================
 // Internal sound data & structures
 // =======================================================================
@@ -44,7 +46,8 @@ vec3_t		listener_origin;
 vec3_t		listener_forward;
 vec3_t		listener_right;
 vec3_t		listener_up;
-vec_t		sound_nominal_clip_dist=1000.0;
+vec_t		sound_nominal_clip_dist=1500.0; // JPG - changed this from 1000 to 1500 (I'm 99% sure that's what it was in 1.06)
+											// put sound back to DOSquake levels!
 
 int			soundtime;		// sample PAIRS
 int   		paintedtime; 	// sample PAIRS
@@ -72,6 +75,7 @@ cvar_t snd_noextraupdate = {"snd_noextraupdate", "0", CVAR_NONE};
 cvar_t snd_show = {"snd_show", "0", CVAR_NONE};
 cvar_t snd_mixahead = {"_snd_mixahead", "0.1", CVAR_ARCHIVE};
 
+cvar_t snd_waterfx = {"snd_waterfx", "1", CVAR_ARCHIVE};
 
 // ====================================================================
 // User-setable variables
@@ -170,6 +174,7 @@ void S_Init (void)
 	Cvar_RegisterVariable(&snd_noextraupdate);
 	Cvar_RegisterVariable(&snd_show);
 	Cvar_RegisterVariable(&snd_mixahead);
+	Cvar_RegisterVariable (&snd_waterfx);
 
 	if (host_parms->memsize < 0x800000)
 	{
@@ -196,7 +201,7 @@ void S_Init (void)
 		dma.samples = 32768;
 		dma.samplepos = 0;
 		dma.submission_chunk = 1;
-		dma.buffer = Hunk_AllocName(1<<16, "shmbuf");
+		dma.buffer = Hunk_AllocName(1<<16, "dmabuf");
 	}
 
 	if (sound_started)
@@ -207,8 +212,8 @@ void S_Init (void)
 						dma.channels, dma.samplebits, dma.speed);
 
 	// provides a tick sound until washed clean
-//	if (shm->buffer)
-//		shm->buffer[4] = shm->buffer[5] = 0x7f;	// force a pop for debugging
+//	if (dma.buffer)
+//		dma.buffer[4] = dma.buffer[5] = 0x7f;	// force a pop for debugging
 
 	ambient_sfx[AMBIENT_WATER] = S_PrecacheSound ("ambience/water1.wav");
 	ambient_sfx[AMBIENT_SKY] = S_PrecacheSound ("ambience/wind2.wav");
@@ -254,7 +259,7 @@ sfx_t *S_FindName (char *name)
 		Sys_Error ("S_FindName: NULL");
 
 	if (strlen(name) >= MAX_QPATH)
-		Sys_Error ("Sound name too long: %s", name);
+		Sys_Error ("S_FindName: Sound name too long: %s", name);
 
 // see if already loaded
 	for (i=0 ; i < num_sfx ; i++)
@@ -618,6 +623,24 @@ void S_StaticSound (sfx_t *sfx, vec3_t origin, float vol, float attenuation)
 
 /*
 ===================
+S_UnderwaterIntensityForContents
+===================
+*/
+float S_UnderwaterIntensityForContents (int contents)
+{
+	switch (contents)
+	{
+	case CONTENTS_WATER:
+	case CONTENTS_SLIME:
+	case CONTENTS_LAVA:
+		return 1.f;
+	default:
+		return 0.f;
+	}
+}
+
+/*
+===================
 S_UpdateAmbientSounds
 ===================
 */
@@ -627,6 +650,7 @@ void S_UpdateAmbientSounds (void)
 	float		vol;
 	int			ambient_channel;
 	channel_t	*chan;
+	static float	level[NUM_AMBIENTS];
 
 // no ambients when disconnected
 	if (cls.state != ca_connected)
@@ -637,10 +661,14 @@ void S_UpdateAmbientSounds (void)
 		return;
 
 	l = Mod_PointInLeaf (listener_origin, cl.worldmodel);
+	S_SetUnderwaterIntensity (l ? S_UnderwaterIntensityForContents (l->contents) : 0.f);
 	if (!l || !ambient_level.value)
 	{
 		for (ambient_channel = 0 ; ambient_channel< NUM_AMBIENTS ; ambient_channel++)
+		{
 			channels[ambient_channel].sfx = NULL;
+			level[ambient_channel] = 0.f;
+		}
 		return;
 	}
 
@@ -650,24 +678,26 @@ void S_UpdateAmbientSounds (void)
 		chan->sfx = ambient_sfx[ambient_channel];
 	
 		vol = ambient_level.value * l->ambient_sound_level[ambient_channel];
-		if (vol < 8)
-			vol = 0;
+		if (vol < 8.f)
+			vol = 0.f;
+		else if (vol > 255.f)
+			vol = 255.f;
 
 	// don't adjust volume too fast
-		if (chan->master_vol < vol)
+		if (level[ambient_channel] < vol)
 		{
-			chan->master_vol += host_frametime * ambient_fade.value;
-			if (chan->master_vol > vol)
-				chan->master_vol = vol;
+			level[ambient_channel] += host_frametime * ambient_fade.value;
+			if (level[ambient_channel] > vol)
+				level[ambient_channel] = vol;
 		}
-		else if (chan->master_vol > vol)
+		else if (level[ambient_channel] > vol)
 		{
-			chan->master_vol -= host_frametime * ambient_fade.value;
-			if (chan->master_vol < vol)
-				chan->master_vol = vol;
+			level[ambient_channel] -= host_frametime * ambient_fade.value;
+			if (level[ambient_channel] < vol)
+				level[ambient_channel] = vol;
 		}
 		
-		chan->leftvol = chan->rightvol = chan->master_vol;
+		chan->leftvol = chan->rightvol = chan->master_vol = (int)level[ambient_channel];
 	}
 }
 
@@ -846,8 +876,10 @@ void S_PaintAndSubmit (void)
 
 // mix ahead of current position
 	endtime = soundtime + snd_mixahead.value * dma.speed;
+
+// never mix more than the complete buffer
 	samps = dma.samples >> (dma.channels-1);
-	if ((int)endtime - soundtime > samps)
+	if (endtime - soundtime > samps)
 		endtime = soundtime + samps;
 
 	SNDDMA_BeginPainting ();

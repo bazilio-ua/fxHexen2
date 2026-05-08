@@ -121,7 +121,7 @@ void CL_ClearTEnts(void)
 //
 //==========================================================================
 
-void CL_ParseTEnt(void)
+void CL_ParseTEnt (void)
 {
 	int type;
 	vec3_t pos;
@@ -132,25 +132,25 @@ void CL_ParseTEnt(void)
 	switch(type)
 	{
 	case TE_WIZSPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		R_RunParticleEffect (pos, vec3_origin, 20, 30);
 //		S_StartSound (-1, 0, cl_sfx_wizhit, pos, 1, 1);
 		break;
 		
 	case TE_KNIGHTSPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		R_RunParticleEffect (pos, vec3_origin, 226, 20);
 //		S_StartSound (-1, 0, cl_sfx_knighthit, pos, 1, 1);
 		break;
 		
 	case TE_SPIKE:			// spike hitting wall
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 		R_RunParticleEffect (pos, vec3_origin, 0, 10);
 
@@ -168,9 +168,9 @@ void CL_ParseTEnt(void)
 		}
 		break;
 	case TE_SUPERSPIKE:			// super spike hitting wall
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		R_RunParticleEffect (pos, vec3_origin, 0, 20);
 
 		if ( rand() % 5 )
@@ -188,16 +188,16 @@ void CL_ParseTEnt(void)
 		break;
 		
 	case TE_GUNSHOT:			// bullet hitting wall
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		R_RunParticleEffect (pos, vec3_origin, 0, 20);
 		break;
 		
 	case TE_EXPLOSION:			// rocket explosion
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		
 		if (cl_extradlight.value)
 		{
@@ -228,12 +228,12 @@ void CL_ParseTEnt(void)
 	case TE_LIGHTNING2:
 	case TE_LIGHTNING3:
 		MSG_ReadShort(net_message);
-		MSG_ReadCoord(net_message);
-		MSG_ReadCoord(net_message);
-		MSG_ReadCoord(net_message);
-		MSG_ReadCoord(net_message);
-		MSG_ReadCoord(net_message);
-		MSG_ReadCoord(net_message);
+		MSG_ReadCoord(net_message, cl.protocolflags);
+		MSG_ReadCoord(net_message, cl.protocolflags);
+		MSG_ReadCoord(net_message, cl.protocolflags);
+		MSG_ReadCoord(net_message, cl.protocolflags);
+		MSG_ReadCoord(net_message, cl.protocolflags);
+		MSG_ReadCoord(net_message, cl.protocolflags);
 		break;
 
 	case TE_STREAM_CHAIN:
@@ -249,16 +249,16 @@ void CL_ParseTEnt(void)
 		break;
 
 	case TE_LAVASPLASH:
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		R_LavaSplash (pos);
 		break;
 
 	case TE_TELEPORT:
-		pos[0] = MSG_ReadCoord (net_message);
-		pos[1] = MSG_ReadCoord (net_message);
-		pos[2] = MSG_ReadCoord (net_message);
+		pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+		pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 		R_TeleportSplash (pos);
 		break;
 /*	//jfm:not used
@@ -278,7 +278,9 @@ void CL_ParseTEnt(void)
 		break;
 */
 	default:
-		Sys_Error ("CL_ParseTEnt: bad type");
+		// no need to crash the engine but we will crash the map, as it means we have
+		// a malformed packet
+		Host_Error ("CL_ParseTEnt: bad type %d", type); // Sys_Error
 	}
 }
 
@@ -310,12 +312,12 @@ static void ParseStream(int type)
 	{
 		skin = MSG_ReadByte(net_message);
 	}
-	source[0] = MSG_ReadCoord(net_message);
-	source[1] = MSG_ReadCoord(net_message);
-	source[2] = MSG_ReadCoord(net_message);
-	dest[0] = MSG_ReadCoord(net_message);
-	dest[1] = MSG_ReadCoord(net_message);
-	dest[2] = MSG_ReadCoord(net_message);
+	source[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+	source[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+	source[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+	dest[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+	dest[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+	dest[2] = MSG_ReadCoord(net_message, cl.protocolflags);
 
 	models[1] = models[2] = models[3] = NULL;
 	switch(type)

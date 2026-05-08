@@ -48,6 +48,7 @@ void Sv_Edicts_f(void);
 SV_Protocol_f
 ===============
 */
+//int sv_protocol = PROTOCOL_FITZQ; //johnfitz
 int sv_protocol = PROTOCOL_RAVEN_112;
 void SV_Protocol_f (void)
 {
@@ -65,9 +66,15 @@ void SV_Protocol_f (void)
 		case PROTOCOL_RAVEN_112:
 			p = "Raven/MP/1.12";
 			break;
-//		case PROTOCOL_UQE_113:
-//			p = "UQE/1.13";
-//			break;
+		case PROTOCOL_FITZQ:
+			p = "FitzQ/H2";
+			break;
+		case PROTOCOL_MARKV:
+			p = "MarkV/H2";
+			break;
+		case PROTOCOL_RMQ:
+			p = "RMQ/H2";
+			break;
 		default:
 			return;
 		}
@@ -75,10 +82,9 @@ void SV_Protocol_f (void)
 		break;
 	case 2:
 		i = atoi(Cmd_Argv(1));
-		if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 /*&& i != PROTOCOL_UQE_113*/)
-			Con_Printf ("sv_protocol must be %i or %i\n",
-//			Con_Printf ("sv_protocol must be %i, %i or %i\n",
-						PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+		if (i != PROTOCOL_RAVEN_111 && i != PROTOCOL_RAVEN_112 && i != PROTOCOL_FITZQ && i != PROTOCOL_MARKV && i != PROTOCOL_RMQ)
+			Con_Printf ("sv_protocol must be %i, %i, %i, %i or %i\n",
+					PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_FITZQ, PROTOCOL_MARKV, PROTOCOL_RMQ);
 		else
 		{
 			sv_protocol = i;
@@ -146,13 +152,18 @@ void SV_Init (void)
 	case PROTOCOL_RAVEN_112:
 		p = "Raven/MP/1.12";
 		break;
-//	case PROTOCOL_UQE_113:
-//		p = "UQE/1.13";
-//		break;
+	case PROTOCOL_FITZQ:
+		p = "FitzQ/H2";
+		break;
+	case PROTOCOL_MARKV:
+		p = "MarkV/H2";
+		break;
+	case PROTOCOL_RMQ:
+		p = "RMQ/H2";
+		break;
 	default:
-		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i",
-//		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i, %i",
-				   sv_protocol, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112/*, PROTOCOL_UQE_113*/);
+		Sys_Error ("Bad protocol version request %i. Accepted values: %i, %i, %i, %i or %i",
+				   sv_protocol, PROTOCOL_RAVEN_111, PROTOCOL_RAVEN_112, PROTOCOL_FITZQ, PROTOCOL_MARKV, PROTOCOL_RMQ);
 		return; /* silence compiler */
 	}
 	Sys_Printf ("Server using protocol %i (%s)\n", sv_protocol, p);
@@ -247,9 +258,9 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count)
 		return;
 
 	MSG_WriteByte (&sv.datagram, svc_particle);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	for (i=0 ; i<3 ; i++)
 	{
 		v = dir[i]*16;
@@ -276,9 +287,9 @@ void SV_StartParticle2 (vec3_t org, vec3_t dmin, vec3_t dmax, int color, int eff
 	if (sv.datagram.cursize > ((sv.protocol <= PROTOCOL_RAVEN_112) ? 1024 : MAX_DATAGRAM) - 36)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle2);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteFloat (&sv.datagram, dmin[0]);
 	MSG_WriteFloat (&sv.datagram, dmin[1]);
 	MSG_WriteFloat (&sv.datagram, dmin[2]);
@@ -304,9 +315,9 @@ void SV_StartParticle3 (vec3_t org, vec3_t box, int color, int effect, int count
 	if (sv.datagram.cursize > ((sv.protocol <= PROTOCOL_RAVEN_112) ? 1024 : MAX_DATAGRAM) - 15)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle3);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteByte (&sv.datagram, box[0]);
 	MSG_WriteByte (&sv.datagram, box[1]);
 	MSG_WriteByte (&sv.datagram, box[2]);
@@ -329,9 +340,9 @@ void SV_StartParticle4 (vec3_t org, float radius, int color, int effect, int cou
 	if (sv.datagram.cursize > ((sv.protocol <= PROTOCOL_RAVEN_112) ? 1024 : MAX_DATAGRAM) - 13)
 		return;
 	MSG_WriteByte (&sv.datagram, svc_particle4);
-	MSG_WriteCoord (&sv.datagram, org[0]);
-	MSG_WriteCoord (&sv.datagram, org[1]);
-	MSG_WriteCoord (&sv.datagram, org[2]);
+	MSG_WriteCoord (&sv.datagram, org[0], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[1], sv.protocolflags);
+	MSG_WriteCoord (&sv.datagram, org[2], sv.protocolflags);
 	MSG_WriteByte (&sv.datagram, radius);
 
 	MSG_WriteShort (&sv.datagram, color);
@@ -347,6 +358,7 @@ SV_StopSound
 void SV_StopSound (edict_t *entity, int channel)
 {
 	int			ent;
+	int			field_mask;
 
 	if (channel < 0 || channel > 7)
 	{
@@ -359,10 +371,35 @@ void SV_StopSound (edict_t *entity, int channel)
 		return;
 
 	ent = NUM_FOR_EDICT(entity);
-	channel = (ent<<3) | channel;
+	
+	field_mask = 0;
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (ent >= 8192)
+	{
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+			field_mask |= SND_LARGEENTITY;
+		else
+			return; // don't send any info protocol can't support
+	}
+	//johnfitz
 
-	MSG_WriteByte (&sv.datagram, svc_stopsound);
-	MSG_WriteShort (&sv.datagram, channel);
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		MSG_WriteByte (&sv.datagram, svc_stopsound2);
+		MSG_WriteByte (&sv.datagram, field_mask);
+	}
+	else
+		MSG_WriteByte (&sv.datagram, svc_stopsound);
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (field_mask & SND_LARGEENTITY)
+	{
+		MSG_WriteShort (&sv.datagram, ent);
+		MSG_WriteByte (&sv.datagram, channel);
+	}
+	else
+		MSG_WriteShort (&sv.datagram, (ent<<3) | channel);
+	//johnfitz
 }
 
 /*
@@ -374,6 +411,7 @@ void SV_UpdateSoundPos (edict_t *entity, int channel)
 {
 	int			ent;
     int			i;
+	int			field_mask;
 
 	if (channel < 0 || channel > 7)
 	{
@@ -386,12 +424,38 @@ void SV_UpdateSoundPos (edict_t *entity, int channel)
 		return;
 
 	ent = NUM_FOR_EDICT(entity);
-	channel = (ent<<3) | channel;
+	
+	field_mask = 0;
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (ent >= 8192)
+	{
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+			field_mask |= SND_LARGEENTITY;
+		else
+			return; // don't send any info protocol can't support
+	}
+	//johnfitz
 
-	MSG_WriteByte (&sv.datagram, svc_sound_update_pos);
-	MSG_WriteShort (&sv.datagram, channel);
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		MSG_WriteByte (&sv.datagram, svc_sound_update_pos2);
+		MSG_WriteByte (&sv.datagram, field_mask);
+	}
+	else
+		MSG_WriteByte (&sv.datagram, svc_sound_update_pos);
+
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (field_mask & SND_LARGEENTITY)
+	{
+		MSG_WriteShort (&sv.datagram, ent);
+		MSG_WriteByte (&sv.datagram, channel);
+	}
+	else
+		MSG_WriteShort (&sv.datagram, (ent<<3) | channel);
+	//johnfitz
+
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]), sv.protocolflags);
 }
 
 /*
@@ -460,24 +524,36 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
     
 	ent = NUM_FOR_EDICT(entity);
 
-	channel = (ent<<3) | channel;
-
 	field_mask = 0;
 	if (volume != DEFAULT_SOUND_PACKET_VOLUME)
 		field_mask |= SND_VOLUME;
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
 		field_mask |= SND_ATTENUATION;
 
-	if (sound_num >= 256)
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (ent >= 8192)
 	{
-		if (sv.protocol == PROTOCOL_RAVEN_111)
-		{
-			Con_DPrintf ("SV_StartSound: protocol 18 violation: %s sound_num == %i >= %i\n", sample, sound_num, 256);
-			return;
-		}
-		field_mask |= SND_OVERFLOW;
-		sound_num -= 256;
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+			field_mask |= SND_LARGEENTITY;
+		else
+			return; // don't send any info protocol can't support
 	}
+	if (sound_num >= 256 || channel >= 8)
+	{
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+			field_mask |= SND_LARGESOUND;
+		else
+		{
+			if (sv.protocol == PROTOCOL_RAVEN_111)
+			{
+				Con_DPrintf ("SV_StartSound: protocol 18 violation: %s sound_num == %i >= %i\n", sample, sound_num, 256);
+				return; // don't send any info protocol can't support
+			}
+			field_mask |= SND_OVERFLOW;
+			sound_num -= 256;
+		}
+	}
+	//johnfitz
 
 // directed messages go only to the entity the are targeted on
 	MSG_WriteByte (&sv.datagram, svc_sound);
@@ -487,11 +563,23 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	if (field_mask & SND_ATTENUATION)
 		MSG_WriteByte (&sv.datagram, attenuation*64);
 
-	MSG_WriteShort (&sv.datagram, channel);
-	MSG_WriteByte (&sv.datagram, sound_num);
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (field_mask & SND_LARGEENTITY)
+	{
+		MSG_WriteShort (&sv.datagram, ent);
+		MSG_WriteByte (&sv.datagram, channel);
+	}
+	else
+		MSG_WriteShort (&sv.datagram, (ent<<3) | channel);
+
+	if (field_mask & SND_LARGESOUND)
+		MSG_WriteShort (&sv.datagram, sound_num);
+	else
+		MSG_WriteByte (&sv.datagram, sound_num);
+	//johnfitz
 
 	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]));
+		MSG_WriteCoord (&sv.datagram, entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]), sv.protocolflags);
 }
 
 /*
@@ -522,6 +610,13 @@ void SV_SendServerinfo (client_t *client)
 
 	MSG_WriteByte (&client->message, svc_serverinfo);
 	MSG_WriteLong (&client->message, sv.protocol); // use sv.protocol instead of PROTOCOL_VERSION
+
+	if (sv.protocol == PROTOCOL_RMQ)
+	{
+		// mh - now send protocol flags so that the client knows the protocol features to expect
+		MSG_WriteLong (&client->message, sv.protocolflags);
+	}
+
 	MSG_WriteByte (&client->message, svs.maxclients);
 
 	if (!coop.value && deathmatch.value)
@@ -543,11 +638,11 @@ void SV_SendServerinfo (client_t *client)
 		MSG_WriteString (&client->message, PR_GetString(sv.edicts->v.netname));
 	}
 
-	//johnfitz -- only send the first 256 sound precaches if protocol is 18
 	for (i=0,s = sv.model_precache+1 ; *s ; s++,i++)
 		MSG_WriteString (&client->message, *s);
 	MSG_WriteByte (&client->message, 0);
 
+	//johnfitz -- only send the first 256 sound precaches if protocol is 18
 	for (i=0,s = sv.sound_precache+1 ; *s ; s++,i++)
 		if (sv.protocol > PROTOCOL_RAVEN_111 || i < 256) // MAX_SOUNDS for PROTOCOL_RAVEN_111
 			MSG_WriteString (&client->message, *s);
@@ -603,7 +698,7 @@ void SV_ConnectClient (int clientnum)
 
 	// JPG - added ProQuake dprint
 	if (client->netconnection->mod == MOD_PROQUAKE && sv.protocol <= PROTOCOL_RAVEN_112)
-		Con_DPrintf ("ProQ/ProHexen Client %s connected\n", client->netconnection->address);
+		Con_DPrintf ("ProQ/ProH2 Client %s connected\n", client->netconnection->address);
 	else
 		Con_DPrintf ("Client %s connected\n", client->netconnection->address);
 
@@ -959,7 +1054,6 @@ skipA:
 			}
 		}
 
-		bits = 0;
 
 		while (position < reference->count && 
 			   e > reference->states[position].index)
@@ -1019,6 +1113,8 @@ skipA:
 			continue;
 
 // send an update
+		bits = 0;
+
 		for (i=0 ; i<3 ; i++)
 		{
 			miss = ent->v.origin[i] - ref_ent->origin[i];
@@ -1119,6 +1215,16 @@ skipA:
 			continue;
 		}
 
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+		{
+			if (bits & U_FRAME && (int)ent->v.frame & 0xFF00)
+				bits |= U_FRAME2;
+			if (ent->sendinterval)
+				bits |= U_LERPFINISH;
+		}
+		//johnfitz
+
 		if (e >= 256)
 			bits |= U_LONGENTITY;
 
@@ -1128,9 +1234,32 @@ skipA:
 		if (bits >= 65536)
 			bits |= U_MOREBITS2;
 
-		// PROTOCOL_VERSION
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+		{
+			if (bits >= 16777216)
+				bits |= U_EXTEND2;
+		}
+
+		// PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
 		{
 			//johnfitz -- max size for protocol 15 (17,18,19) is 18 bytes, not 16 as originally assumed here.
+			//And, for protocol 85(PROTOCOL_FITZQUAKE?) the max size is actually 24 bytes.
+			//For float coords and angles the limit is 40. PROTOCOL_RMQ?
+//			packetsize = 24;
+			packetsize = 40;
+
+			if (msg->maxsize - msg->cursize < packetsize)
+			{
+				if (IsTimeout (&lastmsg, 2))
+					Con_Printf ("packet overflow!\n");
+
+				return;
+			}
+		}
+		else
+		{
 			packetsize = 16 + 2; // Original + missing for worst case
 
 			if (msg->maxsize - msg->cursize < packetsize)
@@ -1152,6 +1281,14 @@ skipA:
 		if (bits & U_MOREBITS2)
 			MSG_WriteByte (msg, bits>>16);
 
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+		{
+			if (bits & U_EXTEND2)
+				MSG_WriteByte (msg, bits>>24);
+		}
+		//johnfitz
+
 		if (bits & U_LONGENTITY)
 			MSG_WriteShort (msg,e);
 		else
@@ -1171,22 +1308,47 @@ skipA:
 		if (bits & U_EFFECTS)
 			MSG_WriteByte (msg, ent->v.effects);
 		if (bits & U_ORIGIN1)
-			MSG_WriteCoord (msg, ent->v.origin[0]);		
+			MSG_WriteCoord (msg, ent->v.origin[0], sv.protocolflags);
 		if (bits & U_ANGLE1)
-			MSG_WriteAngle(msg, ent->v.angles[0]);
+		{
+			if (sv.protocol == PROTOCOL_MARKV)
+				MSG_WriteAngle16(msg, ent->v.angles[0], sv.protocolflags); // Baker change
+			else
+				MSG_WriteAngle(msg, ent->v.angles[0], sv.protocolflags);
+		}
 		if (bits & U_ORIGIN2)
-			MSG_WriteCoord (msg, ent->v.origin[1]);
+			MSG_WriteCoord (msg, ent->v.origin[1], sv.protocolflags);
 		if (bits & U_ANGLE2)
-			MSG_WriteAngle(msg, ent->v.angles[1]);
+		{
+			if (sv.protocol == PROTOCOL_MARKV)
+				MSG_WriteAngle16(msg, ent->v.angles[1], sv.protocolflags); // Baker change
+			else
+				MSG_WriteAngle(msg, ent->v.angles[1], sv.protocolflags);
+		}
 		if (bits & U_ORIGIN3)
-			MSG_WriteCoord (msg, ent->v.origin[2]);
+			MSG_WriteCoord (msg, ent->v.origin[2], sv.protocolflags);
 		if (bits & U_ANGLE3)
-			MSG_WriteAngle(msg, ent->v.angles[2]);
+		{
+			if (sv.protocol == PROTOCOL_MARKV)
+				MSG_WriteAngle16(msg, ent->v.angles[2], sv.protocolflags); // Baker change
+			else
+				MSG_WriteAngle(msg, ent->v.angles[2], sv.protocolflags);
+		}
 		if (bits & U_SCALE)
 		{ // Used for scale and abslight
 			MSG_WriteByte(msg, (int)(ent->v.scale*100.0)&255);
 			MSG_WriteByte(msg, (int)(ent->v.abslight*255.0)&255);
 		}
+
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+		{
+			if (bits & U_FRAME2)
+				MSG_WriteByte(msg, (int)ent->v.frame >> 8);
+			if (bits & U_LERPFINISH)
+				MSG_WriteByte(msg, (byte)(Q_rint((ent->v.nextthink-sv.time)*255)));
+		}
+		//johnfitz
 
 		if (build->count >= MAX_CLIENT_STATES)
 			break;
@@ -1242,7 +1404,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		MSG_WriteByte (msg, ent->v.dmg_save);
 		MSG_WriteByte (msg, ent->v.dmg_take);
 		for (i=0 ; i<3 ; i++)
-			MSG_WriteCoord (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]));
+			MSG_WriteCoord (msg, other->v.origin[i] + 0.5*(other->v.mins[i] + other->v.maxs[i]), sv.protocolflags);
 	
 		ent->v.dmg_take = 0;
 		ent->v.dmg_save = 0;
@@ -1258,7 +1420,7 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	{
 		MSG_WriteByte (msg, svc_setangle);
 		for (i=0 ; i < 3 ; i++)
-			MSG_WriteAngle (msg, ent->v.angles[i] );
+			MSG_WriteAngle (msg, ent->v.angles[i], sv.protocolflags);
 		ent->v.fixangle = 0;
 	}
 
@@ -1299,8 +1461,6 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		if (ent->v.weaponmodel != client->old_v.weaponmodel)
 			bits |= SU_WEAPON;
 	}
-
-// send the data
 
 	//fjm: this wasn't in here b4, and the centerview command requires it.
 	if ( (int)ent->v.flags & FL_ONGROUND) 
@@ -1355,9 +1515,36 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 		}
 	}
 
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & SU_ARMOR && (int)ent->v.armorvalue & 0xFF00)
+			bits |= SU_ARMOR2;
+		if (bits & SU_WEAPONFRAME && (int)ent->v.weaponframe & 0xFF00)
+			bits |= SU_WEAPONFRAME2;
+		
+		if (bits >= 65536)
+			bits |= SU_EXTEND1;
+		if (bits >= 16777216)
+			bits |= SU_EXTEND2;
+	}
+	//johnfitz
+
+// send the data
+
 	MSG_WriteByte (msg, svc_clientdata);
 	MSG_WriteShort (msg, bits);
 	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & SU_EXTEND1)
+			MSG_WriteByte(msg, bits>>16);
+		if (bits & SU_EXTEND2)
+			MSG_WriteByte(msg, bits>>24);
+	}
+	//johnfitz
+
 	if (bits & SU_VIEWHEIGHT)
 		MSG_WriteChar (msg, ent->v.view_ofs[2]);
 
@@ -1382,7 +1569,17 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	if (bits & SU_WEAPON)
 		MSG_WriteShort (msg, SV_ModelIndex(PR_GetString(ent->v.weaponmodel)));
 
-	if (host_client->send_all_v) 
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		if (bits & SU_ARMOR2)
+			MSG_WriteByte (msg, (int)ent->v.armorvalue >> 8);
+		if (bits & SU_WEAPONFRAME2)
+			MSG_WriteByte (msg, (int)ent->v.weaponframe >> 8);
+	}
+	//johnfitz
+
+	if (host_client->send_all_v)
 	{
 		sc1 = sc2 = 0xffffffff;
 		host_client->send_all_v = false;
@@ -1510,6 +1707,18 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 				sc2 |= SC2_OBJ2;
 		}
 	}
+	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		if (sc1 & SC1_BLUEMANA && (int)ent->v.bluemana & 0xFF00)
+			sc2 |= SC1_BLUEMANA2;
+		if (sc1 & SC1_GREENMANA && (int)ent->v.greenmana & 0xFF00)
+			sc2 |= SC1_GREENMANA2;
+		if (sc2 & SC2_MAXMANA && (int)ent->v.max_mana & 0xFF00)
+			sc2 |= SC2_MAXMANA2;
+	}
+	//johnfitz
 
 	if (!sc1 && !sc2)
 		goto end;
@@ -1676,6 +1885,18 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 			client->info_mask2 = info_mask2;
 		}
 	}
+	
+	//johnfitz -- PROTOCOL_FITZQUAKE
+	if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+	{
+		if (sc2 & SC1_BLUEMANA2)
+			MSG_WriteByte (&host_client->message, (int)ent->v.bluemana >> 8);
+		if (sc2 & SC1_GREENMANA2)
+			MSG_WriteByte (&host_client->message, (int)ent->v.greenmana >> 8);
+		if (sc2 & SC2_MAXMANA2)
+			MSG_WriteByte (&host_client->message, (int)ent->v.max_mana >> 8);
+	}
+	//johnfitz
 
 end:
 	memcpy (&client->old_v,&ent->v,sizeof(client->old_v));
@@ -1893,6 +2114,7 @@ SV_ModelIndex
 int SV_ModelIndex (char *name)
 {
 	int		i;
+	static float lastmsg = 0;
 	
 	if (!name || !name[0])
 		return 0;
@@ -1900,8 +2122,14 @@ int SV_ModelIndex (char *name)
 	for (i=0 ; i<MAX_MODELS && sv.model_precache[i] ; i++)
 		if (!strcmp(sv.model_precache[i], name))
 			return i;
+
 	if (i == MAX_MODELS || !sv.model_precache[i])
-		Host_Error ("SV_ModelIndex: model %s not precached", name);
+	{
+		if (IsTimeout (&lastmsg, 2))
+			Con_Printf ("SV_ModelIndex: model %s not precached\n", name);
+		return 0;
+	}
+
 	return i;
 }
 
@@ -1916,6 +2144,7 @@ void SV_CreateBaseline (void)
 	int			i;
 	edict_t			*svent;
 	int				entnum;	
+	int			bits; //johnfitz -- PROTOCOL_FITZQUAKE
 
 	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
 	{
@@ -1950,23 +2179,68 @@ void SV_CreateBaseline (void)
 		}
 		memset (svent->baseline.ClearCount,99,sizeof(svent->baseline.ClearCount));
 		
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		bits = 0;
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ) //decide which extra data needs to be sent
+		{
+			if (svent->baseline.frame & 0xFF00)
+				bits |= B_LARGEFRAME;
+		}
+		else //still want to send baseline in PROTOCOL_RAVEN, so reset these values
+		{
+			if (svent->baseline.frame & 0xFF00)
+				svent->baseline.frame = 0;
+		}
+		//johnfitz
+		
 	//
 	// add to the message
 	//
-		MSG_WriteByte (&sv.signon,svc_spawnbaseline);
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+		{
+			if (bits)
+				MSG_WriteByte (&sv.signon, svc_spawnbaseline2);
+			else
+				MSG_WriteByte (&sv.signon, svc_spawnbaseline);
+		}
+		else // PROTOCOL_RAVEN
+		{
+			MSG_WriteByte (&sv.signon,svc_spawnbaseline);
+		}
+		//johnfitz
+
 		MSG_WriteShort (&sv.signon,entnum);
 
 		MSG_WriteShort (&sv.signon, svent->baseline.modelindex);
-		MSG_WriteByte (&sv.signon, svent->baseline.frame);
+		
+		//johnfitz -- PROTOCOL_FITZQUAKE
+		if (sv.protocol == PROTOCOL_FITZQ || sv.protocol == PROTOCOL_MARKV || sv.protocol == PROTOCOL_RMQ)
+		{
+			if (bits)
+				MSG_WriteByte (&sv.signon, bits);
+
+			if (bits & B_LARGEFRAME)
+				MSG_WriteShort (&sv.signon, svent->baseline.frame);
+			else
+				MSG_WriteByte (&sv.signon, svent->baseline.frame);
+		}
+		else // PROTOCOL_RAVEN
+		{
+			MSG_WriteByte (&sv.signon, svent->baseline.frame);
+		}
+		//johnfitz
+		
 		MSG_WriteByte (&sv.signon, svent->baseline.colormap);
 		MSG_WriteByte (&sv.signon, svent->baseline.skin);
 		MSG_WriteByte (&sv.signon, svent->baseline.scale);
 		MSG_WriteByte (&sv.signon, svent->baseline.drawflags);
 		MSG_WriteByte (&sv.signon, svent->baseline.abslight);
-		for (i = 0; i < 3; i++)
+		
+		for (i=0 ; i<3 ; i++)
 		{
-			MSG_WriteCoord (&sv.signon, svent->baseline.origin[i]);
-			MSG_WriteAngle (&sv.signon, svent->baseline.angles[i]);
+			MSG_WriteCoord(&sv.signon, svent->baseline.origin[i], sv.protocolflags);
+			MSG_WriteAngle(&sv.signon, svent->baseline.angles[i], sv.protocolflags);
 		}
 	}
 }
@@ -2090,6 +2364,15 @@ void SV_SpawnServer (char *server, char *startspot)
 
 	strcpy (sv.name, server);
 	sv.protocol = sv_protocol;
+
+	if (sv.protocol == PROTOCOL_RMQ)
+	{
+		// set up the protocol flags used by this server
+		// (note - these could be cvar-ised so that server admins could choose the protocol features used by their servers)
+		sv.protocolflags = PRFL_INT32COORD | PRFL_SHORTANGLE;
+	}
+	else
+		sv.protocolflags = 0;
 
 	if (startspot)
 		strcpy(sv.startspot, startspot);

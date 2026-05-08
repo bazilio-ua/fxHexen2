@@ -196,48 +196,48 @@ void CL_ParseEffect(void)
 	switch(cl.Effects[index].type)
 	{
 		case CE_RAIN:
-			cl.Effects[index].effect.Rain.min_org[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.min_org[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.min_org[2] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.max_org[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.max_org[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.max_org[2] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.e_size[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.e_size[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.e_size[2] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.dir[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.dir[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.dir[2] = MSG_ReadCoord(net_message);
+			cl.Effects[index].effect.Rain.min_org[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.min_org[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.min_org[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.max_org[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.max_org[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.max_org[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.e_size[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.e_size[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.e_size[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.dir[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.dir[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.dir[2] = MSG_ReadCoord(net_message, cl.protocolflags);
 			cl.Effects[index].effect.Rain.color = MSG_ReadShort(net_message);
 			cl.Effects[index].effect.Rain.count = MSG_ReadShort(net_message);
 			cl.Effects[index].effect.Rain.wait = MSG_ReadFloat(net_message);
 			break;
 
 		case CE_SNOW:
-			cl.Effects[index].effect.Rain.min_org[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.min_org[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.min_org[2] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.max_org[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.max_org[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.max_org[2] = MSG_ReadCoord(net_message);
+			cl.Effects[index].effect.Rain.min_org[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.min_org[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.min_org[2] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.max_org[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.max_org[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.max_org[2] = MSG_ReadCoord(net_message, cl.protocolflags);
 			cl.Effects[index].effect.Rain.flags = MSG_ReadByte(net_message);
-			cl.Effects[index].effect.Rain.dir[0] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.dir[1] = MSG_ReadCoord(net_message);
-			cl.Effects[index].effect.Rain.dir[2] = MSG_ReadCoord(net_message);
+			cl.Effects[index].effect.Rain.dir[0] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.dir[1] = MSG_ReadCoord(net_message, cl.protocolflags);
+			cl.Effects[index].effect.Rain.dir[2] = MSG_ReadCoord(net_message, cl.protocolflags);
 			cl.Effects[index].effect.Rain.count = MSG_ReadByte(net_message);
 			//cl.Effects[index].effect.Rain.veer = MSG_ReadShort(net_message);
 			break;
 
 		case CE_FOUNTAIN:
-			cl.Effects[index].effect.Fountain.pos[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Fountain.pos[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Fountain.pos[2] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Fountain.angle[0] = MSG_ReadAngle (net_message);
-			cl.Effects[index].effect.Fountain.angle[1] = MSG_ReadAngle (net_message);
-			cl.Effects[index].effect.Fountain.angle[2] = MSG_ReadAngle (net_message);
-			cl.Effects[index].effect.Fountain.movedir[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Fountain.movedir[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Fountain.movedir[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Fountain.pos[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.pos[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.pos[2] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.angle[0] = MSG_ReadAngle (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.angle[1] = MSG_ReadAngle (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.angle[2] = MSG_ReadAngle (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.movedir[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.movedir[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Fountain.movedir[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 			cl.Effects[index].effect.Fountain.color = MSG_ReadShort (net_message);
 			cl.Effects[index].effect.Fountain.cnt = MSG_ReadByte (net_message);
 			AngleVectors (cl.Effects[index].effect.Fountain.angle, 
@@ -247,9 +247,9 @@ void CL_ParseEffect(void)
 			break;
 
 		case CE_QUAKE:
-			cl.Effects[index].effect.Quake.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Quake.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Quake.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Quake.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Quake.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Quake.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 			cl.Effects[index].effect.Quake.radius = MSG_ReadFloat (net_message);
 			break;
 
@@ -267,9 +267,9 @@ void CL_ParseEffect(void)
 		case CE_FLAMEWALL:
 		case CE_FLAMEWALL2:
 		case CE_ONFIRE:
-			cl.Effects[index].effect.Smoke.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Smoke.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Smoke.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Smoke.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Smoke.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Smoke.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 			cl.Effects[index].effect.Smoke.velocity[0] = MSG_ReadFloat (net_message);
 			cl.Effects[index].effect.Smoke.velocity[1] = MSG_ReadFloat (net_message);
@@ -545,9 +545,9 @@ void CL_ParseEffect(void)
 		case CE_FIREWALL_SMALL:
 		case CE_FIREWALL_MEDIUM:
 		case CE_FIREWALL_LARGE:
-			cl.Effects[index].effect.Smoke.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Smoke.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Smoke.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Smoke.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Smoke.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Smoke.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 			if ((cl.Effects[index].effect.Smoke.entity_index = NewEffectEntity()) != -1)
 			{
 				ent = &EffectEntities[cl.Effects[index].effect.Smoke.entity_index];
@@ -1054,9 +1054,9 @@ void CL_ParseEffect(void)
 		case CE_BLUE_FLASH:
 		case CE_SM_BLUE_FLASH:
 		case CE_RED_FLASH:
-			cl.Effects[index].effect.Flash.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Flash.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Flash.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Flash.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Flash.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Flash.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 			cl.Effects[index].effect.Flash.reverse = 0;
 			if ((cl.Effects[index].effect.Flash.entity_index = NewEffectEntity()) != -1)
 			{
@@ -1134,23 +1134,23 @@ void CL_ParseEffect(void)
 			break;
 
 		case CE_RIDER_DEATH:
-			cl.Effects[index].effect.RD.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.RD.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.RD.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.RD.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.RD.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.RD.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 			break;
 
 		case CE_GRAVITYWELL:
-			cl.Effects[index].effect.RD.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.RD.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.RD.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.RD.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.RD.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.RD.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 			cl.Effects[index].effect.RD.color = MSG_ReadShort (net_message);
 			cl.Effects[index].effect.RD.lifetime = MSG_ReadFloat (net_message);
 			break;
 
 		case CE_TELEPORTERPUFFS:
-			cl.Effects[index].effect.Teleporter.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Teleporter.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Teleporter.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Teleporter.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Teleporter.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Teleporter.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 				
 			cl.Effects[index].effect.Teleporter.framelength = .05;
 			dir = 0;
@@ -1189,9 +1189,9 @@ void CL_ParseEffect(void)
 			break;
 
 		case CE_TELEPORTERBODY:
-			cl.Effects[index].effect.Teleporter.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Teleporter.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Teleporter.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Teleporter.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Teleporter.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Teleporter.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 			cl.Effects[index].effect.Teleporter.velocity[0][0] = MSG_ReadFloat (net_message);
 			cl.Effects[index].effect.Teleporter.velocity[0][1] = MSG_ReadFloat (net_message);
@@ -1229,9 +1229,9 @@ void CL_ParseEffect(void)
 
 		case CE_BONESHARD:
 		case CE_BONESHRAPNEL:
-			cl.Effects[index].effect.Missile.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Missile.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Missile.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Missile.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Missile.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Missile.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 			cl.Effects[index].effect.Missile.velocity[0] = MSG_ReadFloat (net_message);
 			cl.Effects[index].effect.Missile.velocity[1] = MSG_ReadFloat (net_message);
@@ -1259,15 +1259,15 @@ void CL_ParseEffect(void)
 			break;
 
 		case CE_CHUNK:
-			cl.Effects[index].effect.Chunk.origin[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Chunk.origin[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Chunk.origin[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Chunk.origin[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Chunk.origin[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Chunk.origin[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 			cl.Effects[index].effect.Chunk.type = MSG_ReadByte (net_message);
 
-			cl.Effects[index].effect.Chunk.srcVel[0] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Chunk.srcVel[1] = MSG_ReadCoord (net_message);
-			cl.Effects[index].effect.Chunk.srcVel[2] = MSG_ReadCoord (net_message);
+			cl.Effects[index].effect.Chunk.srcVel[0] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Chunk.srcVel[1] = MSG_ReadCoord (net_message, cl.protocolflags);
+			cl.Effects[index].effect.Chunk.srcVel[2] = MSG_ReadCoord (net_message, cl.protocolflags);
 
 			cl.Effects[index].effect.Chunk.numChunks = MSG_ReadByte (net_message);
 

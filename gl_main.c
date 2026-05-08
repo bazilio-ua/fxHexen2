@@ -1643,7 +1643,7 @@ void R_SetupAliasFrame (entity_t *e, aliashdr_t *paliashdr, lerpdata_t *lerpdata
 	}
 	else
 	{
-		e->lerptime = 0.1; // One tenth of a second is a good for most Quake animations.
+		e->lerptime = HX_FRAME_TIME; // One tenth of a second is a good for most Quake animations. (five hundredths of a second for Hexen II animations)
 	}
 
 	if (e->lerpflags & LERP_RESETANIM) // kill any lerp in progress
@@ -1730,7 +1730,7 @@ void R_SetupEntityTransform (entity_t *e, lerpdata_t *lerpdata)
 		if (e->lerpflags & LERP_FINISH)
 			blend = CLAMP (0.f, (float)(cl.time - e->movelerpstart) / (e->lerpfinish - e->movelerpstart), 1.f);
 		else
-			blend = CLAMP (0.f, (float)(cl.time - e->movelerpstart) / 0.1f, 1.f);
+			blend = CLAMP (0.f, (float)(cl.time - e->movelerpstart) / HX_FRAME_TIME, 1.f);
 
 		// positional interpolation (translation)
 		VectorSubtract (e->currentorigin, e->previousorigin, d);

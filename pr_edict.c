@@ -1084,7 +1084,14 @@ qboolean	ED_ParseEpair (void *base, ddef_t *key, char *s)
 		def = ED_FindField (s);
 		if (!def)
 		{
-			Con_Printf ("Can't find field %s\n", s);
+			// hack to suppress error because fog/sky/alpha/fullbright/wateralpha/mapversion fields might not be mentioned in defs.qc
+			if (strncmp(s, "sky", 3) && 
+				strcmp(s, "fog") && 
+				strcmp(s, "alpha") && 
+				strcmp(s, "fullbright") && 
+				strcmp(s, "wateralpha") && 
+				strcmp(s, "mapversion"))
+				Con_DPrintf ("Can't find field '%s'\n", s);
 			return false;
 		}
 		*(int *)d = G_INT(def->ofs);
@@ -1137,7 +1144,7 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 		if (com_token[0] == '}')
 			break;
 		if (!data)
-			Host_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEdict: EOF without closing brace");
 		
 // anglehack is to allow QuakeEd to write single scalar angles
 // and allow them to be turned into vectors. (FIXME...)
@@ -1155,7 +1162,7 @@ if (!strcmp(com_token, "light"))
 
 		strcpy (keyname, com_token);
 
-		// another hack to fix heynames with trailing spaces
+		// another hack to fix keynames with trailing spaces
 		n = strlen(keyname);
 		while (n && keyname[n-1] == ' ')
 		{
@@ -1166,10 +1173,10 @@ if (!strcmp(com_token, "light"))
 	// parse value	
 		data = COM_Parse (data);
 		if (!data)
-			Host_Error ("ED_ParseEntity: EOF without closing brace");
+			Host_Error ("ED_ParseEdict: EOF without closing brace");
 
 		if (com_token[0] == '}')
-			Host_Error ("ED_ParseEntity: closing brace without data");
+			Host_Error ("ED_ParseEdict: closing brace without data");
 
 		init = true;	
 
@@ -1192,16 +1199,23 @@ if (!strcmp(com_token, "light"))
 		key = ED_FindField (keyname);
 		if (!key)
 		{
-			Con_Printf ("'%s' is not a field\n", keyname);
+			// hack to suppress error because fog/sky/alpha/fullbright/wateralpha/mapversion fields might not be mentioned in defs.qc
+			if (strncmp(keyname, "sky", 3) && 
+				strcmp(keyname, "fog") && 
+				strcmp(keyname, "alpha") && 
+				strcmp(keyname, "fullbright") && 
+				strcmp(keyname, "wateralpha") && 
+				strcmp(keyname, "mapversion")) // Now supported in worldspawn
+				Con_DPrintf ("'%s' is not a field\n", keyname); //johnfitz -- was Con_Printf
 			continue;
 		}
 
-if (anglehack)
-{
-char	temp[32];
-strcpy (temp, com_token);
-sprintf (com_token, "0 %s 0", temp);
-}
+		if (anglehack)
+		{
+			char	temp[32];
+			strcpy (temp, com_token);
+			sprintf (com_token, "0 %s 0", temp);
+		}
 
 		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))
 			Host_Error ("ED_ParseEdict: parse error");
