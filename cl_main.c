@@ -263,7 +263,7 @@ void CL_EstablishConnection (char *host)
 		Host_Error ("CL_EstablishConnection: connect failed");
 
 	// JPG - ProQuake dprint
-	if (cls.netcon->mod == MOD_PROQUAKE && cl.protocol <= PROTOCOL_RAVEN_112)
+	if (cls.netcon->mod == MOD_PROQ && cl.protocol <= PROTOCOL_RAVEN_112)
 		Con_DPrintf ("Connected to ProQ/ProH2 server %s\n", host);
 	else
 		Con_DPrintf ("Connected to server %s\n", host);

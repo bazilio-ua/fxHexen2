@@ -85,7 +85,7 @@ struct qsockaddr
 };
 
 #define NET_NAME_ID			"HEXENII"
-#define PROQUAKE_VERSION	6.00 // for network communications (compat. with PQ)
+#define PROQ_VERSION	6.00 // for network communications (compat. with PQ)
 
 #define	NET_NAMELEN			64
 
@@ -181,7 +181,7 @@ struct qsockaddr
 
 // support for mods
 #define MOD_NONE		0x00
-#define MOD_PROQUAKE		0x01
+#define MOD_PROQ		0x01
 
 struct net_landriver_s;
 struct net_driver_s;

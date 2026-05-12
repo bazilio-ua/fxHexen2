@@ -572,7 +572,7 @@ void SV_ReadClientMove (usercmd_t *move)
 	host_client->num_pings++;
 
 // read current angles	
-	if ((host_client->netconnection->mod == MOD_PROQUAKE) && (sv.protocol <= PROTOCOL_RAVEN_112)) // precise aim for ProQuake
+	if ((host_client->netconnection->mod == MOD_PROQ) && (sv.protocol <= PROTOCOL_RAVEN_112)) // precise aim for ProQuake
 	{
 		for (i=0 ; i<3 ; i++)
 			angle[i] = MSG_ReadPreciseAngle (net_message);
@@ -713,7 +713,7 @@ nextmsg:
 					ret = 1;
 				else if (strncasecmp(s, "ban", 3) == 0)
 					ret = 1;
-				else if (strncasecmp(s, "qcexec", 6) == 0)
+				else if (strncasecmp(s, "qcexec", 6) == 0 || strncasecmp(s, "hcexec", 6) == 0)
 					ret = 1; // qcexec command for qc testing
 				else if (strncasecmp(s, "setpos", 6) == 0)
 					ret = 1;

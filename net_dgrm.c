@@ -1358,7 +1358,7 @@ static qsocket_t *_Datagram_CheckNewConnections (net_landriver_t *driver)
 	sock->mod = mod;
 	sock->mod_version = mod_version;
 	sock->mod_flags = mod_flags;
-	if (mod == MOD_PROQUAKE && mod_version >= 60)
+	if (mod == MOD_PROQ && mod_version >= 60)
 		sock->net_wait = true; // ProQuake NAT fix
 
 	// everything is allocated, just fill in the details	
@@ -1376,8 +1376,8 @@ static qsocket_t *_Datagram_CheckNewConnections (net_landriver_t *driver)
 	driver->GetSocketAddr(newsock, &newaddr);
 	sock->client_port = driver->GetSocketPort(&newaddr);
 	MSG_WriteLong(net_message->message, sock->client_port);
-	MSG_WriteByte(net_message->message, MOD_PROQUAKE); // (compat. with PQ)
-	MSG_WriteByte(net_message->message, PROQUAKE_VERSION * 10); // (compat. with PQ)
+	MSG_WriteByte(net_message->message, MOD_PROQ); // (compat. with PQ)
+	MSG_WriteByte(net_message->message, PROQ_VERSION * 10); // (compat. with PQ)
 	MSG_WriteByte(net_message->message, 0); // reserved (flags) (compat. with PQ) 
 	*((int *)net_message->message->data) = BigLong(NETFLAG_CTL | (net_message->message->cursize & NETFLAG_LENGTH_MASK));
 	driver->Write(acceptsock, net_message->message->data, net_message->message->cursize, &clientaddr);
@@ -1566,8 +1566,8 @@ static qsocket_t *_Datagram_Connect (char *host, net_landriver_t *driver)
 		MSG_WriteByte(net_message->message, CCREQ_CONNECT);
 		MSG_WriteString(net_message->message, NET_NAME_ID);
 		MSG_WriteByte(net_message->message, NET_PROTOCOL_VERSION);
-		MSG_WriteByte(net_message->message, MOD_PROQUAKE); // (compat. with PQ)
-		MSG_WriteByte(net_message->message, PROQUAKE_VERSION * 10); // (compat. with PQ)
+		MSG_WriteByte(net_message->message, MOD_PROQ); // (compat. with PQ)
+		MSG_WriteByte(net_message->message, PROQ_VERSION * 10); // (compat. with PQ)
 		MSG_WriteByte(net_message->message, 0); // reserverd (flags) (compat. with PQ)
 		MSG_WriteLong(net_message->message, pq_password.value); // password protected servers
 		*((int *)net_message->message->data) = BigLong(NETFLAG_CTL | (net_message->message->cursize & NETFLAG_LENGTH_MASK));
@@ -1689,7 +1689,7 @@ static qsocket_t *_Datagram_Connect (char *host, net_landriver_t *driver)
 	sock->lastMessageTime = SetNetTime();
 
 	// make NAT work by opening a new socket (ProQuake NAT fix)
-	if (sock->mod == MOD_PROQUAKE && sock->mod_version >= 60)
+	if (sock->mod == MOD_PROQ && sock->mod_version >= 60)
 	{
 		clientsock = driver->OpenSocket(0);
 		if (clientsock == -1)

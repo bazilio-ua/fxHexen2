@@ -709,7 +709,7 @@ void SV_ConnectClient (int clientnum)
 	client = svs.clients + clientnum;
 
 	// JPG - added ProQuake dprint
-	if (client->netconnection->mod == MOD_PROQUAKE && sv.protocol <= PROTOCOL_RAVEN_112)
+	if (client->netconnection->mod == MOD_PROQ && sv.protocol <= PROTOCOL_RAVEN_112)
 		Con_DPrintf ("ProQ/ProH2 Client %s connected\n", client->netconnection->address);
 	else
 		Con_DPrintf ("Client %s connected\n", client->netconnection->address);

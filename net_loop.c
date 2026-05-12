@@ -82,7 +82,7 @@ qsocket_t *Loop_Connect (char *host)
 	loop_client->sendMessageLength = 0;
 	loop_client->canSend = true;
 	loop_client->mtu = Loop_GetDefaultMTU();
-	loop_client->mod = MOD_PROQUAKE; // (compat. with PQ)
+	loop_client->mod = MOD_PROQ; // (compat. with PQ)
 	loop_client->client_port = 0;
 
 	if (!loop_server)
@@ -98,7 +98,7 @@ qsocket_t *Loop_Connect (char *host)
 	loop_server->sendMessageLength = 0;
 	loop_server->canSend = true;
 	loop_server->mtu = Loop_GetDefaultMTU();
-	loop_server->mod = MOD_PROQUAKE; // (compat. with PQ)
+	loop_server->mod = MOD_PROQ; // (compat. with PQ)
 	loop_server->client_port = 0;
 
 	loop_client->driverdata = (void *)loop_server;
