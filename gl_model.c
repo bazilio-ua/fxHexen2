@@ -2798,6 +2798,7 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 {
 	int			i,j,k;
 	float		dist, yawradius, radius;
+	float		m;
 	vec3_t		v;
 
 	//clear out all data
@@ -2828,6 +2829,10 @@ void Mod_CalcAliasBounds (aliashdr_t *a)
 				radius = dist;
 		}
 
+	m = (loadmodel->mins[2] + loadmodel->maxs[2]) / 2;
+	loadmodel->mins[2] = min (loadmodel->mins[2], -m);
+	loadmodel->maxs[2] = max (loadmodel->maxs[2], m);
+	
 	//rbounds will be used when entity has nonzero pitch or roll
 	radius = sqrt(radius);
 	loadmodel->rmins[0] = loadmodel->rmins[1] = loadmodel->rmins[2] = -radius;
