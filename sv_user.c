@@ -23,10 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 edict_t	*sv_player = NULL;
 
-//extern	cvar_t	sv_friction;
-cvar_t	sv_edgefriction = {"edgefriction", "2", CVAR_NONE};
-//extern	cvar_t	sv_stopspeed;
-
 static	vec3_t		forward, right, up;
 
 vec3_t	wishdir;
@@ -41,9 +37,18 @@ qboolean	onground;
 
 usercmd_t	cmd;
 
+cvar_t	sv_edgefriction = {"sv_edgefriction", "2", CVAR_NONE};
 cvar_t	sv_idealpitchscale = {"sv_idealpitchscale","0.8", CVAR_NONE};
 cvar_t	sv_idealrollscale = {"sv_idealrollscale","0.8", CVAR_NONE};
 
+cvar_t	sv_altnoclip = {"sv_altnoclip", "0", CVAR_NONE};
+cvar_t	sv_touchnoclip = {"sv_touchnoclip", "0", CVAR_NONE};
+cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_SERVER};
+cvar_t	sv_maxairspeed = {"sv_maxairspeed", "30", CVAR_NONE};
+cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
+cvar_t	sv_airaccelerate = {"sv_airaccelerate", "10", CVAR_NONE};
+cvar_t	sv_q2airaccelerate = {"sv_q2airaccelerate", "0", CVAR_NONE}; // Quake2-style air acceleration
+cvar_t	sv_wateraccelerate = {"sv_wateraccelerate", "10", CVAR_NONE};
 
 /*
 ===============
@@ -119,7 +124,6 @@ void SV_SetIdealPitch (void)
 	
 	if (steps < 2)
 		return;
-
 	sv_player->v.idealpitch = -dir * sv_idealpitchscale.value;
 }
 
@@ -206,15 +210,6 @@ void SV_UserFriction (void)
 SV_Accelerate
 ==============
 */
-cvar_t	sv_maxspeed = {"sv_maxspeed", "320", CVAR_SERVER};
-//cvar_t	sv_maxspeed = {"sv_maxspeed", "640", CVAR_SERVER}; //fixme: 320
-cvar_t	sv_accelerate = {"sv_accelerate", "10", CVAR_NONE};
-
-/* Old values before the id 1.07 update
-cvar_t	sv_maxspeed = {"sv_maxspeed", "640", CVAR_SERVER};
-cvar_t	sv_accelerate = {"sv_accelerate", "100", CVAR_NONE};
-*/
-
 void SV_Accelerate (void)
 {
 	int			i;
@@ -238,14 +233,14 @@ void SV_AirAccelerate (vec3_t wishveloc)
 	float		addspeed, wishspd, accelspeed, currentspeed;
 		
 	wishspd = VectorNormalize (wishveloc);
-	if (wishspd > 30)
-		wishspd = 30;
+	if (wishspd > sv_maxairspeed.value) // added cvar, was 30
+		wishspd = sv_maxairspeed.value; // added cvar, was 30
 	currentspeed = DotProduct (velocity, wishveloc);
 	addspeed = wishspd - currentspeed;
 	if (addspeed <= 0)
 		return;
 //	accelspeed = sv_accelerate.value * host_frametime;
-	accelspeed = sv_accelerate.value*wishspeed * host_frametime;
+	accelspeed = sv_airaccelerate.value * (sv_q2airaccelerate.value ? wishspd : wishspeed) * host_frametime; // separate different types of acceleration, was sv_accelerate
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 	
@@ -425,6 +420,28 @@ void SV_WaterJump (void)
 	sv_player->v.velocity[1] = sv_player->v.movedir[1];
 }
 
+/*
+===================
+SV_NoclipMove
+
+new, alternate noclip. old noclip is still handled in SV_AirMove
+===================
+*/
+void SV_NoclipMove (void)
+{
+	AngleVectors (sv_player->v.v_angle, forward, right, up);
+	
+	velocity[0] = forward[0]*cmd.forwardmove + right[0]*cmd.sidemove;
+	velocity[1] = forward[1]*cmd.forwardmove + right[1]*cmd.sidemove;
+	velocity[2] = forward[2]*cmd.forwardmove + right[2]*cmd.sidemove;
+	velocity[2] += cmd.upmove*2; //doubled to match running speed
+		
+	if (VectorLength (velocity) > sv_maxspeed.value)
+	{
+		VectorNormalize (velocity);
+		VectorScale (velocity, sv_maxspeed.value, velocity);
+	}
+}
 
 /*
 ===================

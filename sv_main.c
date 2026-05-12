@@ -111,15 +111,24 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_maxvelocity);
 	Cvar_RegisterVariable (&sv_gravity);
 	Cvar_RegisterVariable (&sv_friction);
+	Cvar_RegisterVariable (&sv_waterfriction);
 	Cvar_RegisterVariable (&sv_edgefriction);
 	Cvar_RegisterVariable (&sv_stopspeed);
 	Cvar_RegisterVariable (&sv_maxspeed);
+	Cvar_RegisterVariable (&sv_maxairspeed);
 	Cvar_RegisterVariable (&sv_accelerate);
+	Cvar_RegisterVariable (&sv_airaccelerate);
+	Cvar_RegisterVariable (&sv_q2airaccelerate);
+	Cvar_RegisterVariable (&sv_wateraccelerate);
 	Cvar_RegisterVariable (&sv_idealpitchscale);
 	Cvar_RegisterVariable (&sv_idealrollscale);
 	Cvar_RegisterVariable (&sv_aim);
 	Cvar_RegisterVariable (&sv_nostep);
+	Cvar_RegisterVariable (&sv_altnoclip);
+	Cvar_RegisterVariable (&sv_touchnoclip);
 	Cvar_RegisterVariableCallback (&sv_stupidquakebugfix, SV_StupidQuakeBugFix);
+
+	Cvar_RegisterVariable (&sv_bouncedownslopes);
 
 	Cvar_RegisterVariable (&sv_walkpitch);
 	Cvar_RegisterVariable (&sv_flypitch);

@@ -1,8 +1,23 @@
-// sv_phys.c
-
 /*
- * $Header: /H2 Mission Pack/SV_PHYS.C 10    3/17/98 6:14p Jmonroe $
- */
+Copyright (C) 1996-1997 Id Software, Inc.
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+
+*/
+// sv_phys.c
 
 #include "quakedef.h"
 
@@ -25,10 +40,14 @@ solid_edge items only clip against bsp models.
 */
 
 cvar_t	sv_friction = {"sv_friction","4", CVAR_SERVER};
+cvar_t	sv_waterfriction = {"sv_waterfriction","4", CVAR_SERVER};
 cvar_t	sv_stopspeed = {"sv_stopspeed","100", CVAR_NONE};
 cvar_t	sv_gravity = {"sv_gravity","800", CVAR_SERVER};
 cvar_t	sv_maxvelocity = {"sv_maxvelocity","2000", CVAR_NONE};
 cvar_t	sv_nostep = {"sv_nostep","0", CVAR_NONE};
+
+cvar_t	sv_bouncedownslopes = {"sv_bouncedownslopes","0", CVAR_SERVER};
+
 cvar_t	sv_flypitch={"sv_flypitch","20", CVAR_NONE};
 cvar_t	sv_walkpitch={"sv_walkpitch","0", CVAR_NONE};
 
