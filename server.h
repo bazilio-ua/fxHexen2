@@ -280,6 +280,7 @@ extern	cvar_t	sv_nostep;
 extern	cvar_t	sv_walkpitch;
 extern	cvar_t	sv_flypitch;
 extern	cvar_t	sv_friction;
+extern	cvar_t	sv_airfriction;
 extern	cvar_t	sv_waterfriction;
 extern	cvar_t	sv_edgefriction;
 extern	cvar_t	sv_stopspeed;

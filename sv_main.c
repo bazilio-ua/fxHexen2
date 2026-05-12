@@ -111,6 +111,7 @@ void SV_Init (void)
 	Cvar_RegisterVariable (&sv_maxvelocity);
 	Cvar_RegisterVariable (&sv_gravity);
 	Cvar_RegisterVariable (&sv_friction);
+	Cvar_RegisterVariable (&sv_airfriction);
 	Cvar_RegisterVariable (&sv_waterfriction);
 	Cvar_RegisterVariable (&sv_edgefriction);
 	Cvar_RegisterVariable (&sv_stopspeed);

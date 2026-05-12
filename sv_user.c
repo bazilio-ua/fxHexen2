@@ -25,9 +25,6 @@ edict_t	*sv_player = NULL;
 
 static	vec3_t		forward, right, up;
 
-vec3_t	wishdir;
-float	wishspeed;
-
 // world
 float	*angles;
 float	*origin;
@@ -210,7 +207,7 @@ void SV_UserFriction (void)
 SV_Accelerate
 ==============
 */
-void SV_Accelerate (void)
+void SV_Accelerate (float wishspeed, vec3_t wishdir)
 {
 	int			i;
 	float		addspeed, accelspeed, currentspeed;
@@ -227,7 +224,7 @@ void SV_Accelerate (void)
 		velocity[i] += accelspeed*wishdir[i];	
 }
 
-void SV_AirAccelerate (vec3_t wishveloc)
+void SV_AirAccelerate (float wishspeed, vec3_t wishveloc)
 {
 	int			i;
 	float		addspeed, wishspd, accelspeed, currentspeed;
@@ -293,12 +290,12 @@ void SV_FlightMove (void)
 	}
 
 //
-// water friction
+// air friction
 //
 	speed = VectorLength (velocity);
 	if (speed)
 	{
-		newspeed = speed - host_frametime * speed * sv_friction.value;
+		newspeed = speed - host_frametime * speed * sv_airfriction.value; // separate different types of friction, was sv_friction
 		if (newspeed < 0)
 			newspeed = 0;	
 		VectorScale (velocity, newspeed/speed, velocity);
@@ -307,7 +304,7 @@ void SV_FlightMove (void)
 		newspeed = 0;
 	
 //
-// water acceleration
+// air acceleration
 //
 	if (!wishspeed)
 		return;
@@ -317,7 +314,7 @@ void SV_FlightMove (void)
 		return;
 
 	VectorNormalize (wishvel);
-	accelspeed = sv_accelerate.value * wishspeed * host_frametime;
+	accelspeed = sv_airaccelerate.value * wishspeed * host_frametime; // separate different types of acceleration, was sv_accelerate
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 
@@ -381,7 +378,7 @@ void SV_WaterMove (void)
 	speed = VectorLength (velocity);
 	if (speed)
 	{
-		newspeed = speed - host_frametime * speed * sv_friction.value;
+		newspeed = speed - host_frametime * speed * sv_waterfriction.value; // separate different types of friction, was sv_friction
 		if (newspeed < 0)
 			newspeed = 0;	
 		VectorScale (velocity, newspeed/speed, velocity);
@@ -400,7 +397,7 @@ void SV_WaterMove (void)
 		return;
 
 	VectorNormalize (wishvel);
-	accelspeed = sv_accelerate.value * wishspeed * host_frametime;
+	accelspeed = sv_wateraccelerate.value * wishspeed * host_frametime; // separate different types of acceleration, was sv_accelerate
 	if (accelspeed > addspeed)
 		accelspeed = addspeed;
 
@@ -422,7 +419,7 @@ void SV_WaterJump (void)
 
 /*
 ===================
-SV_NoclipMove
+SV_NoclipMove -- johnfitz
 
 new, alternate noclip. old noclip is still handled in SV_AirMove
 ===================
@@ -452,7 +449,8 @@ SV_AirMove
 void SV_AirMove (void)
 {
 	int			i;
-	vec3_t		wishvel;
+	vec3_t		wishvel, wishdir;
+	float		wishspeed;
 	float		fmove, smove;
 
 	AngleVectors (sv_player->v.angles, forward, right, up);
@@ -487,11 +485,11 @@ void SV_AirMove (void)
 	else if ( onground )
 	{
 		SV_UserFriction ();
-		SV_Accelerate ();
+		SV_Accelerate (wishspeed, wishdir);
 	}
 	else
 	{	// not on ground, so little effect on velocity
-		SV_AirAccelerate (wishvel);
+		SV_AirAccelerate (wishspeed, wishvel);
 	}		
 }
 
@@ -545,19 +543,15 @@ void SV_ClientThink (void)
 //
 // walk
 //
-	if ( (sv_player->v.waterlevel >= 2)
-	&& (sv_player->v.movetype != MOVETYPE_NOCLIP) )
-	{
+	//johnfitz -- Alternate noclip
+	if (sv_altnoclip.value && sv_player->v.movetype == MOVETYPE_NOCLIP)
+		SV_NoclipMove ();
+	else if (sv_player->v.waterlevel >= 2 && sv_player->v.movetype != MOVETYPE_NOCLIP)
 		SV_WaterMove ();
-		return;
-	}
 	else if (sv_player->v.movetype == MOVETYPE_FLY)
-	{
 		SV_FlightMove ();
-		return;
-	} 
-
-	SV_AirMove ();	
+	else
+		SV_AirMove ();
 }
 
 
@@ -719,6 +713,12 @@ nextmsg:
 					ret = 1;
 				else if (strncasecmp(s, "ban", 3) == 0)
 					ret = 1;
+				else if (strncasecmp(s, "qcexec", 6) == 0)
+					ret = 1; // qcexec command for qc testing
+				else if (strncasecmp(s, "setpos", 6) == 0)
+					ret = 1;
+				else if (strncasecmp(s, "error", 5) == 0)
+					ret = 1; // error command for shutdown testing
 
 				if (ret == 1)
 					Cmd_ExecuteString (s, src_client);
@@ -780,7 +780,7 @@ void SV_RunClients (void)
 		}
 
 // always pause in single player if in console or menus
-		if (!sv.paused && (svs.maxclients > 1 || key_dest == key_game) )
+		if ( !(sv.paused || (svs.maxclients == 1 && key_dest != key_game) ) )
 			SV_ClientThink ();
 	}
 }

@@ -40,6 +40,7 @@ solid_edge items only clip against bsp models.
 */
 
 cvar_t	sv_friction = {"sv_friction","4", CVAR_SERVER};
+cvar_t	sv_airfriction = {"sv_airfriction","4", CVAR_SERVER};
 cvar_t	sv_waterfriction = {"sv_waterfriction","4", CVAR_SERVER};
 cvar_t	sv_stopspeed = {"sv_stopspeed","100", CVAR_NONE};
 cvar_t	sv_gravity = {"sv_gravity","800", CVAR_SERVER};
@@ -50,8 +51,6 @@ cvar_t	sv_bouncedownslopes = {"sv_bouncedownslopes","0", CVAR_SERVER};
 
 cvar_t	sv_flypitch={"sv_flypitch","20", CVAR_NONE};
 cvar_t	sv_walkpitch={"sv_walkpitch","0", CVAR_NONE};
-
-static	vec3_t	vec_origin = {0.0, 0.0, 0.0};
 
 #define	MOVE_EPSILON	0.01
 
@@ -91,7 +90,7 @@ SV_CheckVelocity
 void SV_CheckVelocity (edict_t *ent)
 {
 	int		i;
-	float		w;
+	float	wishspeed;
 
 //
 // bound velocity
@@ -100,20 +99,21 @@ void SV_CheckVelocity (edict_t *ent)
 	{
 		if (IS_NAN(ent->v.velocity[i]))
 		{
-			Con_DPrintf ("Got a NaN velocity on %s\n", PR_GetString(ent->v.classname));
+			Con_SafePrintf ("Got a NaN velocity on %s\n", PR_GetString(ent->v.classname));
 			ent->v.velocity[i] = 0;
 		}
 		if (IS_NAN(ent->v.origin[i]))
 		{
-			Con_DPrintf ("Got a NaN origin on %s\n", PR_GetString(ent->v.classname));
+			Con_SafePrintf ("Got a NaN origin on %s\n", PR_GetString(ent->v.classname));
 			ent->v.origin[i] = 0;
 		}
 	}
 
-	w = VectorLength(ent->v.velocity);
-	if (w > sv_maxvelocity.value)
+	wishspeed = VectorLength(ent->v.velocity);
+	if (wishspeed > sv_maxvelocity.value)
 	{	// sv_maxvelocity fix by Maddes
-		VectorScale (ent->v.velocity, sv_maxvelocity.value/w, ent->v.velocity);
+		VectorScale (ent->v.velocity, sv_maxvelocity.value/wishspeed, ent->v.velocity);
+		wishspeed = sv_maxvelocity.value;
 	}
 }
 
@@ -286,7 +286,7 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 			 break;		// moved the entire distance
 
 		if (!trace.ent)
-			Sys_Error ("SV_FlyMove: !trace.ent");
+			Host_Error ("SV_FlyMove: !trace.ent");
 
 		if (trace.plane.normal[2] > 0.7)
 		{
@@ -375,6 +375,12 @@ int SV_FlyMove (edict_t *ent, float time, trace_t *steptrace)
 		}
 	}
 
+	// lordhavoc: this came from QW and allows you to get out of water more easily
+	if ( (int)ent->v.flags & FL_WATERJUMP )
+	{
+		VectorCopy (primal_velocity, ent->v.velocity);
+	}
+	
 	return blocked;
 }
 
@@ -1347,7 +1353,7 @@ void SV_Physics_Client (edict_t	*ent, int num)
 		break;
 		
 	default:
-		Sys_Error ("SV_Physics_client: bad movetype %i", (int)ent->v.movetype);
+		Host_Error ("SV_Physics_client: bad movetype %i", (int)ent->v.movetype);
 	}
 
 //
@@ -1477,7 +1483,7 @@ void SV_Physics_Toss (edict_t *ent)
 
 // move origin
 	VectorScale (ent->v.velocity, host_frametime, move);
-//	VectorCopy(vec_origin,move);
+//	VectorCopy(vec3_origin,move);
 	trace = SV_PushEntity (ent, move);
 	if (trace.fraction == 1)
 		return;
