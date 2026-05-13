@@ -111,7 +111,7 @@ void SV_CheckVelocity (edict_t *ent)
 
 	wishspeed = VectorLength(ent->v.velocity);
 	if (wishspeed > sv_maxvelocity.value)
-	{	// sv_maxvelocity fix by Maddes
+	{	// SV_MAXVELOCITY fix by Maddes
 		VectorScale (ent->v.velocity, sv_maxvelocity.value/wishspeed, ent->v.velocity);
 		wishspeed = sv_maxvelocity.value;
 	}
@@ -601,13 +601,27 @@ void SV_PushMove (edict_t *pusher, float movetime, qboolean update_time)
 		moved_edict[num_moved] = check;
 		num_moved++;
 
-		// try moving the contacted entity 
-		pusher->v.solid = SOLID_NOT;
-		SV_PushEntity (check, move);
-		pusher->v.solid = SOLID_BSP;
+	// only check for types that can block -- MOVETYPE_PUSH fix by LordHavoc/Maddes
+		if (pusher->v.solid == SOLID_BSP // everything that blocks: bsp models, map brushes, doors, plats etc.
+		|| pusher->v.solid == SOLID_BBOX // normally boxes
+		|| pusher->v.solid == SOLID_SLIDEBOX) // normally monsters
+		{	// store out the previous solid value because we're going to change it next
+			float savepushervsolid = pusher->v.solid;
 
-	// if it is still inside the pusher, block
-		block = SV_TestEntityPosition (check);
+			// try moving the contacted entity
+			pusher->v.solid = SOLID_NOT;
+			SV_PushEntity (check, move);
+			// restore from the stored solid
+			pusher->v.solid = savepushervsolid;
+
+		// if it is still inside the pusher, block
+			block = SV_TestEntityPosition (check);
+		}
+		else
+		{	// not blocked
+			block = NULL;
+		}
+
 		if (block)
 		{	// fail the move
 			if (check->v.mins[0] == check->v.maxs[0])
@@ -789,111 +803,126 @@ void SV_PushRotate (edict_t *pusher, float movetime)
 		VectorAdd(move,move2,move3);
 
 		// try moving the contacted entity 
-		for( t = 0; t < 13; t++)
+		for (t = 0; t < 13; t++)
 		{
-			switch(t)
+			switch (t)
 			{
-				case 0:
-				//try x, y and z
-					VectorCopy(move3,testmove);
-					break;
-				case 1:
-				//Try xy only
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=move3[0];
-					testmove[1]=move3[1];
-					testmove[2]=0;
-					break;
-				case 2:
-				//Try z only
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=0;
-					testmove[1]=0;
-					testmove[2]=move3[2];
-					break;
-				case 3:
-				//Try none
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=0;
-					testmove[1]=0;
-					testmove[2]=0;
-					break;
-				case 4:
-				//Try xy in opposite dir
-					testmove[0]=move3[0]*-1;
-					testmove[1]=move3[1]*-1;
-					testmove[2]=move3[2];
-					break;
-				case 5:
-				//Try z in opposite dir
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=move3[0];
-					testmove[1]=move3[1];
-					testmove[2]=move3[2]*-1;
-					break;
-				case 6:
-				//Try xyz in opposite dir
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=move3[0]*-1;
-					testmove[1]=move3[1]*-1;
-					testmove[2]=move3[2]*-1;
-					break;
-				case 7:
-				//Try move3 times 2
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					VectorScale(move3,2,testmove);
-					break;
-				case 8:
-				//Try normalized org
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
+			case 0:
+			//try x, y and z
+				VectorCopy(move3,testmove);
+				break;
+			case 1:
+			//Try xy only
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=move3[0];
+				testmove[1]=move3[1];
+				testmove[2]=0;
+				break;
+			case 2:
+			//Try z only
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=0;
+				testmove[1]=0;
+				testmove[2]=move3[2];
+				break;
+			case 3:
+			//Try none
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=0;
+				testmove[1]=0;
+				testmove[2]=0;
+				break;
+			case 4:
+			//Try xy in opposite dir
+				testmove[0]=move3[0]*-1;
+				testmove[1]=move3[1]*-1;
+				testmove[2]=move3[2];
+				break;
+			case 5:
+			//Try z in opposite dir
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=move3[0];
+				testmove[1]=move3[1];
+				testmove[2]=move3[2]*-1;
+				break;
+			case 6:
+			//Try xyz in opposite dir
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=move3[0]*-1;
+				testmove[1]=move3[1]*-1;
+				testmove[2]=move3[2]*-1;
+				break;
+			case 7:
+			//Try move3 times 2
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				VectorScale(move3,2,testmove);
+				break;
+			case 8:
+			//Try normalized org
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
 
-					VectorScale(org,movetime,org);//movetime*20?
-					VectorCopy(org,testmove);
-					break;
-				case 9:
-				//Try normalized org z * 3 only
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=0;
-					testmove[1]=0;
-					testmove[2]=org[2]*3;//was: +org[2]*(fabs(org[1])+fabs(org[2]));
-					break;
-				case 10:
-				//Try normalized org xy * 2 only
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=org[0]*2;//was: +org[0]*fabs(org[2]);
-					testmove[1]=org[1]*2;//was: +org[1]*fabs(org[2]);
-					testmove[2]=0;
-					break;
-				case 11:
-				//Try xy in opposite org dir
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=org[0]*-2;
-					testmove[1]=org[1]*-2;
-					testmove[2]=org[2];
-					break;
-				case 12:
-				//Try z in opposite dir
-					VectorSubtract(check->v.origin,testmove,check->v.origin);
-					testmove[0]=org[0];
-					testmove[1]=org[1];
-					testmove[2]=org[2]*-3;
-					break;
+				VectorScale(org,movetime,org);//movetime*20?
+				VectorCopy(org,testmove);
+				break;
+			case 9:
+			//Try normalized org z * 3 only
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=0;
+				testmove[1]=0;
+				testmove[2]=org[2]*3;//was: +org[2]*(fabs(org[1])+fabs(org[2]));
+				break;
+			case 10:
+			//Try normalized org xy * 2 only
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=org[0]*2;//was: +org[0]*fabs(org[2]);
+				testmove[1]=org[1]*2;//was: +org[1]*fabs(org[2]);
+				testmove[2]=0;
+				break;
+			case 11:
+			//Try xy in opposite org dir
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=org[0]*-2;
+				testmove[1]=org[1]*-2;
+				testmove[2]=org[2];
+				break;
+			case 12:
+			//Try z in opposite dir
+				VectorSubtract(check->v.origin,testmove,check->v.origin);
+				testmove[0]=org[0];
+				testmove[1]=org[1];
+				testmove[2]=org[2]*-3;
+				break;
 			}
 
-			if(t!=3)
-			{
-				//THIS IS VERY BAD BAD HACK...
-				pusher->v.solid = SOLID_NOT;
-				SV_PushEntity (check, move3);
-				//@@TODO: do we ever want to do anybody's angles?  maybe just yaw???
-				//		if (!((int)check->v.flags & (FL_CLIENT | FL_MONSTER)))
-				//			VectorAdd (check->v.angles, amove, check->v.angles);
-				check->v.angles[YAW] += amove[YAW];
-				pusher->v.solid = SOLID_BSP;
-			}
+		// only check for types that can block -- MOVETYPE_PUSH fix by LordHavoc/Maddes
+			if (pusher->v.solid == SOLID_BSP // everything that blocks: bsp models, map brushes, doors, plats etc.
+			|| pusher->v.solid == SOLID_BBOX // normally boxes
+			|| pusher->v.solid == SOLID_SLIDEBOX) // normally monsters
+			{	// store out the previous solid value because we're going to change it next
+				if (t!=3)
+				{	//THIS IS VERY BAD BAD HACK...
+					float savepushervsolid = pusher->v.solid;
+					
+					// try moving the contacted entity
+					pusher->v.solid = SOLID_NOT;
+					SV_PushEntity (check, move3);
+					//@@TODO: do we ever want to do anybody's angles?  maybe just yaw???
+					//		if (!((int)check->v.flags & (FL_CLIENT | FL_MONSTER)))
+					//			VectorAdd (check->v.angles, amove, check->v.angles);
+					check->v.angles[YAW] += amove[YAW];
+					// restore from the stored solid
+					pusher->v.solid = savepushervsolid;
+				}
+				
 			// if it is still inside the pusher, block
-			block = SV_TestEntityPosition (check);
-			if(!block)
+				block = SV_TestEntityPosition (check);
+			}
+			else
+			{	// not blocked
+				block = NULL;
+			}
+
+			if (!block)
 				break;
 		}
 
