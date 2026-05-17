@@ -1478,6 +1478,9 @@ void SV_WriteClientdataToMessage (client_t *client, edict_t *ent, sizebuf_t *msg
 	if ( (int)ent->v.flags & FL_ONGROUND) 
 		bits |= SU_ONGROUND;
 
+	if ( ent->v.waterlevel >= 2)
+		bits |= SU_INWATER;
+
 	next_count++;
 	if (next_count >= 3)
 	{

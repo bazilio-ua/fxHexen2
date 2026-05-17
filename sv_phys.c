@@ -1108,18 +1108,18 @@ qboolean SV_CheckWater (edict_t *ent)
 	ent->v.waterlevel = 0;
 	ent->v.watertype = CONTENTS_EMPTY;
 	cont = SV_PointContents (point);
-	if (cont <= CONTENTS_WATER)
+	if (cont == CONTENTS_WATER || cont == CONTENTS_SLIME || cont == CONTENTS_LAVA)
 	{
 		ent->v.watertype = cont;
 		ent->v.waterlevel = 1;
 		point[2] = ent->v.origin[2] + (ent->v.mins[2] + ent->v.maxs[2])*0.5;
 		cont = SV_PointContents (point);
-		if (cont <= CONTENTS_WATER)
+		if (cont == CONTENTS_WATER || cont == CONTENTS_SLIME || cont == CONTENTS_LAVA)
 		{
 			ent->v.waterlevel = 2;
 			point[2] = ent->v.origin[2] + ent->v.view_ofs[2];
 			cont = SV_PointContents (point);
-			if (cont <= CONTENTS_WATER)
+			if (cont == CONTENTS_WATER || cont == CONTENTS_SLIME || cont == CONTENTS_LAVA)
 				ent->v.waterlevel = 3;
 		}
 	}
@@ -1457,7 +1457,7 @@ void SV_CheckWaterTransition (edict_t *ent)
 		return;
 	}
 	
-	if (cont <= CONTENTS_WATER)
+	if (cont == CONTENTS_WATER || cont == CONTENTS_SLIME || cont == CONTENTS_LAVA)
 	{
 		if (ent->v.watertype == CONTENTS_EMPTY)
 		{	// just crossed into water
@@ -1468,12 +1468,12 @@ void SV_CheckWaterTransition (edict_t *ent)
 	}
 	else
 	{
-		if (ent->v.watertype != CONTENTS_EMPTY)
-		{	// just crossed into water
+		if (ent->v.watertype == CONTENTS_WATER || ent->v.watertype == CONTENTS_SLIME || ent->v.watertype == CONTENTS_LAVA)
+		{	// just crossed out of water
 			SV_StartSound (ent, 0, "misc/hith2o.wav", 255, 1);
 		}		
 		ent->v.watertype = CONTENTS_EMPTY;
-		ent->v.waterlevel = cont;
+		ent->v.waterlevel = 0; // EER1 fix
 	}
 }
 
